@@ -1,0 +1,4 @@
+toolbar.icon:
+  css:
+    theme:
+      css/admin_toolbar_tools.css: {}
