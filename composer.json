@@ -19,6 +19,7 @@
         "drupal/admin_toolbar": "^3.6",
         "drupal/admin_toolbar_links_access_filter": "^3.6",
         "drupal/admin_toolbar_tools": "^3.6",
+        "drupal/backup_migrate": "^5.1",
         "drupal/config_split": "^2.0",
         "drupal/core-composer-scaffold": "^11.4",
         "drupal/core-project-message": "^11.4",
