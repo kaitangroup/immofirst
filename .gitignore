@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Composer
+/vendor/
+
+# Drupal generated files
+/web/sites/default/files/
+/web/sites/default/settings.local.php
+
+# Private files
+/private/
+
+# IDE
+.idea/
+.vscode/

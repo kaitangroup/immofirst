@@ -1,0 +1,241 @@
+<?php
+
+/**
+ * @file
+ * Functions to support theming in the Suchauftrag theme.
+ */
+
+use Drupal\Core\Template\Attribute;
+
+/**
+ * Implements hook_preprocess_HOOK() for page.html.twig.
+ */
+function suchauftrag_theme_preprocess_page(array &$variables) {
+  $variables['site_name'] = \Drupal::config('system.site')->get('name');
+
+  // Primary navigation links used by includes/header.html.twig.
+  $variables['main_nav_links'] = [
+    ['title' => 'Suchaufträge', 'url' => '/suchauftraege', 'active' => TRUE],
+    ['title' => 'Suchauftrag erstellen', 'url' => '/suchauftrag/erstellen', 'active' => FALSE],
+    ['title' => "So funktioniert's", 'url' => '/so-funktionierts', 'active' => FALSE],
+    ['title' => 'Über uns', 'url' => '/ueber-uns', 'active' => FALSE],
+    ['title' => 'FAQ', 'url' => '/faq', 'active' => FALSE],
+  ];
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for page--front.html.twig data.
+ */
+function suchauftrag_theme_preprocess_page__front(array &$variables) {
+  suchauftrag_theme_preprocess_page($variables);
+
+  // Build the Search Requests view as a render array (core-only approach —
+  // avoids requiring the contrib Twig Tweak module's drupal_view() function).
+  // Printed in page--front.html.twig as {{ search_requests_view }}.
+  $variables['search_requests_view'] = views_embed_view('search_requests', 'block_1');
+  $variables['search_requests_count'] = 0;
+
+  // Pull the real result count from the executed view, if it loaded.
+  $view = \Drupal\views\Views::getView('search_requests');
+  if ($view) {
+    $view->setDisplay('block_1');
+    $view->execute();
+    $variables['search_requests_count'] = $view->total_rows ?? count($view->result);
+  }
+
+  // Feature icon row content (editable later via block config).
+  $variables['feature_icons'] = [
+    [
+      'icon' => 'shield',
+      'title' => 'Direkter Kontakt',
+      'text' => 'Treten Sie direkt mit Suchkunden in Kontakt.',
+      'color' => 'green',
+    ],
+    [
+      'icon' => 'target',
+      'title' => 'Aktuelle Gesuche',
+      'text' => 'Täglich neue Suchaufträge von geprüften Interessenten.',
+      'color' => 'indigo',
+    ],
+    [
+      'icon' => 'lock',
+      'title' => 'Kostenlos & unverbindlich',
+      'text' => 'Angebote einstellen ist für Sie kostenlos.',
+      'color' => 'purple',
+    ],
+    [
+      'icon' => 'clock',
+      'title' => 'Zeit sparen',
+      'text' => 'Finden Sie passende Anfragen in Ihrer Region.',
+      'color' => 'amber',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for the property-card component.
+ */
+function suchauftrag_theme_preprocess_property_card(array &$variables) {
+  if (!empty($variables['request_type']) && $variables['request_type'] === 'kaufen') {
+    $variables['badge_class'] = 'badge--buy';
+  }
+  else {
+    $variables['badge_class'] = 'badge--rent';
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for the search_requests view's
+ * unformatted row style.
+ *
+ * Builds one `property_card` render array per row and exposes them as
+ * $property_cards, so the Twig template can simply print each one
+ * ({{ card }}) instead of calling a "theme()" Twig function — which,
+ * like drupal_view(), does not exist in core Twig without the contrib
+ * Twig Tweak module. This keeps the theme dependency-free.
+ *
+ * IMPORTANT: adjust the field machine names below once the real
+ * "search_requests" View/content type exists (see the comments in
+ * templates/views/views-view-unformatted--search-requests.html.twig).
+ */
+function suchauftrag_theme_preprocess_views_view_unformatted__search_requests(array &$variables) {
+  $variables['property_cards'] = [];
+
+  foreach ($variables['rows'] as $id => $row) {
+    // The "entity:node" row plugin normally exposes the raw ResultRow
+    // (with its ->_entity property) at $row['content']['#row']. As a
+    // fallback for any Views internals differences, also try pulling
+    // the entity straight from the executed view's result array.
+    $node = $row['content']['#row']->_entity
+      ?? $variables['view']->result[$id]->_entity
+      ?? NULL;
+
+    if (!$node) {
+      continue;
+    }
+
+    $type = $node->hasField('field_request_type') && !$node->get('field_request_type')->isEmpty()
+      ? $node->get('field_request_type')->value
+      : 'mieten';
+
+    $get = function (string $field) use ($node) {
+      return $node->hasField($field) && !$node->get($field)->isEmpty()
+        ? $node->get($field)->value
+        : '';
+    };
+
+    // Format field_request_date (stored as Y-m-d) into "Heute" / "Gestern"
+    // / "d.m.Y", matching the reference design's card header.
+    $date_label = '';
+    $raw_date = $get('field_request_date');
+    if ($raw_date) {
+      try {
+        $date = new \DateTime($raw_date);
+        $today = new \DateTime('today');
+        $yesterday = new \DateTime('yesterday');
+        if ($date->format('Y-m-d') === $today->format('Y-m-d')) {
+          $date_label = 'Heute';
+        }
+        elseif ($date->format('Y-m-d') === $yesterday->format('Y-m-d')) {
+          $date_label = 'Gestern';
+        }
+        else {
+          $date_label = $date->format('d.m.Y');
+        }
+      }
+      catch (\Exception $e) {
+        $date_label = $raw_date;
+      }
+    }
+
+    $variables['property_cards'][$id] = [
+      '#theme' => 'property_card',
+      // IMPORTANT: every variable key below MUST be '#'-prefixed.
+      // This array is processed by Drupal's Renderer (not a plain Twig
+      // include), and the Renderer treats any NON-'#' key as a child
+      // render element that must itself be an array — passing a scalar
+      // there throws "... is an invalid render array key" (Element::children()).
+      // Also note: the property is named '#request_type', not '#type' —
+      // '#type' is a reserved Render API property (element plugin ID)
+      // and using it here would collide with that system, not our data.
+      '#request_type' => $type,
+      '#badge_label' => $type === 'kaufen' ? 'KAUFEN' : 'MIETEN',
+      '#date' => $date_label,
+      '#icon' => $get('field_property_icon') ?: 'home',
+      '#title' => $node->label(),
+      '#location' => $get('field_location'),
+      '#area' => $get('field_area'),
+      '#rooms' => $get('field_rooms'),
+      '#price' => $get('field_price'),
+      '#description' => $get('field_description'),
+      '#details_url' => $node->toUrl()->toString(),
+      '#offer_url' => $node->toUrl()->toString() . '/angebot',
+    ];
+  }
+}
+
+/**
+ * Implements hook_theme().
+ *
+ * Registers the reusable components as themeable render elements so they
+ * can be invoked from views, preprocess functions, or other templates via
+ * theme('property_card', [...]) etc.
+ */
+function suchauftrag_theme_theme($existing, $type, $theme, $path) {
+  return [
+    'property_card' => [
+      'variables' => [
+        'request_type' => 'mieten',
+        'badge_label' => 'MIETEN',
+        'date' => '',
+        'icon' => 'home',
+        'title' => '',
+        'location' => '',
+        'area' => '',
+        'rooms' => '',
+        'price' => '',
+        'description' => '',
+        'details_url' => '#',
+        'offer_url' => '#',
+      ],
+      'template' => 'components/property-card',
+    ],
+    'search_form' => [
+      'variables' => [],
+      'template' => 'components/search-form',
+    ],
+    'filter_select' => [
+      'variables' => [
+        'label' => '',
+        'name' => '',
+        'options' => [],
+        'selected' => '',
+      ],
+      'template' => 'components/filter-select',
+    ],
+    'button' => [
+      'variables' => [
+        'text' => '',
+        'url' => '#',
+        'variant' => 'primary',
+        'icon' => NULL,
+      ],
+      'template' => 'components/button',
+    ],
+    'badge' => [
+      'variables' => [
+        'label' => '',
+        'variant' => 'rent',
+      ],
+      'template' => 'components/badge',
+    ],
+    'stat_item' => [
+      'variables' => [
+        'icon' => '',
+        'value' => '',
+        'label' => '',
+      ],
+      'template' => 'components/stat-item',
+    ],
+  ];
+}

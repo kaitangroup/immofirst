@@ -1,0 +1,22 @@
+{#
+/**
+ * @file
+ * Default page template for all non-front pages
+ * (e.g. /suchauftrag/erstellen — the 5-step wizard).
+ *
+ * Keeps the same header/footer shell as the front page, but renders
+ * Drupal's normal page.content region so route-specific controllers
+ * (e.g. the wizard form) can inject their own markup.
+ */
+#}
+{% include '@suchauftrag_theme/templates/includes/header.html.twig' %}
+
+<main id="main-content" class="main-content" role="main">
+  <div class="container">
+    {% if page.content %}
+      {{ page.content }}
+    {% endif %}
+  </div>
+</main>
+
+{% include '@suchauftrag_theme/templates/includes/footer.html.twig' %}

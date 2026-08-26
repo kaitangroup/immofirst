@@ -1,0 +1,1 @@
+// Button has no JavaScript.

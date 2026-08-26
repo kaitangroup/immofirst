@@ -1,0 +1,12 @@
+name: 'Stage File Proxy test'
+type: module
+description: 'Support module for testing Stage File Proxy tests.'
+package: Testing
+core_version_requirement: '>=10.3'
+dependencies:
+  - stage_file_proxy:stage_file_proxy
+
+# Information added by Drupal.org packaging script on 2026-06-25
+version: '4.0.0'
+project: 'stage_file_proxy'
+datestamp: 1782427513

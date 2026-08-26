@@ -1,0 +1,44 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the module_filter module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function module_filter_install(): void {
+  $state = \Drupal::state();
+  $state->set('module_filter.recent', ['module_filter' => \Drupal::time()->getRequestTime()]);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function module_filter_uninstall(): void {
+  $state = \Drupal::state();
+  $state->delete('module_filter.recent');
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function module_filter_update_last_removed(): int {
+  return 9402;
+}
+
+/**
+ * Enable jQuery UI Autocomplete module.
+ */
+function module_filter_update_9403(): void {
+  \Drupal::service('module_installer')->install(['jquery_ui_autocomplete']);
+}
+
+/**
+ * Add new config key for descriptions_show.
+ */
+function module_filter_update_9404(): void {
+  $config_factory = \Drupal::configFactory();
+  $config_factory->getEditable('module_filter.settings')->set('descriptions_show', FALSE)->save();
+}

@@ -1,0 +1,47 @@
+{#
+/**
+ * @file
+ * Custom-styled select, wired for real form submission.
+ *
+ * Variables:
+ *   id        string, element id for the trigger button
+ *   name      string — MUST match a Views exposed filter identifier
+ *             if this select is meant to filter results (see
+ *             views.view.search_requests.yml)
+ *   options   array of {value, label} pairs. `value` is what gets
+ *             submitted (must match the target field's machine value,
+ *             e.g. 'home'/'apartment' for field_property_icon);
+ *             `label` is what the user sees (e.g. 'Haus'/'Wohnung').
+ *   selected  the currently selected VALUE (not label), '' = none/any
+ *   placeholder  text shown when selected is '' (default: first option's label)
+ *
+ * theme.js rotates the chevron via [data-select] / .is-open, and syncs
+ * the hidden input's value + the trigger's visible label text on choice.
+ */
+#}
+{% set selected_label = placeholder|default('Bitte wählen') %}
+{% for option in options %}
+  {% if option.value == selected %}
+    {% set selected_label = option.label %}
+  {% endif %}
+{% endfor %}
+<div class="select" data-select>
+  <button type="button"
+          class="select__trigger"
+          id="{{ id }}"
+          aria-haspopup="listbox"
+          aria-expanded="false">
+    <span data-select-value>{{ selected_label }}</span>
+    <svg class="select__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  <ul class="select__menu" role="listbox" data-select-menu hidden>
+    {% for option in options %}
+      <li role="option" class="select__option{{ option.value == selected ? ' is-selected' : '' }}" data-value="{{ option.value }}">
+        {{ option.label }}
+      </li>
+    {% endfor %}
+  </ul>
+  <input type="hidden" name="{{ name }}" value="{{ selected }}" data-select-input>
+</div>

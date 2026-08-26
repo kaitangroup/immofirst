@@ -1,0 +1,36 @@
+{#
+/**
+ * @file
+ * Default page template for the Immobilien theme (non-front pages).
+ */
+#}
+<div class="page-wrapper">
+  <header class="site-header" role="banner">
+    <div class="layout-container site-header__inner">
+      {% if logo %}
+        <a href="{{ front_page }}" class="site-logo" rel="home">
+          <img src="{{ logo }}" alt="{{ 'Home'|t }}" />
+        </a>
+      {% endif %}
+      {{ page.primary_menu }}
+    </div>
+  </header>
+
+  {% if page.breadcrumb %}
+    <nav class="layout-container" aria-label="Breadcrumb">{{ page.breadcrumb }}</nav>
+  {% endif %}
+
+  <main role="main" id="main-content" class="layout-container page-main">
+    {{ page.highlighted }}
+    {{ page.help }}
+    {{ page.content_top }}
+    {{ page.content }}
+    {{ page.content_bottom }}
+  </main>
+
+  {% if page.footer %}
+    <footer class="site-footer" role="contentinfo">
+      <div class="layout-container">{{ page.footer }}</div>
+    </footer>
+  {% endif %}
+</div>

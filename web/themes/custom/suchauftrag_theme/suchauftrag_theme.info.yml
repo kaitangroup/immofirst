@@ -1,0 +1,16 @@
+name: Suchauftrag Theme
+type: theme
+description: 'Custom production theme for Suchauftrag.de — real estate search-request marketplace.'
+package: Custom
+core_version_requirement: ^10 || ^11
+base theme: false
+
+libraries:
+  - suchauftrag_theme/global
+
+regions:
+  header: 'Header'
+  content: 'Content'
+  footer: 'Footer'
+
+logo: images/logos/logo.svg

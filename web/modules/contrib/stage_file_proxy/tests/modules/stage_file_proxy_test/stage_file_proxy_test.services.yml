@@ -1,0 +1,25 @@
+services:
+  _defaults:
+    autoconfigure: true
+    autowire: true
+
+  stage_file_proxy_test.http_client_proxy_middleware:
+    class: Drupal\stage_file_proxy_test\HttpClientMiddleware\StageFileProxyTestHttpClientMiddleware
+
+  stage_file_proxy_test.http_handler_stack:
+    parent: http_handler_stack
+    configurator: ['@http_handler_stack_configurator', 'configure']
+
+  stage_file_proxy_test.http_client_factory:
+    class: Drupal\stage_file_proxy_test\Http\TestClientFactory
+    arguments:
+      $clientFactory: '@http_client_factory'
+      $stack: '@stage_file_proxy_test.http_handler_stack'
+    calls:
+      - ['addMiddleware', ['@stage_file_proxy_test.http_client_proxy_middleware', 'stage_file_proxy_test.http_client_proxy_middleware']]
+
+  # Use a custom http client for making the requests.
+  stage_file_proxy_test.stage_file_proxy.http_client:
+    decorates: stage_file_proxy.http_client
+    parent: stage_file_proxy.http_client
+    factory: ['@stage_file_proxy_test.http_client_factory', 'fromOptions']

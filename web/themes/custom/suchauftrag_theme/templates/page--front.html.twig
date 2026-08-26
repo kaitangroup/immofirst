@@ -1,0 +1,93 @@
+{#
+/**
+ * @file
+ * Front page template — Search Requests Overview.
+ *
+ * Composes the page entirely from reusable includes. No markup for
+ * individual sections lives in this file.
+ */
+#}
+{% include '@suchauftrag_theme/templates/includes/header.html.twig' %}
+
+<main id="main-content" class="main-content" role="main">
+
+  {# Hero + Search Card + Feature Icons share ONE continuous background
+     band in the reference design — wrap them in a single container so
+     the gradient doesn't seam between sections. #}
+  <div class="hero-band">
+    <div class="hero-band__bg" aria-hidden="true">
+      <svg class="hero-band__wave" viewBox="0 0 1440 500" preserveAspectRatio="none" fill="none">
+        <path d="M0 260 C 300 160, 500 340, 820 240 S 1300 120, 1440 220 V500H0Z" fill="url(#waveGrad2)" opacity="0.5"/>
+        <defs>
+          <linearGradient id="waveGrad2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#E9EBFF"/>
+            <stop offset="1" stop-color="#F6F8FF"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+
+    {% include '@suchauftrag_theme/templates/includes/hero.html.twig' %}
+    {% include '@suchauftrag_theme/templates/includes/search-filter.html.twig' %}
+    {% include '@suchauftrag_theme/templates/includes/feature-icons.html.twig' %}
+  </div>
+
+  <section class="search-requests" aria-labelledby="search-requests-title">
+    <div class="container">
+      <div class="search-requests__head">
+        <div>
+          <h2 id="search-requests-title" class="search-requests__title">Aktuelle Suchaufträge</h2>
+          <p class="search-requests__count">{{ search_requests_count is defined ? search_requests_count : 0 }} Suchaufträge gefunden</p>
+        </div>
+        <div class="search-requests__sort">
+          <label for="sort-select" class="sort__label">Sortieren nach</label>
+          {# NOTE: only "Neueste zuerst" is a real, wired sort right now
+             (matches the View's created DESC sort). Preis/Fläche sorting
+             needs those fields converted to numeric fields first, since
+             they're currently free-text strings like "bis 1.600 €" —
+             sorting those alphabetically wouldn't be numerically correct.
+             Left as visual placeholders until that field change happens. #}
+          {% include '@suchauftrag_theme/templates/components/filter-select.html.twig' with {
+            id: 'sort-select',
+            name: 'sort',
+            selected: 'newest',
+            options: [
+              {value: 'newest', label: 'Neueste zuerst'},
+              {value: 'price_asc', label: 'Preis aufsteigend'},
+              {value: 'price_desc', label: 'Preis absteigend'},
+              {value: 'area', label: 'Fläche'}
+            ]
+          } %}
+        </div>
+      </div>
+
+      {# Drupal View placeholder — do not hardcode cards here.
+         Built in suchauftrag_theme_preprocess_page__front() via
+         views_embed_view(), core-only (no Twig Tweak dependency).
+         Twig Tweak's drupal_view() would also work now that it's
+         installed, but this approach needs no contrib dependency. #}
+      {% if search_requests_view %}
+        {{ search_requests_view }}
+      {% else %}
+        <div class="property-grid__empty-state">
+          <p>Aktuell wurden keine Suchaufträge gefunden.</p>
+          <p class="u-text-muted">Bitte passen Sie Ihre Filter an oder versuchen Sie es später erneut.</p>
+        </div>
+      {% endif %}
+
+      <div class="search-requests__load-more">
+        <button type="button" class="btn btn--outline" data-load-more>
+          Weitere Suchaufträge laden
+          <svg class="btn__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  {% include '@suchauftrag_theme/templates/includes/cta-banner.html.twig' %}
+
+</main>
+
+{% include '@suchauftrag_theme/templates/includes/footer.html.twig' %}

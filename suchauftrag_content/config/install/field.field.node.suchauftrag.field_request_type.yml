@@ -1,0 +1,21 @@
+langcode: de
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_request_type
+    - node.type.suchauftrag
+  module:
+    - options
+id: node.suchauftrag.field_request_type
+field_name: field_request_type
+entity_type: node
+bundle: suchauftrag
+label: 'Gesuchsart'
+description: 'Kaufen oder Mieten.'
+required: true
+translatable: false
+default_value:
+  - value: mieten
+default_value_callback: ''
+settings: {  }
+field_type: list_string

@@ -1,0 +1,28 @@
+name: ImmoFirst
+type: theme
+description: 'Custom Drupal 11 theme for the ImmoFirst platform.'
+package: Custom
+
+core_version_requirement: ^11
+
+# We are building our own frontend.
+base theme: false
+
+logo: assets/images/logo.svg
+
+libraries:
+  - immofirst_theme/global
+
+regions:
+  header: Header
+  primary_menu: Primary Menu
+  hero: Hero
+  highlighted: Highlighted
+  breadcrumb: Breadcrumb
+  content: Content
+  sidebar: Sidebar
+  prefooter: Pre Footer
+  footer: Footer
+
+libraries-override:
+  system/base: false

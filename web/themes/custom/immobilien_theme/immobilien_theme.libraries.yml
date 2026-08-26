@@ -1,0 +1,25 @@
+global:
+  version: 1.0.0
+  css:
+    base:
+      css/reset.css: {}
+      css/tokens.css: {}
+    theme:
+      css/global.css: {}
+  js:
+    js/global.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+
+homepage:
+  version: 1.0.0
+  css:
+    theme:
+      css/homepage.css: {}
+      css/waves.css: {}
+      css/responsive.css: { weight: 10 }
+  js:
+    js/homepage.js: { attributes: { defer: true } }
+  dependencies:
+    - immobilien_theme/global

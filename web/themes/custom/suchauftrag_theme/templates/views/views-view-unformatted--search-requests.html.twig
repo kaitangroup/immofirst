@@ -1,0 +1,35 @@
+{#
+/**
+ * @file
+ * Theme override for the unformatted row style of the search_requests view.
+ *
+ * IMPORTANT: This file does NOT hardcode card markup. Each row is mapped
+ * to the reusable `property_card` theme hook (see suchauftrag_theme_theme()
+ * in suchauftrag_theme.theme). The render arrays themselves are built in
+ * suchauftrag_theme_preprocess_views_view_unformatted__search_requests()
+ * and exposed here as {{ property_cards }} -- this avoids calling a
+ * "theme()" Twig function, which does not exist in core Twig (only the
+ * contrib Twig Tweak module adds functions like that).
+ *
+ * Field machine names used in the preprocess function (adjust to match
+ * your actual "search_requests" View once it is built in
+ * /admin/structure/views):
+ *   field_request_type      (list: kaufen|mieten)
+ *   field_request_date      (datetime)
+ *   field_property_icon     (list: home|apartment|plot|garage)
+ *   title                   (base field)
+ *   field_location
+ *   field_area
+ *   field_rooms
+ *   field_price
+ *   field_description
+ *   (details/offer links are built from the entity URL)
+ */
+#}
+<div{{ attributes.addClass('property-grid__rows') }}>
+  {% for key, card in property_cards %}
+    <div class="property-grid__item">
+      {{ card }}
+    </div>
+  {% endfor %}
+</div>

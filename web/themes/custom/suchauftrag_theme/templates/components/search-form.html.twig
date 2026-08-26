@@ -1,0 +1,99 @@
+{#
+/**
+ * @file
+ * Reusable search-form component — wired to the search_requests View's
+ * exposed filters (see views.view.search_requests.yml). This is a real
+ * GET form: submitting it reloads the front page with query parameters
+ * that Drupal Views reads automatically to filter the results grid
+ * below, no matter that the form markup itself is fully custom-styled
+ * rather than Views' own auto-generated exposed form.
+ *
+ * Field name <-> View filter identifier map:
+ *   art            <-> field_request_type_value (Kaufen/Mieten)
+ *   immobilienart  <-> field_property_icon_value (Immobilienart)
+ *   ort            <-> field_location_value (Ort oder PLZ, contains)
+ *   radius         <-> NOT wired yet — no geolocation field exists on
+ *                      the content type. Kept in the UI for parity with
+ *                      the design; submitting it currently has no
+ *                      effect on results. Wiring real radius search
+ *                      needs a geofield + proximity filter (Geofield +
+ *                      Geocoder contrib modules) — say the word and
+ *                      I'll add that.
+ *
+ * BEM block: .search-card
+ */
+#}
+<form class="search-card" data-hover-lift method="get" action="" id="search-filter-form">
+  <div class="search-card__grid">
+
+    <div class="search-card__field search-card__field--tabs">
+      <span class="search-card__label" id="art-label">Ich suche zum...</span>
+      <div class="tabs" data-tabs role="radiogroup" aria-labelledby="art-label">
+        <input type="radio" id="tab-kaufen" name="art" value="kaufen" class="tabs__radio" data-tab-radio>
+        <label for="tab-kaufen" class="tabs__btn" data-tab="kaufen">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 4.5h2l1 2M6.5 6.5l1.8 8.2a1.6 1.6 0 001.6 1.3h6.4a1.6 1.6 0 001.6-1.3l1.1-6.2H6.5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="19.5" r="1.1" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="16.5" cy="19.5" r="1.1" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          Kaufen
+        </label>
+
+        <input type="radio" id="tab-mieten" name="art" value="mieten" class="tabs__radio" data-tab-radio checked>
+        <label for="tab-mieten" class="tabs__btn" data-tab="mieten">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Mieten
+        </label>
+
+        <span class="tabs__indicator" data-tabs-indicator aria-hidden="true"></span>
+      </div>
+    </div>
+
+    <div class="search-card__field">
+      <label class="search-card__label" for="property-type">Immobilienart</label>
+      {% include '@suchauftrag_theme/templates/components/filter-select.html.twig' with {
+        id: 'property-type',
+        name: 'immobilienart',
+        selected: '',
+        placeholder: 'Alle Arten',
+        options: [
+          {value: 'apartment', label: 'Wohnung'},
+          {value: 'home', label: 'Haus'},
+          {value: 'plot', label: 'Grundstück'},
+          {value: 'garage', label: 'Garage / Stellplatz'}
+        ]
+      } %}
+    </div>
+
+    <div class="search-card__field">
+      <label class="search-card__label" for="city-input">Ort oder PLZ</label>
+      <div class="input-icon">
+        <input type="text" id="city-input" name="ort" class="input" placeholder="z. B. München oder 80331">
+        <svg class="input-icon__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 21.5s7.2-6.7 7.2-12A7.2 7.2 0 104.8 9.5c0 5.3 7.2 12 7.2 12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="search-card__field">
+      <label class="search-card__label" for="radius-select">Umkreis</label>
+      {% include '@suchauftrag_theme/templates/components/filter-select.html.twig' with {
+        id: 'radius-select',
+        name: 'radius',
+        selected: '25',
+        options: [
+          {value: '5', label: '5 km'},
+          {value: '10', label: '10 km'},
+          {value: '25', label: '25 km'},
+          {value: '50', label: '50 km'},
+          {value: '100', label: '100 km'}
+        ]
+      } %}
+    </div>
+  </div>
+
+  <div class="search-card__actions">
+    <button type="submit" class="btn btn--primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Suchaufträge anzeigen
+    </button>
+    <a href="?" class="search-card__reset" data-reset-filters>Filter zurücksetzen</a>
+  </div>
+</form>

@@ -1,0 +1,16 @@
+{#
+/**
+ * @file
+ * Search filter section wrapper. The actual form markup lives in the
+ * reusable components/search-form.html.twig — a real GET <form> wired
+ * to the search_requests View's exposed filters via matching field
+ * names/identifiers (art, immobilienart, ort). See that file's header
+ * comment for the full identifier map, and views.view.search_requests.yml
+ * for the filter definitions themselves.
+ */
+#}
+<section class="search-filter" aria-label="Suchaufträge filtern">
+  <div class="container">
+    {% include '@suchauftrag_theme/templates/components/search-form.html.twig' %}
+  </div>
+</section>

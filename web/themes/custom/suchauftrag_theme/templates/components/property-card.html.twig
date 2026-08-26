@@ -1,0 +1,82 @@
+{#
+/**
+ * @file
+ * Reusable search-request / property card.
+ *
+ * Variables (see suchauftrag_theme_theme() in the .theme file):
+ *   request_type   'kaufen' | 'mieten'
+ *   badge_label     e.g. 'KAUFEN' / 'MIETEN'
+ *   date            e.g. 'Heute', '11.05.2024'
+ *   icon            'home' | 'apartment' | 'plot' | 'garage'
+ *   title           string
+ *   location        string
+ *   area            string, e.g. 'ab 70 m²'
+ *   rooms           string, e.g. '3'
+ *   price           string, e.g. 'bis 1.600 €'
+ *   description     string
+ *   details_url     string
+ *   offer_url       string
+ */
+#}
+<article class="property-card" data-hover-lift>
+  <div class="property-card__top">
+    {% include '@suchauftrag_theme/templates/components/badge.html.twig' with {
+      label: badge_label,
+      variant: request_type == 'kaufen' ? 'buy' : 'rent'
+    } %}
+    <span class="property-card__date">
+      {% if date == 'Heute' %}<span class="property-card__date-dot" aria-hidden="true"></span>{% endif %}
+      {{ date }}
+    </span>
+  </div>
+
+  <div class="property-card__middle">
+    <span class="property-card__icon" aria-hidden="true">
+      {% if icon == 'apartment' %}
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4.5" y="3" width="15" height="18" rx="1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.2 7.2h1.8M14 7.2h1.8M8.2 11h1.8M14 11h1.8M8.2 14.8h1.8M14 14.8h1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      {% elseif icon == 'plot' %}
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 20.5V9.2L12 4l8 5.2v11.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20.5h16M9 20.5v-5.7h6v5.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      {% elseif icon == 'garage' %}
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 10.3L12 4l9 6.3V20H3v-9.7z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 20v-6.3h11V20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 16.3h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      {% else %}
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 10.5L12 3.5l9 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9.5V19a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      {% endif %}
+    </span>
+    <h3 class="property-card__title">{{ title }}</h3>
+    <p class="property-card__location">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21.5s7.2-6.7 7.2-12A7.2 7.2 0 104.8 9.5c0 5.3 7.2 12 7.2 12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      {{ location }}
+    </p>
+  </div>
+
+  <div class="property-card__stats">
+    {% if area %}
+      {% include '@suchauftrag_theme/templates/components/stat-item.html.twig' with { icon: 'area', value: area, label: 'Wohnfläche' } %}
+    {% endif %}
+    {% if rooms %}
+      {% include '@suchauftrag_theme/templates/components/stat-item.html.twig' with { icon: 'rooms', value: rooms, label: 'Zimmer' } %}
+    {% endif %}
+    {% if price %}
+      {% include '@suchauftrag_theme/templates/components/stat-item.html.twig' with { icon: 'price', value: price, label: request_type == 'kaufen' ? 'Kaufpreis' : 'Kaltmiete' } %}
+    {% endif %}
+  </div>
+
+  {% if description %}
+    <p class="property-card__description">{{ description }}</p>
+  {% endif %}
+
+  <div class="property-card__bottom">
+    <a href="{{ details_url }}" class="property-card__details">Details ansehen</a>
+
+    <div class="property-card__actions">
+      {% include '@suchauftrag_theme/templates/components/button.html.twig' with {
+        text: 'Angebot senden',
+        url: offer_url,
+        variant: 'primary'
+      } %}
+      <button type="button" class="property-card__bookmark" data-bookmark aria-pressed="false" aria-label="Zu Favoriten hinzufügen">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6.5 4h11a1 1 0 011 1v16l-6.5-4.3L5.5 21V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+</article>

@@ -1,0 +1,18 @@
+langcode: de
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_price
+    - node.type.suchauftrag
+id: node.suchauftrag.field_price
+field_name: field_price
+entity_type: node
+bundle: suchauftrag
+label: 'Preis'
+description: 'z. B. „bis 1.600 €“ (Miete) oder „bis 600.000 €“ (Kauf)'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

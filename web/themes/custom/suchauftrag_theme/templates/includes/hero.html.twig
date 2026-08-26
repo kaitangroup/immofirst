@@ -1,0 +1,51 @@
+{#
+/**
+ * @file
+ * Hero section — headline, subtext, "What is a Suchauftrag" info card,
+ * wave/pin background illustration.
+ */
+#}
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero__bg" aria-hidden="true">
+    <svg class="hero__path" width="220" height="120" viewBox="0 0 220 120" fill="none">
+      <path d="M10 100 Q 90 20 210 30" stroke="#C7CBFB" stroke-width="2" stroke-dasharray="4 6" fill="none"/>
+    </svg>
+    <span class="hero__pin hero__pin--1" aria-hidden="true"></span>
+    <span class="hero__pin hero__pin--2" aria-hidden="true"></span>
+  </div>
+
+  <div class="container hero__inner">
+    <div class="hero__content">
+      <h1 id="hero-title" class="hero__title">
+        Echte Menschen suchen Immobilien. Finden Sie Ihren passenden
+        <span class="hero__title-accent">Suchauftrag</span>.
+      </h1>
+      <p class="hero__subtitle">
+        Entdecken Sie aktuelle Kauf- und Mietgesuche in Ihrer Region und bringen Sie Angebot und Nachfrage zusammen.
+      </p>
+    </div>
+
+    <aside class="hero__card" data-hover-lift aria-labelledby="hero-card-title">
+      <div class="hero__card-icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="9" cy="8" r="3.2" stroke="#5664FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3.5 19.5c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5" stroke="#5664FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M15.5 8.3a2.6 2.6 0 110 5.2" stroke="#5664FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M16.5 14.2c2.3.4 4 2.3 4 5.3" stroke="#5664FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="hero__card-content">
+        <h2 id="hero-card-title" class="hero__card-title">Was ist ein Suchauftrag?</h2>
+        <p class="hero__card-text">
+          Interessenten beschreiben hier ihre Wünsche. Sie haben eine passende Immobilie? Dann machen Sie ein Angebot.
+        </p>
+        <a href="/so-funktionierts" class="hero__card-link">
+          Mehr erfahren
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
+    </aside>
+  </div>
+</section>

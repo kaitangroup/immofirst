@@ -1,0 +1,18 @@
+langcode: de
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_rooms
+    - node.type.suchauftrag
+id: node.suchauftrag.field_rooms
+field_name: field_rooms
+entity_type: node
+bundle: suchauftrag
+label: 'Zimmer'
+description: 'z. B. „3“ oder „ab 3“'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

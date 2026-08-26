@@ -1,0 +1,29 @@
+/* Utilities */
+.site-header__utilities{
+  display:flex;
+  align-items:center;
+  gap:1rem;
+}
+.site-header__language{display:flex;align-items:center;}
+.site-header__auth{display:flex;align-items:center;gap:1rem;}
+.site-header__login,
+.site-header__register{
+  text-decoration:none;
+  color:var(--color-text,#374151);
+  font-weight:500;
+}
+.site-header__cta{margin-left:.5rem;}
+.site-header__icon-button{
+  width:42px;
+  height:42px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:0;
+  border-radius:999px;
+  background:transparent;
+  cursor:pointer;
+}
+.site-header__icon-button:hover{
+  background:rgba(0,0,0,.05);
+}

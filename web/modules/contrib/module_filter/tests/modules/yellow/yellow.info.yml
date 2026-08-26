@@ -1,0 +1,11 @@
+name: '2. Banana'
+type: module
+description: 'Its a fruity one.'
+package: Testing
+dependencies:
+  - module_filter:module_filter
+
+# Information added by Drupal.org packaging script on 2026-06-14
+version: '5.0.5'
+project: 'module_filter'
+datestamp: 1781405915

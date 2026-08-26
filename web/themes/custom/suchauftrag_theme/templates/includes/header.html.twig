@@ -1,0 +1,66 @@
+{#
+/**
+ * @file
+ * Site header — logo, primary nav, CTA, mobile hamburger.
+ * Sticky; gains shadow after 20px scroll via theme.js (.header--scrolled).
+ */
+#}
+<header class="header" data-header>
+  <div class="container header__inner">
+
+    <a href="/" class="header__logo" aria-label="Suchauftrag.de Startseite">
+      <span class="header__logo-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <path d="M3 10.5L12 3l9 7.5" stroke="#5664FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 9.5V19a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V9.5" stroke="#5664FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="header__logo-text">Suchauftrag.de</span>
+    </a>
+
+    <nav class="header__nav" aria-label="Hauptnavigation">
+      <ul class="header__nav-list">
+        {% for link in main_nav_links %}
+          <li class="header__nav-item">
+            <a href="{{ link.url }}"
+               class="header__nav-link{{ link.active ? ' is-active' : '' }}"
+               {{ link.active ? 'aria-current="page"' : '' }}>
+              {{ link.title }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </nav>
+
+    <div class="header__actions">
+      <a href="/suchauftrag/erstellen" class="btn btn--primary btn--sm header__cta">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Suchauftrag erstellen
+      </a>
+
+      <button type="button"
+              class="header__hamburger"
+              data-menu-toggle
+              aria-expanded="false"
+              aria-controls="mobile-menu"
+              aria-label="Menü öffnen">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <nav id="mobile-menu" class="header__mobile-menu" data-mobile-menu aria-label="Mobile Navigation" hidden>
+    <ul>
+      {% for link in main_nav_links %}
+        <li>
+          <a href="{{ link.url }}"{{ link.active ? ' aria-current="page"' : '' }}>{{ link.title }}</a>
+        </li>
+      {% endfor %}
+      <li>
+        <a href="/suchauftrag/erstellen" class="btn btn--primary btn--block">Suchauftrag erstellen</a>
+      </li>
+    </ul>
+  </nav>
+</header>

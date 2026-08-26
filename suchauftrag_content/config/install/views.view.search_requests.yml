@@ -1,0 +1,135 @@
+langcode: de
+status: true
+dependencies:
+  config:
+    - node.type.suchauftrag
+  module:
+    - node
+    - user
+id: search_requests
+label: 'Suchaufträge'
+module: views
+description: 'Listet veröffentlichte Suchauftrag-Inhalte, neueste zuerst. Wird von suchauftrag_theme über views_embed_view() eingebettet.'
+tag: ''
+base_table: node_field_data
+base_field: nid
+core: '10.0'
+display:
+  default:
+    id: default
+    display_title: Standard
+    display_plugin: default
+    position: 0
+    display_options:
+      title: Suchaufträge
+      fields: {  }
+      pager:
+        type: some
+        options:
+          items_per_page: 6
+          offset: 0
+      exposed_form:
+        type: basic
+        options:
+          submit_button: 'Anwenden'
+          reset_button: true
+          reset_button_label: 'Zurücksetzen'
+          exposed_sorts_label: 'Sortieren nach'
+      access:
+        type: perm
+        options:
+          perm: 'access content'
+      cache:
+        type: tag
+        options: {  }
+      query:
+        type: views_query
+        options:
+          disable_sql_rewrite: false
+          distinct: false
+          replica: false
+          query_comment: ''
+          query_tags: {  }
+      # Row plugin: "entity:node" populates row._entity, which is what
+      # templates/views/views-view-unformatted--search-requests.html.twig
+      # and suchauftrag_theme_preprocess_views_view_unformatted__search_requests()
+      # expect.
+      row:
+        type: 'entity:node'
+        options:
+          relationship: none
+          view_mode: teaser
+      style:
+        type: default
+      filters:
+        status:
+          id: status
+          table: node_field_data
+          field: status
+          entity_type: node
+          entity_field: status
+          value: '1'
+          plugin_id: boolean
+          expose:
+            operator: false
+        type:
+          id: type
+          table: node_field_data
+          field: type
+          entity_type: node
+          entity_field: type
+          value:
+            suchauftrag: suchauftrag
+          plugin_id: bundle
+          expose:
+            operator: false
+      sorts:
+        created:
+          id: created
+          table: node_field_data
+          field: created
+          entity_type: node
+          entity_field: created
+          order: DESC
+          plugin_id: date
+      header: {  }
+      footer: {  }
+      empty:
+        area_text_custom:
+          id: area_text_custom
+          table: views
+          field: area_text_custom
+          empty: true
+          content: 'Aktuell wurden keine Suchaufträge gefunden. Bitte passen Sie Ihre Filter an oder schauen Sie später wieder vorbei.'
+          plugin_id: text_custom
+      relationships: {  }
+      arguments: {  }
+    cache_metadata:
+      max-age: -1
+      contexts:
+        - 'languages:language_content'
+        - 'languages:language_interface'
+        - url
+        - url.query_args
+      tags:
+        - 'config:node.type.suchauftrag'
+        - node_list
+  block_1:
+    id: block_1
+    display_title: 'Suchaufträge Block'
+    display_plugin: block
+    position: 1
+    display_options:
+      display_extenders: {  }
+      block_description: 'Suchaufträge – Übersicht (Startseite)'
+      block_category: 'Suchauftrag.de'
+    cache_metadata:
+      max-age: -1
+      contexts:
+        - 'languages:language_content'
+        - 'languages:language_interface'
+        - url
+        - url.query_args
+      tags:
+        - 'config:node.type.suchauftrag'
+        - node_list

@@ -1,0 +1,25 @@
+{
+    "name": "drupal/twig_tweak",
+    "type": "drupal-module",
+    "description": "A Twig extension with some useful functions and filters for Drupal development.",
+    "keywords": ["Drupal", "Twig"],
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://www.drupal.org/project/twig_tweak",
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/twig_tweak",
+        "source": "https://git.drupalcode.org/project/twig_tweak"
+    },
+    "require": {
+        "php": ">=8.4",
+        "ext-json": "*",
+        "drupal/core": "^11.2",
+        "twig/twig": "^3.21"
+    },
+    "suggest": {
+        "symfony/var-dumper": "Better dump() function for debugging Twig variables",
+        "drush/drush": "Required for Drush commands (twig-tweak:debug:*). Version 12 or later."
+    },
+    "conflict": {
+        "drush/drush": "<12.0.0"
+    }
+}
