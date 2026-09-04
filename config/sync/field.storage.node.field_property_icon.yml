@@ -1,0 +1,32 @@
+uuid: 0e209f0c-f296-4513-b06c-0109ea8dc347
+langcode: de
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_property_icon
+field_name: field_property_icon
+entity_type: node
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: home
+      label: Haus
+    -
+      value: apartment
+      label: Wohnung
+    -
+      value: plot
+      label: Grundstück
+    -
+      value: garage
+      label: 'Garage / Stellplatz'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,23 @@
+uuid: 216ba822-4eb9-4352-8748-7ce86b41761d
+langcode: de
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_property_icon
+    - node.type.suchauftrag
+  module:
+    - options
+id: node.suchauftrag.field_property_icon
+field_name: field_property_icon
+entity_type: node
+bundle: suchauftrag
+label: 'Immobilienart (Icon)'
+description: 'Bestimmt das Icon auf der Property-Card.'
+required: true
+translatable: false
+default_value:
+  -
+    value: home
+default_value_callback: ''
+settings: {  }
+field_type: list_string

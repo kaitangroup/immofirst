@@ -1,0 +1,30 @@
+uuid: 444636b7-06ed-4f87-b969-d119c3db4d90
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: ikPafVU964d26lUSvUSARI6mOpK5g03CFT1hRI6y0-A
+id: member
+label: 'Member profile'
+description: 'Configuration for site members'
+conf:
+  usertab: false
+  extensions: 'jpg png gif'
+  maxsize: 2.0
+  quota: 50.0
+  maxwidth: 1024
+  maxheight: 1024
+  replace: 0
+  thumbnail_style: ''
+  thumbnail_grid_style: false
+  ignore_usage: false
+  url_alter: false
+  image_extensions: 'jpg jpeg png gif webp avif'
+  lazy_dimensions: false
+  folders:
+    -
+      path: 'users/user[user:uid]'
+      permissions:
+        browse_files: true
+        upload_files: true
+        delete_files: true

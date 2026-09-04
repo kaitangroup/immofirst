@@ -1,0 +1,22 @@
+uuid: b9711c00-fe87-40e6-9ced-04a6bf3629e6
+langcode: de
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_description
+    - node.type.suchauftrag
+  module:
+    - text
+id: node.suchauftrag.field_description
+field_name: field_description
+entity_type: node
+bundle: suchauftrag
+label: Beschreibung
+description: 'Freitext, z. B. "Familie mit 2 Kindern sucht ein freistehendes Einfamilienhaus mit Garten."'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

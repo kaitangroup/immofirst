@@ -1,0 +1,11 @@
+uuid: 6b1fb6fc-e397-4a9f-8ceb-bb45f4fb4328
+langcode: de
+status: true
+dependencies: {  }
+name: Suchauftrag
+type: suchauftrag
+description: 'Ein einzelnes Immobilien-Suchgesuch (Kaufen oder Mieten).'
+help: ''
+new_revision: true
+preview_mode: 1
+display_submitted: false

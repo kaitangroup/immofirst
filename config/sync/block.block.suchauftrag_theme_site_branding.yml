@@ -1,0 +1,25 @@
+uuid: 4db3e38a-1aa1-45ee-bd58-2c3b43e52630
+langcode: en
+status: true
+dependencies:
+  module:
+    - system
+  theme:
+    - suchauftrag_theme
+_core:
+  default_config_hash: '-OAAZDw1OR_UyAEPEKX0Hu4LaZD149vW9PmMnIC-v0o'
+id: suchauftrag_theme_site_branding
+theme: suchauftrag_theme
+region: header
+weight: 0
+provider: null
+plugin: system_branding_block
+settings:
+  id: system_branding_block
+  label: 'Site branding'
+  label_display: '0'
+  provider: system
+  use_site_logo: true
+  use_site_name: true
+  use_site_slogan: true
+visibility: {  }

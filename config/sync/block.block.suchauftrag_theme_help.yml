@@ -1,0 +1,22 @@
+uuid: edbadaec-7218-4574-8b88-e7674b21e84e
+langcode: en
+status: true
+dependencies:
+  module:
+    - help
+  theme:
+    - suchauftrag_theme
+_core:
+  default_config_hash: VfPFqqxfkomud5CO8DUijw85QIl9GIxh_nIxLOYESxg
+id: suchauftrag_theme_help
+theme: suchauftrag_theme
+region: header
+weight: 0
+provider: null
+plugin: help_block
+settings:
+  id: help_block
+  label: Help
+  label_display: '0'
+  provider: help
+visibility: {  }

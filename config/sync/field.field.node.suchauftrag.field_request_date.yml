@@ -1,0 +1,21 @@
+uuid: f12aca2e-856e-485b-a70a-8ae4df67a841
+langcode: de
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_request_date
+    - node.type.suchauftrag
+  module:
+    - datetime
+id: node.suchauftrag.field_request_date
+field_name: field_request_date
+entity_type: node
+bundle: suchauftrag
+label: 'Datum des Gesuchs'
+description: 'Wird im Card-Header als "Heute" / "Gestern" / Datum angezeigt.'
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime
