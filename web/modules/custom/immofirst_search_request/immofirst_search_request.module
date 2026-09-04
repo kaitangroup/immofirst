@@ -1,0 +1,63 @@
+<?php
+
+/**
+ * @file
+ * Hook implementations for the ImmoFirst Search Request wizard.
+ */
+
+declare(strict_types=1);
+
+/**
+ * Implements hook_theme().
+ */
+function immofirst_search_request_theme(array $existing, string $type, string $theme, string $path): array {
+  return [
+    'search_request_wizard' => [
+      'render element' => 'form',
+      'template' => 'search-request-wizard',
+      'path' => $path . '/templates',
+    ],
+    'search_request_thank_you' => [
+      'variables' => [
+        'reference_number' => NULL,
+        'node' => NULL,
+      ],
+      'template' => 'search-request-thank-you',
+      'path' => $path . '/templates',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for search-request-wizard.html.twig.
+ *
+ * IMPORTANT: because this template overrides the 'form' render element's
+ * theme hook, Drupal's default form.html.twig (which normally emits the
+ * <form> tag itself, with action/method/attributes) is bypassed. This
+ * preprocess function is responsible for reconstructing that same
+ * "form_attributes" variable so the template can build a real, working
+ * <form> element instead of an inert <div>.
+ */
+function template_preprocess_search_request_wizard(array &$variables): void {
+  $form = $variables['form'];
+
+  $variables['current_step'] = $form['#immofirst_step'] ?? 1;
+  $variables['total_steps'] = $form['#immofirst_total_steps'] ?? 5;
+  $variables['step_titles'] = $form['#immofirst_step_titles'] ?? [];
+  $variables['progress_percent'] = $variables['total_steps']
+    ? (int) round(($variables['current_step'] / $variables['total_steps']) * 100)
+    : 0;
+
+  $attributes = $form['#attributes'] ?? [];
+  $attributes['action'] = $form['#action'] ?? '';
+  $attributes['method'] = $form['#method'] ?? 'post';
+  if (!empty($form['#id'])) {
+    $attributes['id'] = $attributes['id'] ?? $form['#id'];
+  }
+  $variables['form_attributes'] = new \Drupal\Core\Template\Attribute($attributes);
+
+  // Render the rest of the form (everything except the properties we
+  // just consumed above) as-is; Drupal's own element children carry the
+  // actual step markup built in the form class.
+  $variables['form'] = $form;
+}

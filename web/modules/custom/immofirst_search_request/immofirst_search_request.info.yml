@@ -1,0 +1,8 @@
+name: ImmoFirst Search Request
+type: module
+description: 'Multi-step AJAX wizard ("Suchauftrag erstellen") that creates suchauftrag nodes.'
+package: ImmoFirst
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:node
+  - drupal:user

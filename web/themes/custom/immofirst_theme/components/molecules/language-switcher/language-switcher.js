@@ -1,1 +1,0 @@
-// Integrate with Drupal language block when available.

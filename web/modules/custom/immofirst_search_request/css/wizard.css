@@ -1,0 +1,1422 @@
+/**
+ * wizard.css
+ * Styles Drupal's native Form API markup (radios/checkboxes/details) to
+ * match the client's mobile mockup's card / grid / chip designs. BEM used
+ * for all custom wrapper classes; native form element selectors are used
+ * where we style Drupal's own generated markup (radio+label pairs etc.)
+ * since Form API doesn't let us inject custom per-option HTML.
+ *
+ * GLOBAL WIZARD WRAPPER: every wizard page — Step 0 overview, Steps 1-5,
+ * and the success screen — shares one flat white card (see
+ * `.wizard-page` below): 1px border, no radius, responsive padding.
+ * `.wizard`/`.wizard__inner` (the <form> and its content) carry no card
+ * chrome of their own, so nothing is double-bordered.
+ */
+
+ :root{
+  --if-primary:#3366FF;
+  --if-primary-dark:#2450F4;
+  --if-primary-bg:#F7F9FF;
+  --if-text:#16182b;
+  --if-label:#1C274C;
+  --if-muted:#6b7280;
+  --if-border:#DDE3F0;
+  --if-wrapper-border:#E7ECF5;
+  --if-chip-border:#D8E0F0;
+  --if-chip-text:#24324B;
+  --if-chip-selected-bg:#F3F7FF;
+  --if-danger:#e02424;
+  --if-success:#22c55e;
+  --if-radius-sm:8px;
+  --if-radius-md:12px;
+  --if-radius-lg:20px;
+  --if-shadow:0 8px 24px rgba(20,30,60,.06);
+  --if-ease:.2s ease;
+}
+
+/* Step 0 (overview) design tokens. Primary blue matches --if-primary/
+   --if-primary-dark exactly (#3366FF / #2450F4) so colors are
+   consistent across Overview + Steps 1-5 + Success, per the spec. */
+:root{
+  --primary:#3366FF;
+  --primary-dark:#2450F4;
+  --navy:#0F1E5A;
+  --text:#64748B;
+  --surface:#F8FAFC;
+  --border:#E8EEF7;
+  --success:#16A34A;
+}
+
+*, *::before, *::after{ box-sizing:border-box; }
+
+/* ===== Global wizard wrapper (Overview + Steps 1-5 + Success) =====
+ * One flat white card, shared by every wizard page: Step 0 overview,
+ * Steps 1-5, and the success screen (both the in-wizard visual Step 5
+ * and the standalone /danke template, since both reuse .wizard-page).
+ * The outer page is flat (radius 0); only inner components (cards,
+ * chips, inputs, buttons) keep their own rounded corners. */
+.wizard-page{
+  max-width:1080px;
+  margin:0 auto;
+  background:#FFFFFF;
+  border:1px solid var(--if-wrapper-border);
+  border-radius:0;
+  padding:24px 20px;
+  font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color:var(--if-text);
+}
+@media (min-width:768px) and (max-width:1023px){
+  .wizard-page{ padding:44px 40px; }
+}
+@media (min-width:1024px){
+  .wizard-page{ padding:56px 64px; }
+}
+
+/* ===== Progress ===== */
+.wizard-progress{ margin-bottom:28px; }
+.wizard-progress__label{
+  font-size:13px;
+  font-weight:600;
+  color:var(--if-muted);
+  text-align:center;
+  margin:0 0 10px;
+}
+.wizard-progress__track{
+  height:6px;
+  border-radius:6px;
+  background:var(--if-border);
+  overflow:hidden;
+}
+.wizard-progress__fill{
+  height:100%;
+  border-radius:6px;
+  background:linear-gradient(90deg, var(--if-primary), var(--if-primary-dark));
+  transition:width .4s ease;
+}
+
+/* ===== Wizard shell =====
+ * The <form> itself carries no card chrome (no background, border,
+ * radius or shadow) on any page — the flat white card now lives on
+ * the shared `.wizard-page` wrapper above, so this stays empty of
+ * box styling to avoid a double border. */
+.wizard{
+  background:none;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+}
+.wizard__inner{ padding:0; }
+.wizard__step-title{
+  font-size:24px;
+  font-weight:700;
+  margin:0 0 6px;
+}
+.wizard__step-subtitle{
+  color:var(--if-muted);
+  font-size:14.5px;
+  margin:0 0 24px;
+}
+.wizard__step-intro{
+  color:var(--if-muted);
+  font-size:14px;
+  margin:0 0 20px;
+}
+
+/* ===== Form field basics ===== */
+.wizard__step-content label,
+.wizard__step-content legend{
+  display:block;
+  font-size:14px;
+  font-weight:600;
+  color:var(--if-label);
+  margin-bottom:8px;
+}
+.wizard-input,
+.wizard-textarea,
+.wizard-select,
+input.form-text,
+input.form-email,
+input.form-tel,
+input.form-number,
+select.form-select,
+textarea.form-textarea{
+  width:100%;
+  padding:12px 14px;
+  border:1px solid var(--if-border);
+  border-radius:var(--if-radius-md);
+  font-size:15px;
+  font-family:inherit;
+  color:var(--if-text);
+  background:#fff;
+  transition:border-color var(--if-ease), box-shadow var(--if-ease);
+}
+/* Inputs and selects share a fixed 56px height per the design; the
+   Step 3 notes textarea is excluded so it keeps growing with its
+   #rows setting instead of clipping to a single line's height. */
+.wizard-input,
+.wizard-select,
+input.form-text,
+input.form-email,
+input.form-tel,
+input.form-number,
+select.form-select{
+  height:56px;
+}
+/* Step 3 "Besondere Wünsche oder Hinweise" textarea: its own radius,
+   min-height and border color per spec (distinct from the generic
+   12px/var(--if-border) shared by the rest of the form's inputs). */
+.wizard-textarea,
+textarea.form-textarea{
+  min-height:88px;
+  border-radius:14px;
+  border-color:#D9E4F6;
+  resize:vertical;
+}
+.wizard-textarea::placeholder,
+textarea.form-textarea::placeholder{
+  color:#A3B0C7;
+}
+.wizard-select,
+select.form-select{
+  appearance:none;
+  -webkit-appearance:none;
+  padding-right:36px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  background-size:16px;
+  cursor:pointer;
+}
+.wizard-input:focus,
+.wizard-textarea:focus,
+.wizard-select:focus,
+input.form-text:focus,
+input.form-email:focus,
+input.form-tel:focus,
+input.form-number:focus,
+select.form-select:focus,
+textarea.form-textarea:focus{
+  outline:none;
+  border-color:var(--if-primary);
+  box-shadow:0 0 0 4px rgba(51,102,255,.12);
+}
+.wizard__step-content .js-form-item,
+.wizard__step-content .form-item{
+  margin-bottom:22px;
+}
+.wizard__step-content .form-required::after{
+  content:" *";
+  color:var(--if-danger);
+}
+.description,
+.wizard__step-content .form-item__description{
+  font-size:12.5px;
+  color:var(--if-muted);
+  margin-top:4px;
+}
+.form-item--error-message,
+.wizard__step-content .form-item--error-message{
+  color:var(--if-danger);
+  font-size:12.5px;
+  margin-top:6px;
+}
+.wizard__step-content input.error,
+.wizard__step-content select.error,
+.wizard__step-content textarea.error{
+  border-color:var(--if-danger);
+}
+
+/* ===== Step 1: selectable cards (styling Drupal's native
+   radios markup) =====
+ * Two distinct option styles per the mockup: "Ich suche zum..."
+ * (gesuchsart) is a centered, icon-less 2-up toggle with a solid-fill
+ * selected state; "Was suchen Sie?" (objektart) is a left-aligned,
+ * icon-led card with a light-tint selected state.
+ *
+ * REAL DOM (confirmed from the live page's rendered HTML — Drupal
+ * core's own radios.html.twig, unmodified):
+ *   fieldset.wizard-cards.wizard-cards--XXX
+ *     legend > span.fieldset-legend
+ *     div.fieldset-wrapper
+ *       div#edit-...           <- Drupal's own wrapper, no class, only an id
+ *         div.js-form-item.form-item   (one per option)
+ *           input[type=radio] + label.option
+ *
+ * This is two levels deeper than it looks from the Form API array —
+ * the fieldset's own direct children are only [legend, .fieldset-
+ * wrapper], never the individual options. That's the actual reason
+ * the column layout wasn't applying: display:grid on the <fieldset>
+ * itself only ever had two children (the legend and the wrapper) to
+ * distribute, so it could never reach the options two levels below.
+ * The fix targets the real direct parent of the options —
+ * `.fieldset-wrapper > div` — which is a plain <div> (not a
+ * <fieldset>), so it's also unaffected by the fieldset+grid/flex
+ * cross-browser quirk that generic <fieldset> elements have. */
+.wizard-cards{
+  border:none;
+  padding:0;
+  margin:0;
+}
+.wizard-cards legend{
+  display:block;
+  width:100%;
+  margin:0 0 12px;
+  padding:0;
+}
+.wizard-cards legend .fieldset-legend,
+.wizard-cards .fieldset-legend{
+  font-size:16px;
+  font-weight:600;
+  color:var(--if-label);
+}
+.wizard-cards .fieldset-wrapper{
+  display:block;
+}
+.wizard-cards .fieldset-wrapper > div{
+  display:grid;
+  gap:20px;
+}
+.wizard-cards--gesuchsart .fieldset-wrapper > div{
+  grid-template-columns:repeat(2, 1fr);
+  max-width:520px;
+}
+.wizard-cards--objektart .fieldset-wrapper > div{
+  grid-template-columns:1fr;
+}
+.wizard-cards .js-form-item,
+.wizard-cards .form-item{
+  margin:0;
+  position:relative;
+}
+/* AFTER — standard visually-hidden input; label[for] still makes the
+   whole card clickable natively, so nothing is lost functionally */
+   .wizard-cards input[type="radio"]{
+    position:absolute;
+    opacity:0;
+    width:1px;
+    height:1px;
+    margin:-1px;
+    padding:0;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+    border:0;
+    cursor:pointer;
+  }
+.wizard-cards label{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:20px 22px;
+  border:1px solid var(--if-border);
+  border-radius:var(--if-radius-md);
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+  transition:border-color var(--if-ease), background var(--if-ease), box-shadow var(--if-ease), transform var(--if-ease), color var(--if-ease);
+  margin:0;
+}
+.wizard-cards label::before{
+  content:"";
+  width:26px;
+  height:26px;
+  flex-shrink:0;
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:contain;
+  opacity:.75;
+}
+.wizard-cards input[type="radio"]:hover + label{
+  border-color:var(--if-primary);
+  box-shadow:var(--if-shadow);
+}
+.wizard-cards input[type="radio"]:checked + label{
+  border-color:var(--if-primary);
+  background:var(--if-primary-bg);
+  color:var(--if-primary);
+  transform:translateY(-1px);
+}
+.wizard-cards input[type="radio"]:focus-visible + label{
+  outline:2px solid var(--if-primary);
+  outline-offset:2px;
+}
+
+/* --- "Ich suche zum..." (Kaufen/Mieten): centered text, no icon,
+   56px-tall, 2 equal columns with a 20px gap at every breakpoint.
+   Selected ("Kaufen"/"Mieten") is a gradient-filled button — a
+   different treatment from the light-tint cards below, per the
+   mockup.
+   NOTE: kept as 2 columns on mobile too (not stacked) — the attached
+   mockup's own mobile-width panels show this pair side by side at
+   every size, which this task's own stated rule ("the client design
+   is the source of truth") takes precedence over a later line in the
+   same task asking for it to stack on mobile. --- */
+.wizard-cards--gesuchsart label{
+  height:56px;
+  padding:0 20px;
+  justify-content:center;
+  gap:0;
+}
+.wizard-cards--gesuchsart label::before{ content:none; }
+.wizard-cards--gesuchsart input[type="radio"]:checked + label{
+  background:linear-gradient(180deg, var(--if-primary) 0%, var(--if-primary-dark) 100%);
+  border-color:var(--if-primary);
+  color:#fff;
+  transform:none;
+}
+
+/* --- "Was suchen Sie?" (Objektart): icon-left cards, 68px tall,
+   12px radius, 1px border — becomes a 2x2 grid from tablet width up
+   (see the responsive section near the end of this file). --- */
+.wizard-cards--objektart label{
+  height:68px;
+  padding:0 20px;
+}
+.wizard-cards--objektart input[type="radio"]:checked + label{
+  font-weight:600;
+}
+
+/* per-option icons (property types) via data-URI SVGs — recolored to
+   the mockup's primary blue (#3366FF) so they match the selected-state
+   border/text color exactly. */
+.wizard-cards--objektart input[value="apartment"] + label::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect x='4.5' y='3' width='15' height='18' rx='1.6' stroke='%233366FF' stroke-width='1.8'/%3E%3Cpath d='M8.2 7.2h1.8M14 7.2h1.8M8.2 11h1.8M14 11h1.8M8.2 14.8h1.8M14 14.8h1.8' stroke='%233366FF' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+.wizard-cards--objektart input[value="house"] + label::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M3 10.5L12 3.5l9 7' stroke='%233366FF' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M5 9.5V19a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V9.5' stroke='%233366FF' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.wizard-cards--objektart input[value="land"] + label::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M12 21s6-5.2 6-10a6 6 0 10-12 0c0 4.8 6 10 6 10z' stroke='%233366FF' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='11' r='2.2' stroke='%233366FF' stroke-width='1.8'/%3E%3C/svg%3E");
+}
+.wizard-cards--objektart input[value="garage"] + label::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M3 10.3L12 4l9 6.3V20H3v-9.7z' stroke='%233366FF' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M6.5 20v-6.3h11V20' stroke='%233366FF' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+/* NEW: Gewerbe (commercial) — briefcase icon, same style/weight as
+   the other four so it doesn't stand out as an afterthought. */
+.wizard-cards--objektart input[value="commercial"] + label::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect x='3.5' y='8' width='17' height='11.5' rx='1.6' stroke='%233366FF' stroke-width='1.8'/%3E%3Cpath d='M8.5 8V6.2a1.6 1.6 0 011.6-1.6h3.8a1.6 1.6 0 011.6 1.6V8' stroke='%233366FF' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M3.5 13.2h17' stroke='%233366FF' stroke-width='1.8'/%3E%3C/svg%3E");
+}
+
+/* ===== Step 1: "Wo suchen Sie" location section ===== */
+.wizard__section{ margin-top:28px; }
+.wizard__section-title{
+  font-size:16px;
+  font-weight:700;
+  margin:0 0 14px;
+}
+.wizard-location-row{
+  display:grid;
+  grid-template-columns:2fr 1fr;
+  gap:16px;
+  align-items:start;
+}
+.wizard-location-row .js-form-item,
+.wizard-location-row .form-item{ margin:0; }
+
+/* ===== Step 2: min/max field pairs =====
+ * Per the design, "Minimum"/"Maximum" ARE visible small labels above
+ * each input (not hidden) — the row bottom-aligns its grid items so
+ * the "–" separator and unit suffix line up with the input boxes
+ * rather than the whole (label + input) cell. */
+.wizard-minmax{ margin-bottom:24px; }
+.wizard-minmax__label{
+  display:block;
+  font-size:14px;
+  font-weight:600;
+  color:var(--if-label);
+  margin-bottom:8px;
+}
+.wizard-minmax__row{
+  display:grid;
+  grid-template-columns:1fr auto 1fr auto;
+  align-items:end;
+  gap:10px;
+}
+.wizard-minmax__separator{
+  color:var(--if-muted);
+  font-weight:600;
+  padding-bottom:12px;
+}
+.wizard-minmax__unit{
+  color:var(--if-muted);
+  font-size:13px;
+  font-weight:600;
+  padding-bottom:14px;
+}
+.wizard-minmax .js-form-item,
+.wizard-minmax .form-item{ margin:0; }
+.wizard-minmax .js-form-item label,
+.wizard-minmax .form-item label{
+  display:block;
+  font-size:13px;
+  font-weight:500;
+  color:var(--if-muted);
+  margin-bottom:6px;
+}
+
+/* ===== Step 3: criteria group cards + checkbox pills =====
+ * Always-open cards (not collapsible accordions): each group is a
+ * static bordered card with an icon + title header and its checkbox
+ * pills always visible below.
+ *
+ * REAL DOM (same underlying Drupal quirk as the Step 1 radios fix
+ * above): 'options' (#type => checkboxes) has no #title of its own,
+ * so Drupal never wraps it in its own <fieldset>, and core's
+ * checkboxes.html.twig preprocess only ever copies the element's
+ * #id onto its own wrapper <div> — never #attributes/class. A plain
+ * '#attributes' class there only cascades onto each bare <input>
+ * (Checkboxes::processCheckboxes propagates #attributes to every
+ * child checkbox), never onto anything that actually wraps the
+ * option rows. SearchRequestWizardForm now wraps 'options' in a real
+ * <div class="wizard-checkbox-grid"> via #prefix/#suffix, so the
+ * actual DOM is:
+ *   div.wizard-checkbox-grid              <- from #prefix/#suffix
+ *     div#edit-...                        <- Drupal's own wrapper, no class, only an id
+ *       div.js-form-item.form-item        (one per option)
+ *         input[type=checkbox] + label
+ * — one more level than it looks, so the grid/flex rules target
+ * `.wizard-checkbox-grid > div`, the real direct parent of the
+ * options, exactly like the Step 1 ".fieldset-wrapper > div" fix. */
+.wizard-criteria-card{
+  background:#fff;
+  border:1px solid #E5ECF7;
+  border-radius:16px;
+  margin:0 0 16px;
+  padding:20px;
+  min-width:0;
+}
+.wizard-criteria-card > legend{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  font-weight:700;
+  font-size:15px;
+  margin-bottom:14px;
+  padding:0;
+  width:auto;
+}
+.wizard-criteria-card__icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:30px;
+  height:30px;
+  border-radius:50%;
+  background:var(--if-primary-bg);
+  color:var(--if-primary);
+  flex-shrink:0;
+}
+.wizard-checkbox-grid{
+  display:block;
+}
+.wizard-checkbox-grid > div{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));
+  gap:12px;
+}
+.wizard-checkbox-grid .js-form-item,
+.wizard-checkbox-grid .form-item{
+  margin:0;
+  min-width:0;
+  position:relative;
+}
+.wizard-checkbox-grid input[type="checkbox"]{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  cursor:pointer;
+  z-index:2;
+}
+.wizard-checkbox-grid label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  min-height:42px;
+  padding:9px 14px;
+  border:1px solid #D9E4F6;
+  border-radius:10px;
+  font-size:14px;
+  font-weight:600;
+  color:#142A5C;
+  background:#fff;
+  cursor:pointer;
+  margin:0;
+  text-align:left;
+  line-height:1.25;
+  transition:border-color .18s ease, border-width .18s ease, color .18s ease;
+}
+.wizard-checkbox-grid input[type="checkbox"]:checked + label{
+  border-width:2px;
+  border-color:#2563FF;
+  background:#fff;
+  color:#2563FF;
+  font-weight:700;
+}
+/* Selected chip: a filled blue circle with a white checkmark, pushed
+   to the right of the label text — not a plain "✓" glyph on the left. */
+.wizard-checkbox-grid input[type="checkbox"]:checked + label::after{
+  content:"";
+  flex-shrink:0;
+  width:18px;
+  height:18px;
+  margin-left:auto;
+  border-radius:50%;
+  background-color:#2563FF;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:11px 11px;
+}
+.wizard-checkbox-grid input[type="checkbox"]:focus-visible + label{
+  outline:2px solid #2563FF;
+  outline-offset:2px;
+}
+
+@media (min-width:1024px){
+  .wizard-checkbox-grid > div{
+    grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));
+  }
+
+  /* Step 3 desktop adaptation: a comfortably narrower reading column
+     than the page's full 1080px card, so the criteria cards and chip
+     grid don't stretch edge-to-edge and thin out into unnaturally
+     wide, sparse rows. Uses the [data-wizard-step] attribute already
+     set on .wizard__step-content in buildForm() — no markup change
+     needed for this. The H1 title lives as step_content's sibling in
+     the twig template (outside it), so it's capped the same way via
+     :has(), keeping the title aligned with the narrower column below
+     it instead of stretching to the page's full width. */
+  .wizard__step-content[data-wizard-step="3"],
+  .wizard__step-title:has(+ [data-wizard-step="3"]),
+  [data-wizard-step="3"] ~ .wizard__actions{
+    max-width:880px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+}
+
+/* ===== Step 4: WhatsApp-Nummer (country + number) group ===== */
+.wizard-phone-group{ margin-bottom:22px; }
+.wizard-phone-group__label{
+  display:block;
+  font-size:14px;
+  font-weight:600;
+  color:var(--if-label);
+  margin-bottom:8px;
+}
+.wizard-phone-group__row{
+  display:grid;
+  grid-template-columns:110px 1fr;
+  gap:10px;
+}
+.wizard-phone-group .js-form-item,
+.wizard-phone-group .form-item{ margin:0; }
+.wizard-phone-group__country{ padding-left:12px; padding-right:32px; }
+
+/* ===== Step 4: consent checkbox ===== */
+.wizard__step-content .js-form-item-consent,
+.wizard__step-content .form-item-consent{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  background:var(--if-primary-bg);
+  border-radius:var(--if-radius-md);
+  padding:14px 16px;
+}
+.wizard__step-content .js-form-item-consent input,
+.wizard__step-content .form-item-consent input{
+  margin-top:3px;
+  flex-shrink:0;
+}
+.wizard__step-content .js-form-item-consent label,
+.wizard__step-content .form-item-consent label{
+  font-weight:400;
+  font-size:14px;
+}
+.wizard__step-content .js-form-item-consent label a,
+.wizard__step-content .form-item-consent label a{
+  color:var(--if-primary);
+  font-weight:600;
+  text-decoration:underline;
+}
+
+/* ===== Buttons =====
+ * Per the design, the primary action (Weiter / Suchauftrag anlegen)
+ * is a single full-width button with no divider line above it. Back
+ * navigation stays available (existing ::submitBack / AJAX wiring is
+ * unchanged) but is restyled as a small text-style link rather than a
+ * second co-equal button, so the primary action keeps the same full-
+ * width visual weight the design shows on every step. */
+.wizard__actions{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-top:16px;
+}
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:13px 26px;
+  border-radius:var(--if-radius-sm);
+  font-size:15px;
+  font-weight:600;
+  border:1.5px solid transparent;
+  cursor:pointer;
+  transition:transform var(--if-ease), box-shadow var(--if-ease), background var(--if-ease);
+}
+.btn--primary{
+  background:linear-gradient(180deg, var(--if-primary) 0%, var(--if-primary-dark) 100%);
+  color:#fff;
+}
+.btn--primary:hover{
+  background:linear-gradient(180deg, var(--if-primary-dark) 0%, var(--if-primary-dark) 100%);
+  transform:translateY(-2px);
+  box-shadow:0 10px 24px rgba(51,102,255,.28);
+}
+.btn--primary:disabled{
+  background:#a4a2ba;
+  cursor:not-allowed;
+  transform:none;
+  box-shadow:none;
+}
+.btn--outline{
+  background:#fff;
+  border-color:var(--if-border);
+  color:var(--if-text);
+}
+.btn--outline:hover{ border-color:var(--if-primary); color:var(--if-primary); }
+
+/* Weiter / Suchauftrag anlegen: always fills the remaining row width
+   (the whole row, when there is no Zurück link — e.g. Step 1). 56px
+   tall with 14px corners per the design; grows to 60px on desktop
+   (see the responsive section near the end of this file). */
+.wizard__btn-next,
+.wizard__btn-finish{
+  flex:1 1 auto;
+  margin-left:0;
+  height:56px;
+  border-radius:14px;
+}
+.wizard__btn-next::after,
+.wizard__btn-finish::after{
+  content:"→";
+  font-weight:700;
+}
+
+/* Zurück: plain text-style link, not a bordered button, so it doesn't
+   compete visually with the primary action. */
+.btn.wizard__btn-back{
+  flex:0 0 auto;
+  background:none;
+  border-color:transparent;
+  color:var(--if-muted);
+  padding:13px 6px;
+}
+.btn.wizard__btn-back:hover{
+  background:none;
+  border-color:transparent;
+  color:var(--if-primary);
+}
+
+/* ===== Trust footer ===== */
+.wizard-page__trust{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:24px;
+  margin-top:40px;
+  padding-top:32px;
+  border-top:1px solid var(--if-border);
+}
+.wizard-page__trust-item{ display:flex; gap:12px; }
+.wizard-page__trust-icon{
+  flex-shrink:0;
+  width:36px; height:36px;
+  border-radius:50%;
+  background:var(--if-primary-bg);
+  color:var(--if-primary);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.wizard-page__trust-item strong{ display:block; font-size:14px; margin-bottom:4px; }
+.wizard-page__trust-item p{ font-size:12.5px; color:var(--if-muted); margin:0; }
+
+/* ===== Success screen ===== */
+.wizard-success{ text-align:center; max-width:440px; margin:0 auto; padding:20px 0; }
+.wizard-success__icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:72px; height:72px;
+  border-radius:50%;
+  background:#e9f9ee;
+  color:var(--if-success);
+  margin-bottom:20px;
+}
+.wizard-success__title{ font-size:24px; font-weight:700; margin:0 0 10px; }
+.wizard-success__text{ color:var(--if-muted); font-size:15px; margin:0 0 24px; }
+.wizard-success__list{
+  list-style:none;
+  margin:0 0 24px;
+  padding:0;
+  text-align:left;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.wizard-success__list li{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  font-size:14px;
+}
+.wizard-success__list-icon{
+  flex-shrink:0;
+  margin-top:1px;
+  color:var(--if-primary);
+}
+.wizard-success__reference{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  background:var(--if-primary-bg);
+  border-radius:var(--if-radius-md);
+  padding:16px 20px;
+  margin-bottom:24px;
+  text-align:left;
+}
+.wizard-success__reference-text{
+  display:flex;
+  flex-direction:column;
+}
+.wizard-success__reference-label{
+  display:block;
+  font-size:12px;
+  color:var(--if-muted);
+  margin-bottom:4px;
+}
+.wizard-success__reference-number{
+  font-size:18px;
+  font-weight:700;
+  color:var(--if-primary);
+  letter-spacing:.02em;
+}
+.wizard-success__copy-btn{
+  flex-shrink:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:36px;
+  height:36px;
+  border:none;
+  border-radius:var(--if-radius-sm);
+  background:#fff;
+  color:var(--if-primary);
+  cursor:pointer;
+  transition:background var(--if-ease), color var(--if-ease), transform var(--if-ease);
+}
+.wizard-success__copy-btn:hover{ background:var(--if-primary); color:#fff; }
+.wizard-success__copy-btn:focus-visible{
+  outline:2px solid var(--if-primary);
+  outline-offset:2px;
+}
+.wizard-success__copy-btn.is-copied{ background:var(--if-success); color:#fff; }
+
+/* ===== Step 4: privacy note below "Suchauftrag anlegen" ===== */
+.wizard__privacy-note{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin-top:16px;
+  font-size:13px;
+  color:var(--if-muted);
+  text-align:center;
+}
+.wizard__privacy-note svg{ flex-shrink:0; }
+
+/* ===== Character counter (JS-added element) ===== */
+.wizard-char-counter{
+  text-align:right;
+  font-size:12px;
+  color:var(--if-muted);
+  margin-top:6px;
+}
+.wizard-char-counter--limit{ color:var(--if-danger); }
+
+/* ===== Responsive (Steps 1-5 + Success) =====
+ * Breakpoints: Desktop >=992px, Tablet 768-991px, Mobile <=767px
+ * (per the choice-components refactor spec). The wizard is a
+ * single-column FORM at every width — the base rules above already
+ * read as the tablet/desktop layout (paired min/max fields, the
+ * location+radius row, the phone country+number row all sit side by
+ * side). "Was suchen Sie?" becomes a 2x2 grid from 768px up (both
+ * tablet and desktop use it, per the spec's breakpoint table); the
+ * CTA button's extra height is desktop-only; every paired row
+ * collapses to one column on true mobile, matching the client's
+ * mobile mockup exactly. */
+@media (min-width:768px){
+  .wizard-cards--objektart .fieldset-wrapper > div{
+    grid-template-columns:repeat(2, 1fr);
+  }
+}
+@media (min-width:1024px){
+  .wizard__btn-next,
+  .wizard__btn-finish{
+    height:60px;
+  }
+}
+@media (max-width: 767px){
+  .wizard-location-row{ grid-template-columns:1fr; }
+  .wizard-phone-group__row{ grid-template-columns:1fr; }
+  .wizard-minmax__row{ grid-template-columns:1fr auto 1fr; }
+  .wizard-minmax__unit{ display:none; }
+  .wizard-page__trust{ grid-template-columns:1fr; }
+  .wizard__actions{ flex-direction:column-reverse; }
+  .wizard__actions .btn{ width:100%; margin-left:0; justify-content:center; }
+}
+
+/* =========================================================================
+ * Step 0 — Overview / landing page.
+ *
+ * Pixel-perfect pass against the client's mobile mockup, with a
+ * responsive desktop/tablet adaptation that preserves the same design
+ * language. Scoped entirely under .immofirst-overview (content) — the
+ * card chrome itself (background/border/radius/padding) now lives on
+ * the single global `.wizard-page` wrapper shared by every wizard page
+ * (see "Global wizard wrapper" near the top of this file), so
+ * `.wizard-page--overview` and `.wizard--overview` no longer need any
+ * box styling of their own; they're kept as plain (unstyled) selectors
+ * only because SearchRequestWizardForm::buildForm() still adds them
+ * while the overview is showing. No Twig/PHP changes; icon sizes are
+ * adjusted purely via `svg` child-selector rules against the existing
+ * inline SVGs.
+ *
+ * Breakpoints: mobile ≤767px (base/mobile-first), tablet 768-1023px,
+ * desktop ≥1024px. Typography and spacing are tuned per breakpoint
+ * rather than simply scaled.
+ * ========================================================================= */
+
+/* ----- Content ----- */
+
+.immofirst-overview{
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  color:var(--navy);
+}
+
+.visually-hidden{
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+}
+
+/* ----- Section 1: hero ----- */
+
+.immofirst-overview__hero{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+}
+
+.immofirst-overview__hero-icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:88px;
+  height:88px;
+  margin-top:8px;
+  border-radius:50%;
+  background:#EEF4FF;
+  color:var(--primary);
+}
+
+.immofirst-overview__hero-icon svg{
+  width:42px;
+  height:42px;
+}
+
+.immofirst-overview__hero-title{
+  margin:28px 0 0;
+  max-width:300px;
+  font-size:30px;
+  line-height:1.15;
+  font-weight:800;
+  color:var(--navy);
+}
+
+.immofirst-overview__hero-title-accent{
+  color:var(--primary);
+}
+
+.immofirst-overview__hero-subtitle{
+  margin:24px 0 0;
+  max-width:300px;
+  color:#667085;
+  font-size:0.9375rem;
+  line-height:1.55;
+}
+
+/* ----- Section 2: benefit cards ----- */
+
+.immofirst-overview__benefits{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  margin-top:40px;
+}
+
+.immofirst-overview__benefit{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  width:100%;
+  padding:20px;
+  background:#F8FAFF;
+  border-radius:18px;
+}
+
+.immofirst-overview__benefit-icon{
+  position:relative;
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  background:#EEF4FF;
+  color:var(--primary);
+}
+
+.immofirst-overview__benefit-icon svg{
+  width:24px;
+  height:24px;
+}
+
+.immofirst-overview__benefit-icon-badge{
+  position:absolute;
+  top:-2px;
+  right:-2px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:var(--success);
+  color:#fff;
+  border:2px solid #fff;
+}
+
+.immofirst-overview__benefit-icon-badge svg{
+  width:9px;
+  height:9px;
+}
+
+.immofirst-overview__benefit-content{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  text-align:left;
+}
+
+.immofirst-overview__benefit-title{
+  margin:0;
+  font-size:1.0625rem;
+  font-weight:700;
+  color:var(--navy);
+}
+
+.immofirst-overview__benefit-text{
+  margin:0;
+  font-size:0.9375rem;
+  line-height:1.5;
+  color:var(--text);
+}
+
+/* ----- Section 3: primary CTA ----- */
+
+.immofirst-overview__cta{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:18px;
+  margin-top:28px;
+}
+
+.immofirst-overview__cta-button{
+  appearance:none;
+  width:100%;
+  height:56px;
+  padding:0 24px;
+  border:0;
+  border-radius:14px;
+  background:linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color:#fff;
+  font-size:1.125rem;
+  font-weight:700;
+  font-family:inherit;
+  cursor:pointer;
+  transition:transform var(--if-ease), box-shadow var(--if-ease), background var(--if-ease);
+}
+
+.immofirst-overview__cta-button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 24px rgba(51,102,255,.28);
+}
+
+.immofirst-overview__cta-button:active{
+  transform:translateY(0);
+}
+
+.immofirst-overview__cta-button:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 3px rgba(51,102,255,.35);
+}
+
+/* ----- Section 4: trust row ----- */
+
+.immofirst-overview__trust{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:8px 20px;
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+
+.immofirst-overview__trust-item{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:var(--navy);
+  font-size:0.8125rem;
+  font-weight:600;
+  white-space:nowrap;
+}
+
+.immofirst-overview__trust-item svg{
+  width:14px;
+  height:14px;
+  color:var(--primary);
+  flex:0 0 auto;
+}
+
+/* ----- Section 5: "So einfach funktioniert es" -----
+ * Explicitly 3 columns at every breakpoint (never stacked), matching
+ * the client mockup, which keeps this row intact even on narrow
+ * mobile viewports. Dotted connectors are visible at every breakpoint
+ * for the same reason. */
+
+.immofirst-overview__process{
+  margin-top:36px;
+  padding-top:40px;
+  border-top:1px solid var(--border);
+}
+
+.immofirst-overview__process-title{
+  margin:0 0 24px;
+  text-align:center;
+  font-size:1.0625rem;
+  font-weight:800;
+  color:var(--navy);
+}
+
+.immofirst-overview__process-list{
+  display:flex;
+  flex-direction:row;
+  align-items:flex-start;
+  justify-content:center;
+  gap:6px;
+  width:100%;
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+
+.immofirst-overview__process-item{
+  position:relative;
+  display:flex;
+  flex:1 1 0;
+  min-width:0;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  gap:6px;
+}
+
+.immofirst-overview__process-icon-wrap{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  background:#EEF4FF;
+  color:var(--primary);
+}
+
+.immofirst-overview__process-icon-wrap svg{
+  width:24px;
+  height:24px;
+}
+
+.immofirst-overview__process-badge{
+  position:absolute;
+  top:-4px;
+  right:-4px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background:var(--primary);
+  color:#fff;
+  font-size:0.6875rem;
+  font-weight:700;
+  border:2px solid #fff;
+}
+
+.immofirst-overview__process-item-title{
+  margin:0;
+  font-size:0.8125rem;
+  line-height:1.25;
+  font-weight:700;
+  color:var(--navy);
+}
+
+.immofirst-overview__process-item-text{
+  margin:0;
+  max-width:9rem;
+  font-size:0.6875rem;
+  line-height:1.4;
+  color:var(--text);
+}
+
+/* Dotted connector between process items — visible at every
+ * breakpoint. Absolutely positioned within the item so it's
+ * independent of flex ordering/content height; `top` is re-aligned to
+ * each breakpoint's icon-wrap vertical center below. */
+.immofirst-overview__process-item:not(:first-child)::before{
+  content:'';
+  position:absolute;
+  top:30px;
+  left:-50%;
+  width:100%;
+  height:0;
+  border-top:2px dotted var(--border);
+  z-index:0;
+}
+
+/* ----- Section 6: bottom green trust panel ----- */
+
+.immofirst-overview__panel{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  gap:10px;
+  margin-top:36px;
+  padding:18px;
+  border-radius:20px;
+  background:#F6FBF7;
+}
+
+.immofirst-overview__panel-icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  background:#fff;
+  color:var(--success);
+  flex:0 0 auto;
+}
+
+.immofirst-overview__panel-icon svg{
+  width:22px;
+  height:22px;
+}
+
+.immofirst-overview__panel-content{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.immofirst-overview__panel-title{
+  margin:0;
+  font-size:1rem;
+  font-weight:700;
+  color:var(--navy);
+}
+
+.immofirst-overview__panel-text{
+  margin:0;
+  font-size:0.875rem;
+  line-height:1.5;
+  color:var(--text);
+}
+
+/* =========================================================================
+ * Tablet (768px – 1023px): reduced spacing vs desktop, same hierarchy,
+ * typography and spacing adjusted independently rather than scaled.
+ * ========================================================================= */
+
+@media (min-width:768px){
+  .immofirst-overview__hero-icon{
+    width:92px;
+    height:92px;
+  }
+
+  .immofirst-overview__hero-icon svg{
+    width:44px;
+    height:44px;
+  }
+
+  .immofirst-overview__hero-title{
+    max-width:520px;
+    font-size:2.75rem;
+    line-height:1.1;
+  }
+
+  .immofirst-overview__hero-subtitle{
+    max-width:560px;
+    font-size:1rem;
+  }
+
+  .immofirst-overview__benefits{
+    max-width:38rem;
+    margin-left:auto;
+    margin-right:auto;
+  }
+
+  .immofirst-overview__cta-button{
+    height:58px;
+    font-size:1.1875rem;
+  }
+
+  .immofirst-overview__process-item-title{
+    font-size:1rem;
+  }
+
+  .immofirst-overview__process-item-text{
+    max-width:11rem;
+    font-size:0.8125rem;
+  }
+
+  .immofirst-overview__process-icon-wrap{
+    width:76px;
+    height:76px;
+  }
+
+  .immofirst-overview__process-icon-wrap svg{
+    width:30px;
+    height:30px;
+  }
+
+  .immofirst-overview__process-item:not(:first-child)::before{
+    top:38px;
+  }
+
+  .immofirst-overview__panel{
+    flex-direction:row;
+    text-align:left;
+    padding:20px 24px;
+  }
+}
+
+/* =========================================================================
+ * Desktop (≥1024px): matches the client mockup's design language at
+ * full width — 1080px container (set on .wizard-page above), large
+ * heading, 3 equal process columns with 92px icon circles.
+ * ========================================================================= */
+
+@media (min-width:1024px){
+  .immofirst-overview__hero-icon{
+    width:96px;
+    height:96px;
+  }
+
+  .immofirst-overview__hero-icon svg{
+    width:46px;
+    height:46px;
+  }
+
+  .immofirst-overview__hero-title{
+    max-width:720px;
+    font-size:3.75rem;
+    line-height:1.08;
+  }
+
+  .immofirst-overview__hero-subtitle{
+    max-width:620px;
+    font-size:1.0625rem;
+  }
+
+  .immofirst-overview__benefits{
+    max-width:640px;
+  }
+
+  .immofirst-overview__benefit{
+    padding:24px 28px;
+  }
+
+  .immofirst-overview__cta-button{
+    height:60px;
+    font-size:1.375rem;
+  }
+
+  .immofirst-overview__process-list{
+    gap:24px;
+  }
+
+  .immofirst-overview__process-item{
+    max-width:none;
+  }
+
+  .immofirst-overview__process-item-title{
+    font-size:1.25rem;
+  }
+
+  .immofirst-overview__process-item-text{
+    max-width:15rem;
+    font-size:0.9375rem;
+  }
+
+  .immofirst-overview__process-icon-wrap{
+    width:92px;
+    height:92px;
+  }
+
+  .immofirst-overview__process-icon-wrap svg{
+    width:36px;
+    height:36px;
+  }
+
+  .immofirst-overview__process-item:not(:first-child)::before{
+    top:46px;
+  }
+
+  .immofirst-overview__panel{
+    padding:24px 32px;
+  }
+}

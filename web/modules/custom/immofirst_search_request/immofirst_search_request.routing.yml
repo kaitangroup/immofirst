@@ -1,0 +1,22 @@
+immofirst_search_request.wizard:
+  path: '/suchauftrag-erstellen'
+  defaults:
+    _form: '\Drupal\immofirst_search_request\Form\SearchRequestWizardForm'
+    _title: 'Suchauftrag erstellen'
+  requirements:
+    _access: 'TRUE'
+
+immofirst_search_request.thank_you:
+  path: '/suchauftrag-erstellen/danke'
+  defaults:
+    _controller: '\Drupal\immofirst_search_request\Controller\ThankYouController::build'
+    _title: 'Suchauftrag erstellt'
+  requirements:
+    _access: 'TRUE'
+
+immofirst_search_request.location_autocomplete:
+  path: '/suchauftrag-erstellen/standort-autocomplete'
+  defaults:
+    _controller: '\Drupal\immofirst_search_request\Controller\LocationAutocompleteController::autocomplete'
+  requirements:
+    _access: 'TRUE'

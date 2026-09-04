@@ -1,0 +1,51 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @file
+ * Install/uninstall hooks for the ImmoFirst Search Request module.
+ */
+
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+
+/**
+ * Implements hook_install().
+ *
+ * Adds the field_search_criteria field to the EXISTING "suchauftrag"
+ * content type (per spec: do not create another content type). Safe to
+ * re-run — checks for an existing field before creating either piece.
+ */
+function immofirst_search_request_install(): void {
+  if (!FieldStorageConfig::loadByName('node', 'field_search_criteria')) {
+    FieldStorageConfig::create([
+      'field_name' => 'field_search_criteria',
+      'entity_type' => 'node',
+      'type' => 'string_long',
+      'translatable' => TRUE,
+    ])->save();
+  }
+
+  if (!FieldConfig::loadByName('node', 'suchauftrag', 'field_search_criteria')) {
+    FieldConfig::create([
+      'field_name' => 'field_search_criteria',
+      'entity_type' => 'node',
+      'bundle' => 'suchauftrag',
+      'label' => 'Suchkriterien (JSON)',
+      'description' => 'Vollständige Wizard-Daten als JSON (Wohnfläche/Zimmer/Preis min+max, Zusatzkriterien, Kontaktdaten). Wird automatisch von der Suchauftrag-Wizard befüllt, nicht manuell bearbeiten.',
+      'required' => FALSE,
+    ])->save();
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ *
+ * Deliberately does NOT delete field_search_criteria or its data on
+ * uninstall — the field lives on a shared content type that other code
+ * may depend on, and node data loss on module uninstall is surprising
+ * behavior. Remove the field manually via config if truly needed.
+ */
+function immofirst_search_request_uninstall(): void {
+}

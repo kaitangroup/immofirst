@@ -1,0 +1,10 @@
+services:
+  immofirst_search_request.session:
+    class: Drupal\immofirst_search_request\Service\SearchRequestSession
+    arguments:
+      - '@tempstore.private'
+
+  immofirst_search_request.node_creator:
+    class: Drupal\immofirst_search_request\Service\SearchRequestNodeCreator
+    arguments:
+      - '@entity_type.manager'

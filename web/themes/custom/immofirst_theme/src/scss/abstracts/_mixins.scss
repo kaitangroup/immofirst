@@ -1,2 +1,0 @@
-@mixin respond($bp){@media(min-width:$bp){@content;}}
-@mixin container{width:min(100% - 2rem,var(--container-xl));margin-inline:auto;}

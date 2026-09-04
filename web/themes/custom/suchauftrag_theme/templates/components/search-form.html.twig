@@ -4,38 +4,51 @@
  * Reusable search-form component — wired to the search_requests View's
  * exposed filters (see views.view.search_requests.yml). This is a real
  * GET form: submitting it reloads the front page with query parameters
- * that Drupal Views reads automatically to filter the results grid
- * below, no matter that the form markup itself is fully custom-styled
- * rather than Views' own auto-generated exposed form.
+ * that Drupal Views reads via hook_views_pre_view() (see
+ * suchauftrag_theme_views_pre_view() in suchauftrag_theme.theme), since
+ * this form's markup is fully custom rather than Views' own
+ * auto-generated exposed form.
  *
  * Field name <-> View filter identifier map:
  *   art            <-> field_request_type_value (Kaufen/Mieten)
  *   immobilienart  <-> field_property_icon_value (Immobilienart)
  *   ort            <-> field_location_value (Ort oder PLZ, contains)
- *   radius         <-> NOT wired yet — no geolocation field exists on
- *                      the content type. Kept in the UI for parity with
- *                      the design; submitting it currently has no
- *                      effect on results. Wiring real radius search
- *                      needs a geofield + proximity filter (Geofield +
- *                      Geocoder contrib modules) — say the word and
- *                      I'll add that.
+ *   radius         <-> NOT wired to filtering yet — no geolocation field
+ *                      exists on the content type. Its submitted value
+ *                      is preserved across redirects (selected below)
+ *                      but has no effect on results yet. Wiring real
+ *                      radius search needs a geofield + proximity
+ *                      filter (Geofield + Geocoder contrib modules).
+ *
+ * All four fields below read their current value from the URL query
+ * string so a submitted search stays reflected in the form after the
+ * page reloads with the filtered results.
  *
  * BEM block: .search-card
  */
 #}
+{# Read values injected by preprocess #}
+{% set art = search_query.art|default('mieten') %}
+{% set immobilienart = search_query.immobilienart|default('') %}
+{% set ort = search_query.ort|default('') %}
+{% set radius = search_query.radius|default('25') %}
+
+
+
+
 <form class="search-card" data-hover-lift method="get" action="" id="search-filter-form">
   <div class="search-card__grid">
 
     <div class="search-card__field search-card__field--tabs">
       <span class="search-card__label" id="art-label">Ich suche zum...</span>
       <div class="tabs" data-tabs role="radiogroup" aria-labelledby="art-label">
-        <input type="radio" id="tab-kaufen" name="art" value="kaufen" class="tabs__radio" data-tab-radio>
+        <input type="radio" id="tab-kaufen" name="art" value="kaufen" class="tabs__radio" data-tab-radio {% if art == 'kaufen' %}checked{% endif %}>
         <label for="tab-kaufen" class="tabs__btn" data-tab="kaufen">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 4.5h2l1 2M6.5 6.5l1.8 8.2a1.6 1.6 0 001.6 1.3h6.4a1.6 1.6 0 001.6-1.3l1.1-6.2H6.5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="19.5" r="1.1" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="16.5" cy="19.5" r="1.1" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
           Kaufen
         </label>
 
-        <input type="radio" id="tab-mieten" name="art" value="mieten" class="tabs__radio" data-tab-radio checked>
+        <input type="radio" id="tab-mieten" name="art" value="mieten" class="tabs__radio" data-tab-radio {% if art == 'mieten' %}checked{% endif %}>
         <label for="tab-mieten" class="tabs__btn" data-tab="mieten">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Mieten
@@ -50,7 +63,7 @@
       {% include '@suchauftrag_theme/templates/components/filter-select.html.twig' with {
         id: 'property-type',
         name: 'immobilienart',
-        selected: '',
+        selected: immobilienart,
         placeholder: 'Alle Arten',
         options: [
           {value: 'apartment', label: 'Wohnung'},
@@ -64,7 +77,7 @@
     <div class="search-card__field">
       <label class="search-card__label" for="city-input">Ort oder PLZ</label>
       <div class="input-icon">
-        <input type="text" id="city-input" name="ort" class="input" placeholder="z. B. München oder 80331">
+        <input type="text" id="city-input" name="ort" class="input" placeholder="z. B. München oder 80331" value="{{ ort }}">
         <svg class="input-icon__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 21.5s7.2-6.7 7.2-12A7.2 7.2 0 104.8 9.5c0 5.3 7.2 12 7.2 12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
           <circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -77,7 +90,7 @@
       {% include '@suchauftrag_theme/templates/components/filter-select.html.twig' with {
         id: 'radius-select',
         name: 'radius',
-        selected: '25',
+        selected: radius,
         options: [
           {value: '5', label: '5 km'},
           {value: '10', label: '10 km'},
@@ -94,6 +107,6 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Suchaufträge anzeigen
     </button>
-    <a href="?" class="search-card__reset" data-reset-filters>Filter zurücksetzen</a>
+    <a href="{{ path('<front>') }}" class="search-card__reset" data-reset-filters>Filter zurücksetzen</a>
   </div>
 </form>

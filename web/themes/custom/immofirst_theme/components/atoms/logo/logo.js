@@ -1,1 +1,0 @@
-// Logo has no JavaScript.

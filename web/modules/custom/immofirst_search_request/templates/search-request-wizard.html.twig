@@ -1,0 +1,92 @@
+{#
+/**
+ * @file
+ * Search request wizard template.
+ *
+ * Variables (set in immofirst_search_request_preprocess... in the
+ * .module file):
+ *   current_step       int, 1-5
+ *   total_steps        int, 5
+ *   step_titles        array<int, string>, keyed 1-5
+ *   progress_percent   int, 0-100
+ *   form               the form render array (step_content + actions,
+ *                       or — before the wizard has been started —
+ *                       form.overview)
+ *
+ * The theme provides the site's global header, navigation and footer.
+ * When form.overview is present (Step 0, before "Jetzt kostenlos
+ * starten" is clicked), this module's own topbar/trust-footer are
+ * skipped so nothing is duplicated; the wizard shell below (progress
+ * bar, topbar, trust footer) renders exactly as before once the
+ * wizard has started.
+ *
+ * No business logic here — only structure, variables, and classes.
+ */
+#}
+<div class="wizard-page{{ form.overview is not empty ? ' wizard-page--overview' : '' }}">
+
+
+  <form{{ form_attributes }}>
+    {% if form.overview is not empty %}
+
+      {# Step 0: overview / landing page. No header/footer of our own —
+         the theme already provides those; this starts directly with
+         the hero, inside the shared white wizard card. #}
+      {{ form.overview }}
+      {{ form|without('overview') }}
+
+    {% else %}
+
+      <div class="wizard-progress" data-wizard-progress>
+        <p class="wizard-progress__label">Schritt {{ current_step }} von {{ total_steps }}</p>
+        <div class="wizard-progress__track">
+          <div class="wizard-progress__fill" style="width: {{ progress_percent }}%"></div>
+        </div>
+      </div>
+
+      <div class="wizard__inner">
+        <h1 class="wizard__step-title">{{ step_titles[current_step] }}</h1>
+
+        {{ form.step_content }}
+
+        {{ form.actions }}
+
+        {{ form|without('step_content', 'actions') }}
+      </div>
+
+    {% endif %}
+  </form>
+
+  {% if form.overview is empty %}
+    <footer class="wizard-page__trust">
+      <div class="wizard-page__trust-item">
+        <span class="wizard-page__trust-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 7.5V12l3.2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <div>
+          <strong>In nur 2 Minuten erstellt</strong>
+          <p>Schnell, einfach und ohne Registrierung.</p>
+        </div>
+      </div>
+      <div class="wizard-page__trust-item">
+        <span class="wizard-page__trust-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3.2l6.5 2.6v5.7c0 4.3-2.8 7.2-6.5 8.5-3.7-1.3-6.5-4.2-6.5-8.5V5.8L12 3.2z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <div>
+          <strong>Ihre Daten bleiben geschützt</strong>
+          <p>Ihre Telefonnummer, ID und E-Mail werden nicht veröffentlicht. Sie entscheiden selbst, wann Sie Kontakt freigeben möchten.</p>
+        </div>
+      </div>
+      <div class="wizard-page__trust-item">
+        <span class="wizard-page__trust-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 19.5c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 12.5l1.8 1.8 3.2-3.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <div>
+          <strong>Ohne Registrierung</strong>
+          <p>Kein Konto, kein Passwort, einfach loslegen.</p>
+        </div>
+      </div>
+    </footer>
+  {% endif %}
+</div>
+

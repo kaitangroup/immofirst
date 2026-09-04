@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Template\Attribute;
+use Drupal\views\ViewExecutable;
 
 /**
  * Implements hook_preprocess_HOOK() for page.html.twig.
@@ -20,6 +21,14 @@ function suchauftrag_theme_preprocess_page(array &$variables) {
     ['title' => "So funktioniert's", 'url' => '/so-funktionierts', 'active' => FALSE],
     ['title' => 'Über uns', 'url' => '/ueber-uns', 'active' => FALSE],
     ['title' => 'FAQ', 'url' => '/faq', 'active' => FALSE],
+  ];
+  $request = \Drupal::request();
+
+  $variables['search_query'] = [
+    'art' => $request->query->get('art', 'mieten'),
+    'immobilienart' => $request->query->get('immobilienart', ''),
+    'ort' => $request->query->get('ort', ''),
+    'radius' => $request->query->get('radius', '25'),
   ];
 }
 
@@ -238,4 +247,35 @@ function suchauftrag_theme_theme($existing, $type, $theme, $path) {
       'template' => 'components/stat-item',
     ],
   ];
+}
+
+/**
+ * Implements hook_views_pre_view().
+ *
+ * templates/components/search-form.html.twig is a plain custom GET
+ * form, not Views' own auto-rendered exposed form — so on its own,
+ * Views has no idea the visitor just submitted ?art=&immobilienart=&ort=
+ * in the URL. This hook is what actually connects the two: it reads
+ * those query parameters and feeds them into the View as exposed
+ * input before the query executes, for every display of this View
+ * (including the "block_1" display embedded on the front page via
+ * views_embed_view() in suchauftrag_theme_preprocess_page__front()).
+ *
+ * Identifiers here MUST match the exposed filter identifiers declared
+ * in views.view.search_requests.yml (art, immobilienart, ort) AND the
+ * <input>/<select> "name" attributes in search-form.html.twig — all
+ * three already agree as of this fix.
+ */
+function suchauftrag_theme_views_pre_view(ViewExecutable $view, $display_id, array &$args) {
+  if ($view->id() !== 'search_requests') {
+    return;
+  }
+
+  $request = \Drupal::request();
+
+  $view->setExposedInput([
+    'art' => $request->query->get('art', ''),
+    'immobilienart' => $request->query->get('immobilienart', ''),
+    'ort' => $request->query->get('ort', ''),
+  ]);
 }
