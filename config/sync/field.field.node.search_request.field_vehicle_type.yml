@@ -1,0 +1,21 @@
+uuid: 42e52be4-933b-4830-857d-dd4135731a96
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_vehicle_type
+    - node.type.search_request
+  module:
+    - options
+id: node.search_request.field_vehicle_type
+field_name: field_vehicle_type
+entity_type: node
+bundle: search_request
+label: Fahrzeugtyp
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

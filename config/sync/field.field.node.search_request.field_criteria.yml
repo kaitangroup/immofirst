@@ -1,0 +1,24 @@
+uuid: 76d50d88-13cf-4796-bd74-111ec3f5f6a4
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_criteria
+    - node.type.search_request
+    - taxonomy.vocabulary.search_criteria
+id: node.search_request.field_criteria
+field_name: field_criteria
+entity_type: node
+bundle: search_request
+label: 'Zusätzliche Kriterien'
+description: 'Step 3 checkbox selections, stored as references to search_criteria taxonomy terms (see SearchCriteriaTermRepository) — not plain text.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:taxonomy_term'
+  handler_settings:
+    target_bundles:
+      search_criteria: search_criteria
+field_type: entity_reference

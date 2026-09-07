@@ -1,0 +1,19 @@
+uuid: 5c6adbe4-773e-41f4-bdb4-5eaa0e20c5c1
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.taxonomy_term.field_group
+    - taxonomy.vocabulary.search_criteria
+id: taxonomy_term.search_criteria.field_group
+field_name: field_group
+entity_type: taxonomy_term
+bundle: search_criteria
+label: Group
+description: 'The Tab.2.1 section heading this criterion belongs under (e.g. "Ausstattung", "Bonität & zusätzliche Angaben"). Drives Step 3''s checkbox card groupings (SearchCriteriaTermRepository) and, later, the detail page''s "Zusätzliche Kriterien" headings — neither hardcodes group names, both derive them from this field.'
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

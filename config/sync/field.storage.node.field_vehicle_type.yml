@@ -1,0 +1,39 @@
+uuid: 534fb0ed-0aa2-4d86-b164-6b368906023f
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - options
+id: node.field_vehicle_type
+field_name: field_vehicle_type
+entity_type: node
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: kleinwagen
+      label: Kleinwagen
+    -
+      value: mittelklasse
+      label: Mittelklasse
+    -
+      value: suv
+      label: SUV
+    -
+      value: transporter
+      label: Transporter
+    -
+      value: wohnwagen
+      label: Wohnwagen
+    -
+      value: wohnmobil
+      label: Wohnmobil
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

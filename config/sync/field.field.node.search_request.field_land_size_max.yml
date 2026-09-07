@@ -1,0 +1,23 @@
+uuid: eddb0ce3-8ac3-4dd3-a828-61b2516251e8
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_land_size_max
+    - node.type.search_request
+id: node.search_request.field_land_size_max
+field_name: field_land_size_max
+entity_type: node
+bundle: search_request
+label: 'Grundstück max. (m²)'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

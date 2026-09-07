@@ -1,0 +1,36 @@
+uuid: 416de35e-e5c5-4c52-9566-e7ead2224bac
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - options
+id: node.field_status
+field_name: field_status
+entity_type: node
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: new
+      label: Neu
+    -
+      value: in_progress
+      label: 'In Bearbeitung'
+    -
+      value: matched
+      label: Vermittelt
+    -
+      value: closed
+      label: Geschlossen
+    -
+      value: archived
+      label: Archiviert
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

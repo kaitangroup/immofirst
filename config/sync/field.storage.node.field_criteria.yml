@@ -1,0 +1,20 @@
+uuid: 2026d0d7-a8dd-481e-87c6-37a4868c6127
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - taxonomy
+id: node.field_criteria
+field_name: field_criteria
+entity_type: node
+type: entity_reference
+settings:
+  target_type: taxonomy_term
+module: core
+locked: false
+cardinality: -1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

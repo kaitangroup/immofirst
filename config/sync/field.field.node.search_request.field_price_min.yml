@@ -1,0 +1,23 @@
+uuid: a3dd79f4-dc31-42d9-be13-4e213adb32b6
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_price_min
+    - node.type.search_request
+id: node.search_request.field_price_min
+field_name: field_price_min
+entity_type: node
+bundle: search_request
+label: 'Preis min. (€)'
+description: 'Kaufpreis, Kaltmiete, Mietpreis oder Miete, je nach Anfrage-/Objektart (siehe priceFieldLabel() im Wizard).'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: decimal

@@ -1,0 +1,21 @@
+uuid: 76daf145-b6ae-4483-9b29-c26671b448c9
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_construction_year
+    - node.type.search_request
+  module:
+    - options
+id: node.search_request.field_construction_year
+field_name: field_construction_year
+entity_type: node
+bundle: search_request
+label: Baujahr
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

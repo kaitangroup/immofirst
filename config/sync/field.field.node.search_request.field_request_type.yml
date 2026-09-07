@@ -1,0 +1,21 @@
+uuid: d5801bbe-b760-423d-94f8-76dde01ce7b5
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_request_type
+    - node.type.search_request
+  module:
+    - options
+id: node.search_request.field_request_type
+field_name: field_request_type
+entity_type: node
+bundle: search_request
+label: Anfrageart
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

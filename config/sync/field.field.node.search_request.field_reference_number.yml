@@ -1,0 +1,19 @@
+uuid: 84177ecf-2800-4ddb-959b-1f9c22cb6bfe
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_reference_number
+    - node.type.search_request
+id: node.search_request.field_reference_number
+field_name: field_reference_number
+entity_type: node
+bundle: search_request
+label: Referenznummer
+description: 'Menschenlesbare Referenz (z. B. SR-2026-000123). Wird programmatisch beim Anlegen des Nodes vergeben, nicht manuell.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

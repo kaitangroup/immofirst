@@ -1,0 +1,18 @@
+uuid: c0e48d9e-1330-4acd-bccf-f1c1735a524f
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_consent
+field_name: field_consent
+entity_type: node
+type: boolean
+settings: {  }
+module: core
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

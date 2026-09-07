@@ -1,0 +1,21 @@
+uuid: be173b43-8f54-4678-be21-bd9fab60fcf5
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_preferred_contact
+    - node.type.search_request
+  module:
+    - options
+id: node.search_request.field_preferred_contact
+field_name: field_preferred_contact
+entity_type: node
+bundle: search_request
+label: 'Bevorzugter Kontaktweg'
+description: 'Noch nicht im Wizard erfasst (Stand Phase 1) — Feld ist für eine kommende Wizard-Ergänzung vorbereitet.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

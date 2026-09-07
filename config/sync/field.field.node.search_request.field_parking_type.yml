@@ -1,0 +1,21 @@
+uuid: af29b494-9394-49f3-9679-3acaf8ae499b
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_parking_type
+    - node.type.search_request
+  module:
+    - options
+id: node.search_request.field_parking_type
+field_name: field_parking_type
+entity_type: node
+bundle: search_request
+label: 'Art des Stellplatzes'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

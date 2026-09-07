@@ -1,0 +1,19 @@
+uuid: f6e83548-e6a0-459c-a6d7-0f5e2a70c629
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_last_name
+    - node.type.search_request
+id: node.search_request.field_last_name
+field_name: field_last_name
+entity_type: node
+bundle: search_request
+label: Nachname
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

@@ -1,0 +1,21 @@
+uuid: 5961f0f2-a3b5-42c9-8276-025b25e06214
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.taxonomy_term.field_property_types
+    - taxonomy.vocabulary.search_criteria
+  module:
+    - options
+id: taxonomy_term.search_criteria.field_property_types
+field_name: field_property_types
+entity_type: taxonomy_term
+bundle: search_criteria
+label: 'Gilt für Objektart(en)'
+description: 'Internal only — which Step 2 Objektart(en) show this checkbox in Step 3. Never displayed to the customer.'
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

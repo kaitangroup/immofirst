@@ -1,0 +1,23 @@
+uuid: 78f93ef1-79b1-4392-b057-e071f59c3821
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_land_size_min
+    - node.type.search_request
+id: node.search_request.field_land_size_min
+field_name: field_land_size_min
+entity_type: node
+bundle: search_request
+label: 'Grundstück min. (m²)'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

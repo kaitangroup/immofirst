@@ -1,0 +1,21 @@
+uuid: 4c104112-3d6c-496c-89ec-d2108642dbc5
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_reference_number
+field_name: field_reference_number
+entity_type: node
+type: string
+settings:
+  max_length: 64
+  case_sensitive: false
+  is_ascii: false
+module: core
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

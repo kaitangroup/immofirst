@@ -1,0 +1,11 @@
+uuid: df1ed9dd-0e12-4e6a-81a1-57f12125609e
+langcode: en
+status: true
+dependencies: {  }
+name: 'Search Request'
+type: search_request
+description: 'Buyer/tenant search requests submitted through the "Suchauftrag erstellen" wizard. Not to be confused with "suchauftrag", which holds provider property LISTINGS.'
+help: null
+new_revision: true
+preview_mode: 1
+display_submitted: false

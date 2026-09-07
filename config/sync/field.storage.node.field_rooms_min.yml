@@ -1,0 +1,20 @@
+uuid: c348ade1-a550-4906-b7b1-bcd15f0dcbb5
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_rooms_min
+field_name: field_rooms_min
+entity_type: node
+type: decimal
+settings:
+  precision: 4
+  scale: 1
+module: core
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

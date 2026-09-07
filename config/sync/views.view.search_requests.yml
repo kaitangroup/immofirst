@@ -3,6 +3,7 @@ langcode: de
 status: true
 dependencies:
   config:
+    - core.entity_view_mode.node.teaser
     - node.type.suchauftrag
   module:
     - node
@@ -27,7 +28,7 @@ display:
         type: some
         options:
           offset: 0
-          items_per_page: 6
+          items_per_page: 12
       exposed_form:
         type: basic
         options:
@@ -100,16 +101,14 @@ display:
       relationships: {  }
       header: {  }
       footer: {  }
+      display_extenders: {  }
     cache_metadata:
       max-age: -1
       contexts:
-        - 'languages:language_content'
         - 'languages:language_interface'
-        - url
-        - url.query_args
-      tags:
-        - 'config:node.type.suchauftrag'
-        - node_list
+        - 'user.node_grants:view'
+        - user.permissions
+      tags: {  }
   block_1:
     id: block_1
     display_title: 'Suchaufträge Block'
@@ -122,10 +121,7 @@ display:
     cache_metadata:
       max-age: -1
       contexts:
-        - 'languages:language_content'
         - 'languages:language_interface'
-        - url
-        - url.query_args
-      tags:
-        - 'config:node.type.suchauftrag'
-        - node_list
+        - 'user.node_grants:view'
+        - user.permissions
+      tags: {  }

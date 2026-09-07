@@ -1,0 +1,39 @@
+uuid: 38b107c3-441c-45ea-b091-1494ab6eb233
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - options
+id: node.field_radius
+field_name: field_radius
+entity_type: node
+type: list_integer
+settings:
+  allowed_values:
+    -
+      value: 5
+      label: '5 km'
+    -
+      value: 10
+      label: '10 km'
+    -
+      value: 15
+      label: '15 km'
+    -
+      value: 25
+      label: '25 km'
+    -
+      value: 50
+      label: '50 km'
+    -
+      value: 100
+      label: '100 km'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

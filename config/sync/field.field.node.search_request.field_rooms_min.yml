@@ -1,0 +1,23 @@
+uuid: 9ddac0bf-f3a6-421a-a30b-513c1ccfaa9a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_rooms_min
+    - node.type.search_request
+id: node.search_request.field_rooms_min
+field_name: field_rooms_min
+entity_type: node
+bundle: search_request
+label: 'Zimmer min.'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: decimal

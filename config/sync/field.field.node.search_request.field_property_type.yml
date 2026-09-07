@@ -1,0 +1,21 @@
+uuid: a8d3126a-4294-4347-a4f5-65cc9b3f9824
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_property_type
+    - node.type.search_request
+  module:
+    - options
+id: node.search_request.field_property_type
+field_name: field_property_type
+entity_type: node
+bundle: search_request
+label: Objektart
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

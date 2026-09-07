@@ -1,0 +1,20 @@
+uuid: 3debed81-c7fb-4c65-8f4c-263a83fadd02
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_price_max
+field_name: field_price_max
+entity_type: node
+type: decimal
+settings:
+  precision: 12
+  scale: 2
+module: core
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

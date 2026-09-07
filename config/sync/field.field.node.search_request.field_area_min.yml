@@ -1,0 +1,23 @@
+uuid: e4eec966-3aa1-4440-9d2c-8f2e47938e69
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_area_min
+    - node.type.search_request
+id: node.search_request.field_area_min
+field_name: field_area_min
+entity_type: node
+bundle: search_request
+label: 'Wohnfläche min. (m²)'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

@@ -1,0 +1,33 @@
+uuid: cc98dea6-70ab-43fb-800d-2f9345097cbc
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - options
+id: node.field_usage
+field_name: field_usage
+entity_type: node
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: einfamilienhaus
+      label: Einfamilienhaus
+    -
+      value: mehrfamilienhaus
+      label: Mehrfamilienhaus
+    -
+      value: gewerbe
+      label: Gewerbe
+    -
+      value: sonstiges
+      label: Sonstiges
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

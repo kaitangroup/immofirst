@@ -1,0 +1,19 @@
+uuid: 76103525-8a65-4515-b25f-ce4a2751bef4
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_phone
+    - node.type.search_request
+id: node.search_request.field_phone
+field_name: field_phone
+entity_type: node
+bundle: search_request
+label: Telefonnummer
+description: 'Ländervorwahl + Rufnummer als ein kombinierter String (z. B. "+49 1701234567"), analog zum bisherigen step5.phone.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

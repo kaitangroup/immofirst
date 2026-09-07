@@ -1,0 +1,21 @@
+uuid: dfcfc23b-1cd9-43ca-80bd-d48f415ecf34
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_usage
+    - node.type.search_request
+  module:
+    - options
+id: node.search_request.field_usage
+field_name: field_usage
+entity_type: node
+bundle: search_request
+label: Nutzung
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

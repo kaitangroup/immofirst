@@ -1,0 +1,9 @@
+uuid: 24f1d9a3-c01b-4cbf-93fd-56bafbc71a79
+langcode: en
+status: true
+dependencies: {  }
+name: 'Search Criteria'
+vid: search_criteria
+description: 'One term per Step 3 "Zusätzliche Kriterien" checkbox (Tab.2.1 of ImmoFirst_260826.xlsx). Populated by _immofirst_search_request_install_search_criteria_terms() from _immofirst_search_request_criteria_term_definitions() — do not hand-edit labels or add/remove terms here; fix at that source instead.'
+weight: 0
+new_revision: false

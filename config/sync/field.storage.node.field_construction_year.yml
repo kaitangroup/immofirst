@@ -1,0 +1,30 @@
+uuid: 0f8f63e7-1171-4922-adf1-5f628cefe476
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - options
+id: node.field_construction_year
+field_name: field_construction_year
+entity_type: node
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: 2010_heute
+      label: '2010 – heute'
+    -
+      value: '1970_2010'
+      label: '1970 – 2010'
+    -
+      value: bis_1970
+      label: 'bis ca. 1970'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

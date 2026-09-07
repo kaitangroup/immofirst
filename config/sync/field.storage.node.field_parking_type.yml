@@ -1,0 +1,36 @@
+uuid: 72388155-92f3-4223-aa14-0cff7e7a82b4
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - options
+id: node.field_parking_type
+field_name: field_parking_type
+entity_type: node
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: aussenstellplatz
+      label: Außenstellplatz
+    -
+      value: carport
+      label: Carport
+    -
+      value: garage
+      label: Garage
+    -
+      value: tiefgaragenstellplatz
+      label: Tiefgaragenstellplatz
+    -
+      value: duplex_doppelparker
+      label: 'Duplex / Doppelparker'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,20 @@
+uuid: 102fff15-1bd3-41b8-9682-7862c69084e0
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_land_size_min
+field_name: field_land_size_min
+entity_type: node
+type: integer
+settings:
+  unsigned: true
+  size: normal
+module: core
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,36 @@
+uuid: 422ab1fa-50b3-4ce0-ad24-f60696c7a386
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - taxonomy
+id: taxonomy_term.field_property_types
+field_name: field_property_types
+entity_type: taxonomy_term
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: apartment
+      label: Wohnung
+    -
+      value: house
+      label: Haus
+    -
+      value: land
+      label: Grundstück
+    -
+      value: garage
+      label: 'Garage / Stellplatz'
+    -
+      value: commercial
+      label: Gewerbe
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: -1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

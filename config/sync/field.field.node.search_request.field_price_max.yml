@@ -1,0 +1,23 @@
+uuid: c9fc1f75-a143-4d3d-9f36-2f3749c5afd6
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_price_max
+    - node.type.search_request
+id: node.search_request.field_price_max
+field_name: field_price_max
+entity_type: node
+bundle: search_request
+label: 'Preis max. (€)'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: decimal

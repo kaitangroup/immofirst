@@ -1,0 +1,23 @@
+uuid: 20da0172-24a1-48df-bb8e-3d29f8a60b51
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_rooms_max
+    - node.type.search_request
+id: node.search_request.field_rooms_max
+field_name: field_rooms_max
+entity_type: node
+bundle: search_request
+label: 'Zimmer max.'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: decimal

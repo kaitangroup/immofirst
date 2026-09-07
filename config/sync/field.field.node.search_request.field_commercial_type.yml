@@ -1,0 +1,21 @@
+uuid: 09289941-b91c-43fc-af57-bc8196ec29fa
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_commercial_type
+    - node.type.search_request
+  module:
+    - options
+id: node.search_request.field_commercial_type
+field_name: field_commercial_type
+entity_type: node
+bundle: search_request
+label: 'Art der Gewerbeimmobilie'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

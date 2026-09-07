@@ -1,0 +1,21 @@
+uuid: 43cbbdcc-dba2-4967-ae08-493144131649
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_radius
+    - node.type.search_request
+  module:
+    - options
+id: node.search_request.field_radius
+field_name: field_radius
+entity_type: node
+bundle: search_request
+label: 'Umkreis (km)'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_integer

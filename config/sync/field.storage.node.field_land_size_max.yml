@@ -1,0 +1,20 @@
+uuid: 093f9d44-8883-4db8-a1ba-581e3374e81b
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_land_size_max
+field_name: field_land_size_max
+entity_type: node
+type: integer
+settings:
+  unsigned: true
+  size: normal
+module: core
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

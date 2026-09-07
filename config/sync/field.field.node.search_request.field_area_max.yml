@@ -1,0 +1,23 @@
+uuid: ea1a2448-b865-4841-abdc-37d4e1aac338
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_area_max
+    - node.type.search_request
+id: node.search_request.field_area_max
+field_name: field_area_max
+entity_type: node
+bundle: search_request
+label: 'Wohnfläche max. (m²)'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

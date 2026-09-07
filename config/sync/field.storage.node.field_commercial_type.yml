@@ -1,0 +1,39 @@
+uuid: e4699746-d249-466a-9439-d6a3c40925a3
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - options
+id: node.field_commercial_type
+field_name: field_commercial_type
+entity_type: node
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: buero_praxis
+      label: 'Büro & Praxis'
+    -
+      value: handel_gastronomie
+      label: 'Handel & Gastronomie'
+    -
+      value: lager_produktion
+      label: 'Lager & Produktion'
+    -
+      value: industrie
+      label: Industrie
+    -
+      value: land_forstwirtschaft
+      label: 'Land- & Forstwirtschaft'
+    -
+      value: grundstuecke_flaechen
+      label: 'Grundstücke & Flächen'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: false
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false
