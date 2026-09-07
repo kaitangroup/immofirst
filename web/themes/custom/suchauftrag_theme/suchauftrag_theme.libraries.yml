@@ -15,3 +15,13 @@ fonts:
   css:
     theme:
       https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap: { type: external }
+
+# NEW library — used only by templates/page--user-login.html.twig via
+# {{ attach_library('suchauftrag_theme/auth') }}. Kept separate from
+# "global" so no other page's CSS payload changes.
+auth:
+  css:
+    theme:
+      css/auth.css: {}
+  dependencies:
+    - suchauftrag_theme/global

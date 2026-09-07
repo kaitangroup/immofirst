@@ -1,0 +1,243 @@
+/**
+ * auth.css — Login / auth page (theme layer only)
+ *
+ * Loaded ONLY on /user/login via {{ attach_library('suchauftrag_theme/auth') }}
+ * in templates/page--user-login.html.twig. No other page's CSS payload
+ * or layout is affected.
+ *
+ * Reuses the existing design tokens from style.css (--primary, --surface,
+ * --border, --muted, --text, --radius-*, --shadow-*, --gradient, the
+ * global .container width) so the login card matches the rest of the
+ * Search Order design system (same rounding, shadows, gradient button,
+ * and .input-style focus ring used elsewhere in this theme).
+ *
+ * No fixed heights anywhere — the header/main/footer stack is a flex
+ * column at least 100vh tall; <main> grows to fill the remaining space
+ * and centers the card inside it.
+ */
+
+/* ==========================================================
+   SHELL — header, content, footer as one flex column
+   ========================================================== */
+.auth-page-shell{
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+
+/* The header include is already position:sticky; that still works
+   fine as a flex child. */
+.auth-page-shell > .header{
+  flex:0 0 auto;
+}
+
+.auth-page-shell > .footer{
+  flex:0 0 auto;
+}
+
+/* ==========================================================
+   AUTH PAGE — vertically centers the card in the space left
+   between header and footer
+   ========================================================== */
+.auth-page{
+  flex:1 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding-top:var(--space-header-to-content);
+  padding-bottom:var(--space-content-to-footer);
+}
+
+.auth-page > .container{
+  display:flex;
+  justify-content:center;
+}
+
+/* ==========================================================
+   AUTH CARD
+   ========================================================== */
+.auth-card{
+  width:100%;
+  max-width:500px;
+  background:var(--surface);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-lg);
+  padding:44px 40px;
+}
+
+.auth-card__header{
+  text-align:center;
+  margin-bottom:32px;
+}
+
+.auth-card__title{
+  font-size:26px;
+  font-weight:700;
+  color:var(--text);
+}
+
+.auth-card__subtitle{
+  margin-top:10px;
+  font-size:15px;
+  color:var(--muted);
+  line-height:1.5;
+}
+
+/* ==========================================================
+   DRUPAL LOGIN FORM — styling Drupal's existing markup only.
+   No labels, inputs, or buttons are replaced — these selectors
+   target core's default classes (.form-item, .form-submit, etc.)
+   and plain element selectors so the form keeps its own HTML.
+   ========================================================== */
+
+/* Space between fields */
+.auth-card__form .form-item,
+.auth-card__form .js-form-item{
+  margin-bottom:20px;
+}
+.auth-card__form .form-item:last-of-type,
+.auth-card__form .js-form-item:last-of-type{
+  margin-bottom:0;
+}
+
+/* Labels — matches .search-card__label elsewhere in this theme */
+.auth-card__form label{
+  display:block;
+  margin-bottom:8px;
+  font-size:13px;
+  font-weight:600;
+  color:var(--text);
+}
+
+/* Inputs — equal heights via consistent padding/line-height,
+   matching the .input component used in the search card */
+.auth-card__form input[type="text"],
+.auth-card__form input[type="email"],
+.auth-card__form input[type="password"]{
+  display:block;
+  width:100%;
+  padding:12px 14px;
+  line-height:1.4;
+  font-size:15px;
+  font-family:inherit;
+  color:var(--text);
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  transition:border-color var(--ease), box-shadow var(--ease);
+}
+.auth-card__form input[type="text"]::placeholder,
+.auth-card__form input[type="email"]::placeholder,
+.auth-card__form input[type="password"]::placeholder{
+  color:#94A3B8;
+}
+.auth-card__form input[type="text"]:focus,
+.auth-card__form input[type="email"]:focus,
+.auth-card__form input[type="password"]:focus{
+  outline:none;
+  border-color:var(--primary);
+  box-shadow:var(--shadow-focus);
+}
+
+/* Field description / help text under an input */
+.auth-card__form .description,
+.auth-card__form .form-item__description{
+  margin-top:6px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+/* Submit button — same visual language as .btn--primary elsewhere
+   in this theme, full width per spec */
+.auth-card__form input[type="submit"],
+.auth-card__form button[type="submit"],
+.auth-card__form .form-submit{
+  display:block;
+  width:100%;
+  margin-top:28px;
+  padding:13px 22px;
+  border:none;
+  border-radius:var(--radius-sm);
+  background:var(--gradient);
+  color:#fff;
+  font-family:inherit;
+  font-size:15px;
+  font-weight:600;
+  box-shadow:var(--shadow-sm);
+  cursor:pointer;
+  transition:transform var(--ease), box-shadow var(--ease), background var(--ease);
+}
+.auth-card__form input[type="submit"]:hover,
+.auth-card__form button[type="submit"]:hover,
+.auth-card__form .form-submit:hover{
+  transform:translateY(-2px);
+  box-shadow:var(--shadow-md);
+  background:linear-gradient(90deg,#4A56E0,#4A42D6);
+}
+.auth-card__form input[type="submit"]:focus-visible,
+.auth-card__form button[type="submit"]:focus-visible,
+.auth-card__form .form-submit:focus-visible{
+  outline:2px solid var(--primary);
+  outline-offset:2px;
+}
+
+/* Any secondary links Drupal may render in the form (e.g. password
+   reset / create account links added by other modules) */
+.auth-card__form a{
+  color:var(--primary);
+  font-weight:500;
+}
+.auth-card__form a:hover{
+  text-decoration:underline;
+}
+
+/* Drupal status/error messages — kept fully intact (role="alert",
+   ARIA, etc. come from core untouched), just restyled to fit the card */
+.auth-card__form .messages{
+  margin-bottom:24px;
+  padding:14px 16px;
+  border-radius:var(--radius-sm);
+  font-size:14px;
+  line-height:1.5;
+}
+.auth-card__form .messages--error{
+  background:#FEF2F2;
+  border:1px solid #FECACA;
+  color:#B91C1C;
+}
+.auth-card__form .messages--status{
+  background:#F0FDF4;
+  border:1px solid #BBF7D0;
+  color:#15803D;
+}
+
+/* ==========================================================
+   RESPONSIVE — same breakpoints as responsive.css (1024 / 640)
+   ========================================================== */
+
+/* Tablet — slightly reduced card width */
+@media (max-width: 1024px){
+  .auth-card{
+    max-width:440px;
+    padding:36px 32px;
+  }
+}
+
+/* Mobile — full-width card, comfortable padding, no horizontal scroll */
+@media (max-width: 640px){
+  .auth-page{
+    padding-top:28px;
+    padding-bottom:28px;
+  }
+  .auth-card{
+    max-width:100%;
+    padding:28px 20px;
+    border-radius:var(--radius-md);
+  }
+  .auth-card__header{
+    margin-bottom:24px;
+  }
+  .auth-card__title{
+    font-size:22px;
+  }
+}

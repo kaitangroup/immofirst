@@ -28,6 +28,25 @@
   --shadow-focus:0 0 0 4px rgba(86,100,255,.15);
   --header-height:72px;
   --ease:.25s ease;
+
+  /* ===== Global container system =====
+   * One width, everywhere. Header, footer and every inner page's
+   * content container all read from these same two variables — see
+   * `.container` below and responsive.css for the tablet/mobile
+   * overrides, which redefine these variables rather than repeating
+   * `.container` with hardcoded numbers at each breakpoint. */
+  --container-width:1240px;
+  --container-padding:24px;
+
+  /* ===== Global vertical rhythm =====
+   * The spacing every inner page shares: header-to-content gap,
+   * spacing between top-level sections inside the content container,
+   * and the gap before the footer. Used by `.container--content`
+   * below. Pages should rely on these instead of ad-hoc per-page
+   * margin-top/bottom hacks. */
+  --space-header-to-content:48px;
+  --space-content-section:64px;
+  --space-content-to-footer:64px;
 }
 
 *,
@@ -68,12 +87,32 @@ p{ margin:0; color:var(--muted); }
 /* ===== Layout primitives ===== */
 .container{
   width:100%;
-  max-width:1240px;
+  max-width:var(--container-width);
   margin:0 auto;
-  padding:0 24px;
+  padding:0 var(--container-padding);
 }
 
 .main-content{ overflow-x:hidden; }
+
+/* `.page-main` is the global inner-page <main> wrapper (page.html.twig).
+   `.main-content` above is kept as-is for page--front.html.twig, which
+   composes its own full-bleed sections and isn't part of this global
+   container system. */
+.page-main{ overflow-x:hidden; }
+
+/* The one global content container every inner page shares: `.container`
+   for width/left-right alignment with the header and footer, plus this
+   modifier for the page-level vertical rhythm (header-to-content gap,
+   spacing before the footer, and spacing between top-level sections —
+   see the child combinator rule below). Pages should never need their
+   own margin-top/bottom hacks to achieve this spacing. */
+.container--content{
+  padding-top:var(--space-header-to-content);
+  padding-bottom:var(--space-content-to-footer);
+}
+.container--content > * + *{
+  margin-top:var(--space-content-section);
+}
 
 /* ===== Focus states (a11y) ===== */
 a:focus-visible,

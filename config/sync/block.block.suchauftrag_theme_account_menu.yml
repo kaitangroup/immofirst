@@ -1,6 +1,6 @@
 uuid: 92a0b65f-a7af-4b68-b4e5-fc87e83ee10f
 langcode: en
-status: true
+status: false
 dependencies:
   config:
     - system.menu.account

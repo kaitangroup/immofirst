@@ -12,6 +12,13 @@
 
 /* ===== Tablet: ≤1024px ===== */
 @media (max-width: 1024px){
+  :root{
+    --container-padding:20px;
+    --space-header-to-content:40px;
+    --space-content-section:48px;
+    --space-content-to-footer:56px;
+  }
+
   .hero__inner{
     grid-template-columns:1fr;
   }
@@ -55,7 +62,12 @@
 
 /* ===== Mobile: ≤640px ===== */
 @media (max-width: 640px){
-  .container{ padding:0 16px; }
+  :root{
+    --container-padding:16px;
+    --space-header-to-content:28px;
+    --space-content-section:40px;
+    --space-content-to-footer:40px;
+  }
 
   .hero{ padding:36px 0 32px; }
   .hero__title{ font-size:26px; }

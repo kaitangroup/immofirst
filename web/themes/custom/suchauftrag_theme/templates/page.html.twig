@@ -1,22 +1,41 @@
 {#
 /**
  * @file
- * Default page template for all non-front pages
- * (e.g. /suchauftrag/erstellen — the 5-step wizard).
+ * Default page template for all non-front pages — e.g. the Search
+ * Wizard (/suchauftrag/erstellen), /user/login, node pages, and any
+ * static page.
  *
- * Keeps the same header/footer shell as the front page, but renders
- * Drupal's normal page.content region so route-specific controllers
- * (e.g. the wizard form) can inject their own markup.
+ * This is the ONE global layout shell every inner page shares: a
+ * single <main class="page-main">, and one content container that
+ * carries both the site-wide `.container` width (same max-width and
+ * left/right padding as the header and footer) and the
+ * `.container--content` vertical-rhythm modifier (header-to-content
+ * gap, spacing before the footer, and spacing between top-level
+ * sections — see css/style.css). No page-specific template should
+ * need its own width or top/bottom spacing wrapper on top of this.
+ *
+ * Site chrome comes from the header/footer includes below, unchanged
+ * from before. page.header and page.footer are also both printed
+ * (previously declared in suchauftrag_theme.info.yml's regions but
+ * never actually output here) so any blocks placed in those regions
+ * via the block admin UI render; if none are assigned, Drupal simply
+ * prints nothing and nothing visually changes.
  */
 #}
 {% include '@suchauftrag_theme/templates/includes/header.html.twig' %}
+{% if page.header %}
+  <div class="container">{{ page.header }}</div>
+{% endif %}
 
-<main id="main-content" class="main-content" role="main">
-  <div class="container">
+<main id="main-content" class="page-main" role="main">
+  <div class="container container--content">
     {% if page.content %}
       {{ page.content }}
     {% endif %}
   </div>
 </main>
 
+{% if page.footer %}
+  <div class="container">{{ page.footer }}</div>
+{% endif %}
 {% include '@suchauftrag_theme/templates/includes/footer.html.twig' %}

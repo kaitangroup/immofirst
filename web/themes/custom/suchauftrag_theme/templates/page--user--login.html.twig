@@ -1,0 +1,56 @@
+{#
+/**
+ * @file
+ * Page template override for /user/login only (Drupal's automatic
+ * page suggestion for the user.login route: page--user-login.html.twig).
+ *
+ * THEME-LAYER ONLY. This file does not touch the login form's render
+ * array, validation, routing, or the user module in any way — it only
+ * changes the surrounding markup that {{ page.content }} (Drupal's
+ * already-built login form) is printed inside of.
+ *
+ * The header include, the main content, and the footer include are
+ * all wrapped together in one self-contained flex column
+ * (.auth-page-shell) that is at least 100vh tall. Header and footer
+ * keep their natural size at the top and bottom; <main> is given
+ * flex:1 and centers the card inside whatever space is left — no
+ * fixed heights anywhere, and nothing outside this one route-specific
+ * template is touched (no changes to body/html, the header/footer
+ * templates themselves, or any other page's layout).
+ *
+ * The `attach_library` call loads css/auth.css, a NEW library
+ * (suchauftrag_theme/auth) added in suchauftrag_theme.libraries.yml.
+ * It is only attached here, so no other page's CSS payload changes.
+ */
+#}
+{{ attach_library('suchauftrag_theme/auth') }}
+
+<div class="auth-page-shell">
+  {% include '@suchauftrag_theme/templates/includes/header.html.twig' %}
+  {% if page.header %}
+    <div class="container">{{ page.header }}</div>
+  {% endif %}
+
+  <main id="main-content" class="page-main auth-page" role="main">
+    <div class="container">
+      <div class="auth-card">
+        <div class="auth-card__header">
+          <h1 class="auth-card__title">Welcome Back</h1>
+          <p class="auth-card__subtitle">Sign in to access your Search Order dashboard.</p>
+        </div>
+
+        {# Drupal's rendered login form — untouched, only wrapped. #}
+        {% if page.content %}
+          <div class="auth-card__form">
+            {{ page.content }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+
+  {% if page.footer %}
+    <div class="container">{{ page.footer }}</div>
+  {% endif %}
+  {% include '@suchauftrag_theme/templates/includes/footer.html.twig' %}
+</div>
