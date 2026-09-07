@@ -184,6 +184,332 @@ function suchauftrag_theme_preprocess_views_view_unformatted__search_requests(ar
 }
 
 /**
+ * Implements hook_preprocess_HOOK() for node--search-request.html.twig.
+ *
+ * DATA SOURCE: reads only the persisted $node's own fields — never the
+ * wizard's PrivateTempStore session (SearchRequestSession is not
+ * touched or referenced here). Field machine names below are exactly
+ * those confirmed in the architecture inspection report (not guessed):
+ * field_request_type, field_property_type, field_location,
+ * field_radius, field_area_min/max, field_rooms_min/max,
+ * field_price_min/max, field_construction_year,
+ * field_land_size_min/max, field_usage, field_parking_type,
+ * field_vehicle_type, field_commercial_type, field_criteria,
+ * field_notes, field_reference_number, field_status. The
+ * search_criteria taxonomy term fields used below (field_group, the
+ * plain string "Group"; field_property_types, "Gilt für
+ * Objektart(en)") are likewise taken as confirmed, not assumed.
+ *
+ * No business logic (SearchRequestWizardForm, SearchRequestNodeCreator,
+ * SearchCriteriaTermRepository, session storage, AJAX, node creation,
+ * taxonomy/field configuration) is modified or duplicated here — this
+ * only reads already-persisted data for display.
+ */
+function suchauftrag_theme_preprocess_node__search_request(array &$variables) {
+  /** @var \Drupal\node\NodeInterface $node */
+  $node = $variables['node'];
+
+  // Local helper: NULL for a missing/empty field, its value otherwise —
+  // used throughout so "do not display empty fields" is enforced at a
+  // single point rather than repeated per field.
+  $get = function (string $field_name) use ($node): ?string {
+    return $node->hasField($field_name) && !$node->get($field_name)->isEmpty()
+      ? $node->get($field_name)->value
+      : NULL;
+  };
+
+  $request_type = $get('field_request_type') ?? 'mieten';
+  $property_type = $get('field_property_type') ?? 'apartment';
+
+  $request_type_labels = [
+    'kaufen' => 'Kaufen',
+    'mieten' => 'Mieten',
+  ];
+  $property_type_labels = [
+    'apartment' => 'Wohnung',
+    'house' => 'Haus',
+    'land' => 'Grundstück',
+    'garage' => 'Garage / Stellplatz',
+    'commercial' => 'Gewerbe',
+  ];
+
+  $variables['request_type'] = $request_type;
+  $variables['request_type_label'] = $request_type_labels[$request_type] ?? ucfirst($request_type);
+  $variables['property_type'] = $property_type;
+  $variables['property_type_label'] = $property_type_labels[$property_type] ?? ucfirst($property_type);
+  $variables['location'] = $get('field_location');
+  $variables['radius'] = $get('field_radius');
+
+  // ===== Property-specific requirements row =====
+  // Section 5/6 of the spec: only the fields that apply to the
+  // selected property_type, in the given order, and only when
+  // actually set. Kaufpreis/Kaltmiete uses the SAME field_price_min/
+  // field_price_max pair for every property type ("where applicable")
+  // — just a different label depending on field_request_type.
+  $price_label = $request_type === 'kaufen' ? 'Kaufpreis' : 'Kaltmiete';
+  $price_range = _suchauftrag_theme_format_price($get('field_price_min'), $get('field_price_max'));
+
+  $requirements = [];
+  switch ($property_type) {
+    case 'apartment':
+      if ($range = _suchauftrag_theme_format_range($get('field_area_min'), $get('field_area_max'), 'm²')) {
+        $requirements[] = ['icon' => 'area', 'value' => $range, 'label' => 'Wohnfläche'];
+      }
+      if ($range = _suchauftrag_theme_format_range($get('field_rooms_min'), $get('field_rooms_max'), NULL)) {
+        $requirements[] = ['icon' => 'rooms', 'value' => $range, 'label' => 'Zimmer'];
+      }
+      if ($price_range) {
+        $requirements[] = ['icon' => 'price', 'value' => $price_range, 'label' => $price_label];
+      }
+      if ($year = $get('field_construction_year')) {
+        $requirements[] = ['icon' => 'year', 'value' => _suchauftrag_theme_format_construction_year($year), 'label' => 'Baujahr'];
+      }
+      break;
+
+    case 'house':
+      if ($range = _suchauftrag_theme_format_range($get('field_area_min'), $get('field_area_max'), 'm²')) {
+        $requirements[] = ['icon' => 'area', 'value' => $range, 'label' => 'Wohnfläche'];
+      }
+      if ($range = _suchauftrag_theme_format_range($get('field_rooms_min'), $get('field_rooms_max'), NULL)) {
+        $requirements[] = ['icon' => 'rooms', 'value' => $range, 'label' => 'Zimmer'];
+      }
+      if ($price_range) {
+        $requirements[] = ['icon' => 'price', 'value' => $price_range, 'label' => $price_label];
+      }
+      if ($year = $get('field_construction_year')) {
+        $requirements[] = ['icon' => 'year', 'value' => _suchauftrag_theme_format_construction_year($year), 'label' => 'Baujahr'];
+      }
+      if ($range = _suchauftrag_theme_format_range($get('field_land_size_min'), $get('field_land_size_max'), 'm²')) {
+        $requirements[] = ['icon' => 'land', 'value' => $range, 'label' => 'Grundstück'];
+      }
+      break;
+
+    case 'land':
+      if ($range = _suchauftrag_theme_format_range($get('field_land_size_min'), $get('field_land_size_max'), 'm²')) {
+        $requirements[] = ['icon' => 'land', 'value' => $range, 'label' => 'Grundstücksfläche'];
+      }
+      if ($price_range) {
+        $requirements[] = ['icon' => 'price', 'value' => $price_range, 'label' => $price_label];
+      }
+      if ($usage = $get('field_usage')) {
+        $requirements[] = ['icon' => 'usage', 'value' => $usage, 'label' => 'Nutzung'];
+      }
+      break;
+
+    case 'garage':
+      if ($parking = $get('field_parking_type')) {
+        $requirements[] = ['icon' => 'parking', 'value' => $parking, 'label' => 'Stellplatzart'];
+      }
+      if ($vehicle = $get('field_vehicle_type')) {
+        $requirements[] = ['icon' => 'vehicle', 'value' => $vehicle, 'label' => 'Fahrzeugtyp'];
+      }
+      if ($price_range) {
+        $requirements[] = ['icon' => 'price', 'value' => $price_range, 'label' => $price_label];
+      }
+      break;
+
+    case 'commercial':
+      // "Gewerbe already exists in the implementation" (field_commercial_type) —
+      // read here, not re-implemented.
+      if ($commercial = $get('field_commercial_type')) {
+        $requirements[] = ['icon' => 'commercial', 'value' => $commercial, 'label' => 'Art der Gewerbeimmobilie'];
+      }
+      if ($range = _suchauftrag_theme_format_range($get('field_area_min'), $get('field_area_max'), 'm²')) {
+        $requirements[] = ['icon' => 'area', 'value' => $range, 'label' => 'Fläche'];
+      }
+      if ($price_range) {
+        $requirements[] = ['icon' => 'price', 'value' => $price_range, 'label' => $price_label];
+      }
+      break;
+  }
+  $variables['requirements'] = $requirements;
+
+  // ===== Criteria, grouped by the term's field_group =====
+  // field_criteria (untouched, existing entity reference field) →
+  // search_criteria taxonomy terms → grouped by each term's
+  // "Group" (field_group). "Gilt für Objektart(en)"
+  // (field_property_types) already constrained which terms were
+  // offered in the wizard for this property_type, so it does not need
+  // to be re-checked here — every referenced term is, by construction,
+  // applicable. The 3 purchase-only terms are defensively re-excluded
+  // for Mieten (see inspection report §7: the wizard's render-time
+  // array_diff() filter is the only current gate, with no
+  // validateForm()/submitForm() re-check) — this is a display-time
+  // safeguard only, no taxonomy/field data is modified.
+  $purchase_only_labels = [
+    'Finanzierung gesichert',
+    'Eigenkapital vorhanden',
+    'Kauf ohne Finanzierung möglich',
+  ];
+
+  $grouped = [];
+  if ($node->hasField('field_criteria') && !$node->get('field_criteria')->isEmpty()) {
+    foreach ($node->get('field_criteria')->referencedEntities() as $term) {
+      if (!$term instanceof \Drupal\taxonomy\TermInterface) {
+        continue;
+      }
+
+      $label = $term->label();
+      if ($request_type !== 'kaufen' && in_array($label, $purchase_only_labels, TRUE)) {
+        continue;
+      }
+
+      $group_label = $term->hasField('field_group') && !$term->get('field_group')->isEmpty()
+        ? $term->get('field_group')->value
+        : NULL;
+      // "Beim Kauf" is never a term/heading at all (confirmed in the
+      // inspection report), so there is nothing to specifically
+      // suppress for it here — an ungrouped term simply has no sane
+      // heading to render under and is skipped rather than inventing one.
+      if ($group_label === NULL) {
+        continue;
+      }
+
+      $grouped[$group_label][] = $label;
+    }
+  }
+
+  $variables['criteria_groups'] = [];
+  foreach ($grouped as $group_label => $items) {
+    $variables['criteria_groups'][] = ['label' => $group_label, 'items' => $items];
+  }
+
+  // ===== Notes =====
+  $variables['notes'] = $get('field_notes');
+
+  // ===== Metadata =====
+  $variables['reference_number'] = $get('field_reference_number');
+  $variables['created_date'] = \Drupal::service('date.formatter')->format($node->getCreatedTime(), 'custom', 'd.m.Y');
+
+  $status_labels = ['new' => 'Neu'];
+  $status = $get('field_status');
+  $variables['status_label'] = $status !== NULL ? ($status_labels[$status] ?? ucfirst($status)) : NULL;
+
+  // "Gesucht seit X Tagen" — derived purely from the base `created`
+  // field. No custom request-date field is ever written by
+  // SearchRequestNodeCreator (confirmed in the inspection report:
+  // field_request_date is read by the OLD views preprocess below but
+  // never set), so nothing here relies on that field.
+  $days_ago = (int) floor((\Drupal::time()->getRequestTime() - $node->getCreatedTime()) / 86400);
+  $variables['days_ago_label'] = match (TRUE) {
+    $days_ago <= 0 => 'Heute eingestellt',
+    $days_ago === 1 => 'Gesucht seit 1 Tag',
+    default => 'Gesucht seit ' . $days_ago . ' Tagen',
+  };
+}
+
+/**
+ * Formats a min/max pair as "70 – 80 m²" / "ab 70 m²" / "bis 80 m²".
+ *
+ * Used for the (decimal-as-string) area/rooms/land-size field pairs.
+ * Returns NULL when both bounds are empty, so the caller can skip
+ * rendering the row entirely ("do not display empty fields").
+ */
+function _suchauftrag_theme_format_range(?string $min, ?string $max, ?string $unit): ?string {
+  $format_number = static function (?string $value): ?string {
+    if ($value === NULL || $value === '' || !is_numeric($value)) {
+      return NULL;
+    }
+    // Decimal-as-string fields (e.g. field_rooms_min) commonly carry a
+    // trailing ".0" — drop it so whole numbers show as "3", not "3.0".
+    $float = (float) $value;
+    return $float == (int) $float ? (string) (int) $float : rtrim(rtrim((string) $float, '0'), '.');
+  };
+
+  $min_formatted = $format_number($min);
+  $max_formatted = $format_number($max);
+  if ($min_formatted === NULL && $max_formatted === NULL) {
+    return NULL;
+  }
+
+  // Defensive display-only fix: if both bounds are present but stored
+  // out of order (e.g. min > max due to a data-entry mistake upstream,
+  // with no validation currently enforcing order — see inspection
+  // report §7), swap them for display so the range always reads
+  // low-to-high. This does not touch the stored field values or any
+  // wizard/node-creation logic, only how this preprocess renders them.
+  if ($min_formatted !== NULL && $max_formatted !== NULL && (float) $min > (float) $max) {
+    [$min_formatted, $max_formatted] = [$max_formatted, $min_formatted];
+  }
+
+  $suffix = $unit ? ' ' . $unit : '';
+  if ($min_formatted !== NULL && $max_formatted !== NULL) {
+    return $min_formatted . ' – ' . $max_formatted . $suffix;
+  }
+  return $min_formatted !== NULL
+    ? 'ab ' . $min_formatted . $suffix
+    : 'bis ' . $max_formatted . $suffix;
+}
+
+/**
+ * Formats a min/max price pair as "300 – 400 €" / "ab 300 €" / "bis 400 €".
+ *
+ * Kept separate from _suchauftrag_theme_format_range() because prices
+ * need German thousands-separator formatting (number_format), not the
+ * plain-integer/decimal handling that field suffices for area/rooms.
+ * Returns NULL when both bounds are empty.
+ */
+function _suchauftrag_theme_format_price(?string $min, ?string $max): ?string {
+  $format_currency = static function (?string $value): ?string {
+    return ($value !== NULL && $value !== '' && is_numeric($value))
+      ? number_format((float) $value, 0, ',', '.')
+      : NULL;
+  };
+
+  $min_formatted = $format_currency($min);
+  $max_formatted = $format_currency($max);
+  if ($min_formatted === NULL && $max_formatted === NULL) {
+    return NULL;
+  }
+
+  // Same defensive display-only ordering fix as
+  // _suchauftrag_theme_format_range() — see the comment there.
+  if ($min_formatted !== NULL && $max_formatted !== NULL && (float) $min > (float) $max) {
+    [$min_formatted, $max_formatted] = [$max_formatted, $min_formatted];
+  }
+
+  if ($min_formatted !== NULL && $max_formatted !== NULL) {
+    return $min_formatted . ' – ' . $max_formatted . ' €';
+  }
+  return ($min_formatted !== NULL ? 'ab ' . $min_formatted : 'bis ' . $max_formatted) . ' €';
+}
+
+/**
+ * Formats a stored field_construction_year value into a readable label.
+ *
+ * BUG FIX: the detail page was printing this field's raw machine value
+ * verbatim (e.g. "bis_1970" shown on screen), because no field storage
+ * config ships in this repo to confirm its allowed-values list (see
+ * inspection report: field storage lives in Config Sync, not in
+ * either archive) — so no label map was ever built for it. Rather
+ * than guess at unconfirmed taxonomy/allowed-value labels, this does
+ * a generic, safe transform of the underscore-separated machine value
+ * into the human formatting already used elsewhere on this page
+ * (e.g. "bis 1970", "ab 2010", "2010 – heute"). Already-human values
+ * (no underscore) pass through unchanged.
+ */
+function _suchauftrag_theme_format_construction_year(string $value): string {
+  if (!str_contains($value, '_')) {
+    return $value;
+  }
+
+  $parts = explode('_', $value);
+
+  // "bis_1970" / "ab_2010" -> "bis 1970" / "ab 2010".
+  if (count($parts) === 2 && in_array($parts[0], ['bis', 'ab'], TRUE)) {
+    return $parts[0] . ' ' . $parts[1];
+  }
+
+  // "2010_heute" -> "2010 – heute"; "1970_1990" -> "1970 – 1990".
+  if (count($parts) === 2) {
+    return $parts[0] . ' – ' . $parts[1];
+  }
+
+  // Fallback: just make it readable.
+  return ucfirst(str_replace('_', ' ', $value));
+}
+
+/**
  * Implements hook_theme().
  *
  * Registers the reusable components as themeable render elements so they

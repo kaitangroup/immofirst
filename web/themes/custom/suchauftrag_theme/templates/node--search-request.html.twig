@@ -1,0 +1,234 @@
+{#
+/**
+ * @file
+ * Detail page for a single "search_request" node.
+ *
+ * Filename per Drupal's node theme-suggestion convention: the bundle's
+ * machine name (search_request) has its underscore converted to a
+ * hyphen for the template file — node--search-request.html.twig.
+ *
+ * DATA SOURCE: every value on this page comes from the persisted
+ * $node's own fields (set once, at submission time, by
+ * SearchRequestNodeCreator — untouched, not read here) — never from
+ * the wizard's PrivateTempStore session. All variables below are
+ * built in suchauftrag_theme_preprocess_node__search_request() in
+ * suchauftrag_theme.theme; nothing is computed inline in this
+ * template beyond simple presentational conditionals.
+ *
+ * Variables (see the preprocess function for exact derivation):
+ *   node                  the full node entity (standard $variables key)
+ *   request_type          'kaufen' | 'mieten' — field_request_type
+ *   request_type_label    'Kaufen' | 'Mieten'
+ *   property_type         apartment|house|land|garage|commercial — field_property_type
+ *   property_type_label   'Wohnung' | 'Haus' | 'Grundstück' | 'Garage / Stellplatz' | 'Gewerbe'
+ *   location               field_location, or NULL
+ *   radius                 field_radius (km), or NULL
+ *   days_ago_label         derived from the base `created` field (no
+ *                          custom request-date field exists — see the
+ *                          architecture inspection report)
+ *   requirements           ordered list of {icon, value, label} —
+ *                          only the fields that apply to
+ *                          property_type AND are actually set (see
+ *                          section 5 of the task spec for the exact
+ *                          per-property-type field list)
+ *   criteria_groups         ordered list of {label, items[]}, built
+ *                          from field_criteria's referenced
+ *                          search_criteria terms, grouped by each
+ *                          term's field_group and — for Mieten —
+ *                          with the 3 purchase-only terms already
+ *                          removed (defensive re-check; see the
+ *                          preprocess function)
+ *   notes                  field_notes value, or NULL
+ *   reference_number       field_reference_number, or NULL
+ *   created_date           formatted from the base `created` field
+ *   status_label           mapped from field_status, or NULL
+ *
+ * Sidebar ("Angebot senden") is presentational only, per the task
+ * spec — no messaging/offer/matching logic is implemented or implied
+ * here; the button has no submit handler.
+ */
+#}
+{{ attach_library('suchauftrag_theme/search-request-detail') }}
+
+{% import _self as icons %}
+
+{% macro stat_icon(name) %}
+  {% if name == 'area' %}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {% elseif name == 'rooms' %}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 18v-6.5A2.5 2.5 0 015.5 9H11v3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 18v-3.5h18V18M21 14.5V11a2 2 0 00-2-2h-6a2 2 0 00-2 2v3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 18v2M20 18v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {% elseif name == 'price' %}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 15c.4.7 1.3 1.2 2.4 1.2 1.5 0 2.6-.8 2.6-2 0-1.1-1-1.6-2.6-1.9-1.5-.3-2.4-.8-2.4-1.9 0-1.1 1.1-1.9 2.4-1.9 1.1 0 1.9.5 2.3 1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 7v1.4M12 15.6V17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {% elseif name == 'year' %}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {% elseif name == 'land' %}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20.5V9.2L12 4l8 5.2v11.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20.5h16M9 20.5v-5.7h6v5.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {% elseif name == 'usage' %}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5 3.8 8 12 12.5 20.2 8Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.8 12.5 12 17l8.2-4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {% elseif name == 'parking' %}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 10.3L12 4l9 6.3V20H3v-9.7z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 20v-6.3h11V20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {% elseif name == 'vehicle' %}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 15.5 5.6 9.8a2 2 0 011.9-1.4h9a2 2 0 011.9 1.4l1.6 5.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.5" y="15.5" width="17" height="4" rx="1.2" stroke="currentColor" stroke-width="1.7"/><circle cx="7.5" cy="19.5" r="1.1" fill="currentColor"/><circle cx="16.5" cy="19.5" r="1.1" fill="currentColor"/></svg>
+  {% elseif name == 'commercial' %}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="1.2" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 7.5h1.6M14 7.5h1.6M8.5 11h1.6M14 11h1.6M8.5 14.5h1.6M14 14.5h1.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+  {% endif %}
+{% endmacro %}
+
+{% macro criteria_icon(group_label) %}
+  {% if 'Ausstattung' in group_label %}
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 10.5 12 3.5l8.5 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 9.5V19a1 1 0 001 1h11a1 1 0 001-1V9.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {% elseif 'Gebäude' in group_label or 'Zustand' in group_label or 'Bebauung' in group_label or 'Erschlossen' in group_label %}
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="1.2" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 7.5h1.6M14 7.5h1.6M8.5 11h1.6M14 11h1.6M8.5 14.5h1.6M14 14.5h1.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+  {% elseif 'Haustyp' in group_label %}
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 10.5 12 3.5l8.5 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 9.5V19a1 1 0 001 1h11a1 1 0 001-1V9.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {% elseif 'Park' in group_label or 'Art' in group_label %}
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 15.5 5.6 9.8a2 2 0 011.9-1.4h9a2 2 0 011.9 1.4l1.6 5.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.5" y="15.5" width="17" height="4" rx="1.2" stroke="currentColor" stroke-width="1.7"/></svg>
+  {% elseif 'Lage' in group_label %}
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 1113 0c0 5.4-6.5 11-6.5 11Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.3" stroke="currentColor" stroke-width="1.7"/></svg>
+  {% elseif 'Außenbereich' in group_label %}
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21v-6.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 14.5a5 5 0 1 0-4.4-7.4A4 4 0 0 0 8 14.5Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {% elseif 'Grundstücksart' in group_label %}
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 1113 0c0 5.4-6.5 11-6.5 11Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.3" stroke="currentColor" stroke-width="1.7"/></svg>
+  {% elseif 'Größe' in group_label %}
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="8.5" width="17" height="7" rx="1.2" transform="rotate(-8 12 12)" stroke="currentColor" stroke-width="1.7"/></svg>
+  {% elseif 'Nutzung' in group_label %}
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5 3.8 8 12 12.5 20.2 8Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.8 12.5 12 17l8.2-4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {% elseif 'Bonität' in group_label %}
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5 19 6v5.5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-2.5Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12.2l2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {% elseif 'Sonstige' in group_label %}
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8.5 6.5h11M8.5 12h11M8.5 17.5h11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+  {% else %}
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8.5 6.5h11M8.5 12h11M8.5 17.5h11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+  {% endif %}
+{% endmacro %}
+
+<div class="request-detail">
+
+  <a href="/suchauftraege" class="request-detail__back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Zurück zur Ergebnisliste
+  </a>
+
+  <div class="request-detail__grid">
+
+    <main class="request-detail__main">
+
+      <header class="request-detail__header">
+        <div class="request-detail__header-top">
+          {% include '@suchauftrag_theme/templates/components/badge.html.twig' with {
+            label: request_type_label|upper,
+            variant: request_type == 'kaufen' ? 'buy' : 'rent'
+          } %}
+          {% if days_ago_label %}
+            <span class="request-detail__days-ago">{{ days_ago_label }}</span>
+          {% endif %}
+        </div>
+
+        <h1 class="request-detail__title">{{ node.label }}</h1>
+
+        {% if location %}
+          <p class="request-detail__location">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21.5s7.2-6.7 7.2-12A7.2 7.2 0 104.8 9.5c0 5.3 7.2 12 7.2 12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            {{ location }}{% if radius %}, {{ radius }} km Umkreis{% endif %}
+          </p>
+        {% endif %}
+
+        {% if requirements %}
+          <div class="request-detail__stats">
+            {% for item in requirements %}
+              <div class="request-detail__stat">
+                <div class="stat-item">
+                  <span class="stat-item__icon" aria-hidden="true">{{ icons.stat_icon(item.icon) }}</span>
+                  <span class="stat-item__value">{{ item.value }}</span>
+                  <span class="stat-item__label">{{ item.label }}</span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </header>
+
+      {% if criteria_groups %}
+        <section class="request-detail__section">
+          <h2 class="request-detail__section-title">Zusätzliche Kriterien</h2>
+          <div class="criteria-list">
+            {% for group in criteria_groups %}
+              <div class="criteria-list__row">
+                <span class="criteria-list__icon" aria-hidden="true">{{ icons.criteria_icon(group.label) }}</span>
+                <span class="criteria-list__label">{{ group.label }}</span>
+                <span class="criteria-list__value">
+                  {% for item in group.items %}
+                    <span class="criteria-chip">{{ item }}</span>
+                  {% endfor %}
+                </span>
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+      {% if notes %}
+        <section class="request-detail__section">
+          <h2 class="request-detail__section-title">Besondere Wünsche und Hinweise</h2>
+          <p class="request-detail__notes">{{ notes|nl2br }}</p>
+        </section>
+      {% endif %}
+
+      {% if reference_number or created_date or status_label %}
+        <section class="request-detail__section request-detail__meta">
+          {% if reference_number %}
+            <div>
+              <span class="request-detail__meta-label">Such-ID</span>
+              <span class="request-detail__meta-value">{{ reference_number }}</span>
+            </div>
+          {% endif %}
+          {% if created_date %}
+            <div>
+              <span class="request-detail__meta-label">Erstellt am</span>
+              <span class="request-detail__meta-value">{{ created_date }}</span>
+            </div>
+          {% endif %}
+          {% if status_label %}
+            <div>
+              <span class="request-detail__meta-label">Status</span>
+              <span class="request-detail__meta-value">{{ status_label }}</span>
+            </div>
+          {% endif %}
+        </section>
+      {% endif %}
+
+      <section class="request-detail__section">
+        <div class="request-detail__similar-head">
+          <h2 class="request-detail__section-title">Ähnliche Suchaufträge</h2>
+        </div>
+        {#
+          Presentation placeholder only — per the task spec, no
+          matching/query logic is implemented here. There is no
+          existing "similar requests" region or block anywhere in the
+          codebase to preserve (only the unrelated front-page
+          "search_requests" View), so this stays a static placeholder
+          until that feature is actually built.
+        #}
+        <p class="request-detail__similar-placeholder">Passende Suchaufträge werden hier bald angezeigt.</p>
+      </section>
+
+    </main>
+
+    <aside class="request-detail__sidebar">
+      <div class="request-sidebar__card">
+        <h2 class="request-sidebar__title">Angebot senden</h2>
+        <p class="request-sidebar__text">
+          Machen Sie dem Suchenden ein passendes Angebot für diesen Suchauftrag.
+        </p>
+        {#
+          UI only, per the task spec — no messaging/offer/notification
+          logic, no submit handler. Left visually identical to a real
+          primary button (not a disabled/greyed-out one) so it reads
+          as a legitimate, upcoming action rather than a broken control.
+        #}
+        <button type="button" class="btn btn--primary btn--block">Angebot senden</button>
+      </div>
+    </aside>
+
+  </div>
+</div>

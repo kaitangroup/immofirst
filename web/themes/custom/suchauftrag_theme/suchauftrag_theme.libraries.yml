@@ -25,3 +25,14 @@ auth:
       css/auth.css: {}
   dependencies:
     - suchauftrag_theme/global
+
+# NEW library — used only by templates/node--search-request.html.twig
+# via {{ attach_library('suchauftrag_theme/search-request-detail') }}.
+# Same reasoning as "auth" above: kept separate from "global" so no
+# other page's CSS payload changes.
+search-request-detail:
+  css:
+    theme:
+      css/search-request-detail.css: {}
+  dependencies:
+    - suchauftrag_theme/global

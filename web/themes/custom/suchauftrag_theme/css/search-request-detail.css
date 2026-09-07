@@ -1,0 +1,237 @@
+/**
+ * search-request-detail.css
+ * Styles for node--search-request.html.twig (the search_request
+ * content type's detail page). Attached only on that page via
+ * {{ attach_library('suchauftrag_theme/search-request-detail') }} —
+ * same pattern as css/auth.css — so no other page's CSS payload
+ * changes. Reuses existing tokens (css/style.css) and existing
+ * components (.badge, .btn, .stat-item from css/components.css)
+ * rather than redefining them.
+ */
+
+ .request-detail__back{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-size:14px;
+  font-weight:600;
+  color:var(--primary);
+  margin-bottom:24px;
+}
+
+.request-detail__grid{
+  display:grid;
+  grid-template-columns:2fr 1fr;
+  gap:32px;
+  align-items:start;
+}
+
+.request-detail__main{
+  display:flex;
+  flex-direction:column;
+  gap:32px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);
+  padding:32px;
+}
+
+/* ===== Header ===== */
+.request-detail__header-top{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+}
+.request-detail__days-ago{
+  font-size:13.5px;
+  color:var(--muted);
+}
+.request-detail__title{
+  font-size:28px;
+  margin-bottom:10px;
+}
+.request-detail__location{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:14.5px;
+  color:var(--muted);
+  margin-bottom:24px;
+}
+.request-detail__location svg{ flex-shrink:0; color:var(--primary); }
+
+.request-detail__stats{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+  padding-top:20px;
+  border-top:1px solid var(--border);
+}
+/* Page-scoped wrapper that gives each requirement its own clean
+   bordered "card" (per spec section 5) — deliberately NOT applied to
+   .stat-item itself, since that class is shared with property-card
+   elsewhere and must not change there (section 10: no global
+   overrides of unrelated components). */
+.request-detail__stat{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:14px 18px;
+  min-width:120px;
+}
+/* .stat-item / __icon / __value / __label already styled in
+   components.css — only the icon size differs slightly here (18px vs
+   the property-card's 16px), which is set inline on the SVG itself. */
+
+/* ===== Generic content sections ===== */
+.request-detail__section{
+  padding-top:28px;
+  border-top:1px solid var(--border);
+}
+.request-detail__section-title{
+  font-size:18px;
+  margin-bottom:16px;
+}
+
+/* ===== Criteria list ===== */
+.criteria-list{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.criteria-list__row{
+  display:grid;
+  grid-template-columns:22px minmax(140px, 220px) 1fr;
+  align-items:start;
+  gap:12px 16px;
+  font-size:14.5px;
+}
+.criteria-list__icon{
+  color:var(--primary);
+  margin-top:2px;
+}
+.criteria-list__label{
+  font-weight:700;
+  padding-top:6px;
+}
+.criteria-list__value{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+/* Individual criterion — compact bordered chip (section 6: "can use
+   compact bordered/chip-like elements where appropriate"). Purely
+   generic: styled by structure/position only, never by a criterion's
+   own text, so any valid taxonomy term renders identically. */
+.criteria-chip{
+  display:inline-flex;
+  align-items:center;
+  padding:6px 12px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  font-size:13.5px;
+  font-weight:500;
+  color:var(--text);
+  background:var(--surface);
+  line-height:1.3;
+}
+
+/* ===== Notes ===== */
+.request-detail__notes{
+  color:var(--text);
+  font-size:15px;
+  line-height:1.6;
+}
+
+/* ===== Metadata ===== */
+.request-detail__meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:32px;
+}
+.request-detail__meta-label{
+  display:block;
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:4px;
+}
+.request-detail__meta-value{
+  display:block;
+  font-size:14.5px;
+  font-weight:600;
+  color:var(--text);
+}
+
+/* ===== Similar requests (placeholder) ===== */
+.request-detail__similar-head{ margin-bottom:4px; }
+.request-detail__similar-placeholder{
+  font-size:14px;
+  color:var(--muted);
+}
+
+/* ===== Sidebar ===== */
+.request-sidebar__card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);
+  padding:28px;
+  position:sticky;
+  top:calc(var(--header-height) + 24px);
+}
+.request-sidebar__title{
+  font-size:18px;
+  margin-bottom:10px;
+}
+.request-sidebar__text{
+  font-size:14px;
+  color:var(--muted);
+  margin-bottom:20px;
+}
+
+/* ===== Responsive =====
+ * Reuses the theme's own 3-tier breakpoint scheme from
+ * css/responsive.css (1024 tablet / 780 mobile-nav-switch / 640
+ * mobile) instead of inventing new ones. Per spec section 8:
+ * desktop = 2 columns; tablet = STILL 2 columns, just tighter gap/
+ * spacing; mobile = 1 column, main content before the sidebar (already
+ * true by DOM order — main comes before aside in the markup, so no
+ * CSS `order` is needed). */
+@media (max-width: 1024px){
+  .request-detail__grid{
+    gap:20px;
+  }
+  .request-detail__main{
+    padding:24px;
+    gap:24px;
+  }
+  .request-detail__stats{ gap:12px; }
+  .request-sidebar__card{ padding:22px; }
+}
+
+@media (max-width: 780px){
+  .request-detail__grid{
+    grid-template-columns:1fr;
+  }
+  .request-sidebar__card{
+    position:static;
+  }
+}
+
+@media (max-width: 640px){
+  .request-detail__title{ font-size:22px; }
+  .request-detail__main{ padding:20px; gap:24px; }
+  .request-detail__stat{ min-width:0; flex:1 1 45%; }
+  .criteria-list__row{
+    grid-template-columns:20px 1fr;
+    grid-template-areas:
+      "icon label"
+      ".    value";
+  }
+  .criteria-list__icon{ grid-area:icon; }
+  .criteria-list__label{ grid-area:label; padding-top:0; }
+  .criteria-list__value{ grid-area:value; }
+}
