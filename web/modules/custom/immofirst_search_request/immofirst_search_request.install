@@ -68,8 +68,8 @@ function immofirst_search_request_install(): void {
   }
 
   _immofirst_search_request_install_search_request_type();
-  _immofirst_search_request_install_search_criteria_vocabulary();
-  _immofirst_search_request_install_search_criteria_terms();
+ // _immofirst_search_request_install_search_criteria_vocabulary();
+ // _immofirst_search_request_install_search_criteria_terms();
   _immofirst_search_request_convert_field_criteria_to_reference();
 }
 
@@ -120,6 +120,11 @@ function immofirst_search_request_update_11002(): void {
   _immofirst_search_request_install_search_criteria_vocabulary();
   _immofirst_search_request_install_search_criteria_terms();
   _immofirst_search_request_convert_field_criteria_to_reference();
+}
+
+function immofirst_search_request_update_11003(): void {
+  _immofirst_search_request_install_search_criteria_vocabulary();
+  _immofirst_search_request_install_search_criteria_terms();
 }
 
 /**
