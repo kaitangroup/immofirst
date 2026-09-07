@@ -433,6 +433,18 @@ final class SearchRequestWizardForm extends FormBase {
         $form['step_footer'] = [
           '#markup' => Markup::create($this->buildPrivacyNote()),
         ];
+
+        // Step 4 "please check your fields" summary banner: only
+        // appears on the rebuild that follows a failed "Suchauftrag
+        // anlegen" submit (i.e. once validateForm() has actually set
+        // errors against this step's fields — never on first load).
+        // Placed after step_footer so it renders last, matching the
+        // design's position below the privacy note.
+        if ($form_state->getErrors()) {
+          $form['step_footer_validation'] = [
+            '#markup' => Markup::create($this->buildValidationSummary()),
+          ];
+        }
       }
     }
 
@@ -823,6 +835,16 @@ SVG,
       'chevron-down' => <<<SVG
 <svg {$attrs} stroke-width="1.8">
   <path d="M5.5 8.5 12 15l6.5-6.5"/>
+</svg>
+SVG,
+      /* Step 4 validation summary banner icon — a solid (not
+         outline-style, unlike every other icon above) red circle with
+         a white "!", per the design. See buildValidationSummary(). */
+      'alert-circle-filled' => <<<SVG
+<svg {$attrs}>
+  <circle cx="12" cy="12" r="10" fill="#E02424" stroke="none"/>
+  <rect x="11" y="6.5" width="2" height="7.5" rx="1" fill="#fff" stroke="none"/>
+  <circle cx="12" cy="16.8" r="1.15" fill="#fff" stroke="none"/>
 </svg>
 SVG,
       default => '',
@@ -1320,32 +1342,64 @@ SVG,
   private function buildStep4(array &$form, FormStateInterface $form_state): void {
     $stored = $this->session->getStepData('step5');
 
+    // Errors already set by the PREVIOUS validation pass (Drupal
+    // rebuilds the form — calling buildForm()/buildStep4() again in
+    // the same request — before redisplaying it after a failed
+    // submit). Keyed the same way Drupal's own required-field
+    // validation keys them: the '][' -joined '#parents' of the
+    // element, e.g. 'step_content][firstname'. Reading them here lets
+    // each field render its OWN error directly underneath itself
+    // (FIX: validation presentation), instead of relying on the
+    // theme's default error theming, which is what was producing the
+    // duplicate/global-only presentation described in the bug report.
+    $errors = $form_state->getErrors();
+
     $form['step_content']['firstname'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Vorname'),
-      // '#required' => TRUE, // TEMP: button validation disabled for now
+      '#required' => TRUE,
+      '#required_error' => $this->t('Bitte geben Sie Ihren Namen ein.'),
       '#placeholder' => $this->t('z. B. Max'),
       '#default_value' => $stored['firstname'] ?? '',
       '#attributes' => ['class' => ['wizard-input']],
+      // Set unconditionally (NOT only once we know there's an error):
+      // finalizeValidation() checks THIS SAME initial build — the one
+      // handed to validateForm() before any error exists yet — so the
+      // flag has to already be present here, not added later once
+      // $form_state->getErrors() is populated. See
+      // attachInlineFieldError()'s docblock for what it does.
+      '#error_no_message' => TRUE,
     ];
+    $this->attachInlineFieldError($form['step_content']['firstname'], $errors, 'step_content][firstname', 'firstname-error');
 
     $form['step_content']['lastname'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Nachname'),
-      // '#required' => TRUE, // TEMP: button validation disabled for now
+      '#required' => TRUE,
+      '#required_error' => $this->t('Bitte geben Sie Ihren Namen ein.'),
       '#placeholder' => $this->t('z. B. Mustermann'),
       '#default_value' => $stored['lastname'] ?? '',
       '#attributes' => ['class' => ['wizard-input']],
+      '#error_no_message' => TRUE,
     ];
+    $this->attachInlineFieldError($form['step_content']['lastname'], $errors, 'step_content][lastname', 'lastname-error');
 
     $form['step_content']['email'] = [
       '#type' => 'email',
       '#title' => $this->t('E-Mail-Adresse'),
-      // '#required' => TRUE, // TEMP: button validation disabled for now
+      '#required' => TRUE,
+      '#required_error' => $this->t('Bitte geben Sie Ihre E-Mail-Adresse ein.'),
       '#placeholder' => $this->t('z. B. max@mustermann.de'),
       '#default_value' => $stored['email'] ?? '',
       '#attributes' => ['class' => ['wizard-input']],
+      '#error_no_message' => TRUE,
     ];
+    // Covers BOTH the empty-field case (#required_error above) and
+    // Drupal core's own "not a valid email address" message from the
+    // '#type' => 'email' element — whichever one $form_state actually
+    // holds for this field is what gets shown, so the existing email
+    // format validation (untouched) is preserved as-is per FIX 6.
+    $this->attachInlineFieldError($form['step_content']['email'], $errors, 'step_content][email', 'email-error');
 
     $form['step_content']['phone_group'] = [
       '#type' => 'container',
@@ -1371,21 +1425,108 @@ SVG,
           '#type' => 'tel',
           '#title' => $this->t('WhatsApp-Nummer'),
           '#title_display' => 'invisible',
-          // '#required' => TRUE, // TEMP: button validation disabled for now
+          '#required' => TRUE,
+          '#required_error' => $this->t('Bitte geben Sie Ihre WhatsApp-Nummer ein.'),
           '#placeholder' => $this->t('z. B. 171 1234567'),
           '#default_value' => $stored['phone_local'] ?? '',
           '#attributes' => ['class' => ['wizard-input', 'wizard-phone-group__number']],
+          // Set unconditionally — see the firstname field's comment
+          // above for why this can't wait until $errors is populated.
+          '#error_no_message' => TRUE,
         ],
       ],
     ];
 
+    // The WhatsApp error belongs to the field AS A WHOLE (country +
+    // number), so — per FIX 10.7 — it's rendered once, as a sibling
+    // AFTER the 'fields' row, rather than attached to just the
+    // 'phone' sub-element (which would visually wedge it inside that
+    // one flex/grid column instead of under the full row).
+    $phoneErrorKey = 'step_content][phone_group][fields][phone';
+    if (isset($errors[$phoneErrorKey])) {
+      $form['step_content']['phone_group']['fields']['phone_country']['#attributes']['class'][] = 'error';
+      $form['step_content']['phone_group']['fields']['phone']['#attributes']['class'][] = 'error';
+      $form['step_content']['phone_group']['fields']['phone']['#attributes']['aria-invalid'] = 'true';
+      $form['step_content']['phone_group']['fields']['phone']['#attributes']['aria-describedby'] = 'phone-error';
+
+      $form['step_content']['phone_group']['error'] = [
+        '#markup' => Markup::create($this->inlineFieldErrorMarkup('phone-error', (string) $errors[$phoneErrorKey])),
+      ];
+    }
+
     $form['step_content']['consent'] = [
       '#type' => 'checkbox',
       '#title' => Markup::create($this->consentLabelMarkup()),
-      // '#required' => TRUE, // TEMP: button validation disabled for now
+      // '#required' => TRUE, // TEMP: button validation disabled for now — not shown in the reference validation screenshot, left as-is
       '#default_value' => $stored['consent'] ?? FALSE,
       '#attributes' => ['class' => ['wizard-checkbox']],
     ];
+  }
+
+  /**
+   * Attaches an existing $form_state validation error to one Step 4
+   * field so it renders directly underneath that field, instead of
+   * (only) in Drupal's global status-message / AJAX message area.
+   *
+   * Does NOT add, remove, or reword any validation rule or message —
+   * it only reads whatever message Drupal's own validation (required
+   * fields, the email element's built-in format check, etc.) already
+   * put into $form_state for this element, per FIX 3/6.
+   *
+   * @param array $element
+   *   The field's render array, by reference (e.g.
+   *   $form['step_content']['firstname']).
+   * @param array<string, mixed> $errors
+   *   $form_state->getErrors(), keyed by the element's '][' -joined
+   *   '#parents' path.
+   * @param string $errorKey
+   *   That key for THIS element, e.g. 'step_content][firstname'.
+   * @param string $errorId
+   *   HTML id for the rendered error message, referenced by the
+   *   field's aria-describedby (FIX 5/19).
+   *
+   * NOTE on '#error_no_message': that property is what stops Drupal
+   * from ALSO surfacing this same error as a top-of-page/AJAX status
+   * message (FIX 10) — see
+   * \Drupal\Core\Form\FormValidator::finalizeValidation(), which
+   * skips its $this->messenger->addError() call for any element
+   * carrying '#error_no_message' => TRUE. It is set directly on each
+   * field's definition in buildStep4() (unconditionally, every
+   * render), NOT here — finalizeValidation() checks the form array
+   * from BEFORE validation ran, i.e. before $form_state->getErrors()
+   * has anything in it, so setting it only once an error is already
+   * known (as this method does for everything else here) would always
+   * be one request too late. The error is still fully tracked in
+   * $form_state either way (server-side validation is untouched, FIX
+   * 11) — this only ever affects where the message is *displayed*.
+   */
+  private function attachInlineFieldError(array &$element, array $errors, string $errorKey, string $errorId): void {
+    if (!isset($errors[$errorKey])) {
+      return;
+    }
+
+    $element['#attributes']['class'][] = 'error';
+    $element['#attributes']['aria-invalid'] = 'true';
+    $element['#attributes']['aria-describedby'] = $errorId;
+
+    // Tightens the gap between the input and its own error message
+    // (see the '.form-item--has-inline-error' rule in wizard.css);
+    // the field's normal spacing to the NEXT field is then restored
+    // by the error message's own margin-bottom.
+    $element['#wrapper_attributes']['class'][] = 'form-item--has-inline-error';
+
+    $element['#suffix'] = Markup::create($this->inlineFieldErrorMarkup($errorId, (string) $errors[$errorKey]));
+  }
+
+  /**
+   * Renders one inline field-error message.
+   *
+   * Reuses the '.form-item--error-message' class already styled in
+   * wizard.css (its small red circular icon, per FIX 4, is drawn
+   * entirely via that class's ::before — no icon library involved).
+   */
+  private function inlineFieldErrorMarkup(string $id, string $message): string {
+    return '<div id="' . $id . '" class="form-item--error-message">' . $message . '</div>';
   }
 
   /**
@@ -1413,6 +1554,29 @@ SVG,
     $text = $this->t('Ihre Daten bleiben vertraulich und werden nicht weitergegeben.');
 
     return '<p class="wizard__privacy-note">' . $this->overviewIcon('lock', 16) . '<span>' . $text . '</span></p>';
+  }
+
+  /**
+   * Builds the Step 4 "please check your fields" banner shown below
+   * the "Suchauftrag anlegen" button after a failed submit attempt.
+   *
+   * Only rendered by buildForm() when $form_state has errors for the
+   * current (step 4) build — see the check right after $form['step_footer']
+   * is set. Purely a summary display; it doesn't add or replace any of
+   * the per-field '#required_error' messages already shown inline by
+   * Drupal core next to each invalid input.
+   */
+  private function buildValidationSummary(): string {
+    $icon = $this->overviewIcon('alert-circle-filled', 28);
+    $line1 = $this->t('Bitte prüfen Sie Ihre Angaben.');
+    $line2 = $this->t('einige Pflichtfelder fehlen noch.');
+
+    return <<<HTML
+<div class="wizard-validation-summary" role="alert">
+  <span class="wizard-validation-summary__icon" aria-hidden="true">{$icon}</span>
+  <p class="wizard-validation-summary__text"><strong>{$line1}</strong><span>{$line2}</span></p>
+</div>
+HTML;
   }
 
   /**

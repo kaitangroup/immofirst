@@ -216,14 +216,95 @@ textarea.form-textarea:focus{
 }
 .form-item--error-message,
 .wizard__step-content .form-item--error-message{
+  display:flex;
+  align-items:flex-start;
+  gap:6px;
   color:var(--if-danger);
   font-size:12.5px;
+  font-weight:600;
   margin-top:6px;
 }
-.wizard__step-content input.error,
+/* Small red "!" badge in front of each inline field error, drawn
+   entirely in CSS (no markup/twig change needed) since Drupal core
+   generates this message text itself. */
+.form-item--error-message::before,
+.wizard__step-content .form-item--error-message::before{
+  content:"!";
+  flex-shrink:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:15px;
+  height:15px;
+  margin-top:1px;
+  border-radius:50%;
+  background:var(--if-danger);
+  color:#fff;
+  font-size:10px;
+  font-weight:700;
+  line-height:1;
+}
+.wizard__step-content input.error:not([type="checkbox"]),
 .wizard__step-content select.error,
 .wizard__step-content textarea.error{
+  border-width:1.5px;
   border-color:var(--if-danger);
+  background:#FFF7F7;
+}
+.wizard__step-content input.error:not([type="checkbox"]):focus,
+.wizard__step-content select.error:focus,
+.wizard__step-content textarea.error:focus{
+  border-color:var(--if-danger);
+  box-shadow:0 0 0 4px rgba(224,36,36,.12);
+}
+/* Step 4 inline field errors (Vorname/Nachname/E-Mail/WhatsApp): a
+ * field carrying its own error sits closer to its message than to
+ * the next field — the message itself then carries the normal
+ * (22px) gap down to whatever comes next. Scoped to '.wizard__step-
+ * content' only, so this never touches error styling elsewhere on
+ * the site. */
+.wizard__step-content .form-item--has-inline-error{
+  margin-bottom:6px;
+}
+.wizard__step-content .form-item--error-message{
+  margin-bottom:22px;
+}
+
+/* ===== Step 4: validation summary banner =====
+ * Shown by buildForm() only on the rebuild after a failed "Suchauftrag
+ * anlegen" submit (once $form_state has errors) — see
+ * buildValidationSummary(). Sits below the privacy note, per the
+ * design: a light red panel with a filled alert-circle icon and a
+ * two-line message. */
+.wizard-validation-summary{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  margin-top:20px;
+  padding:18px 20px;
+  background:#FDEEEE;
+  border:1px solid #F6C6C6;
+  border-radius:14px;
+}
+.wizard-validation-summary__icon{
+  flex-shrink:0;
+  display:inline-flex;
+  margin-top:2px;
+}
+.wizard-validation-summary__text{
+  margin:0;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  font-size:14.5px;
+  line-height:1.4;
+  color:var(--if-danger);
+}
+.wizard-validation-summary__text strong{
+  font-weight:700;
+}
+.wizard-validation-summary__text span{
+  font-weight:500;
 }
 
 /* ===== Step 1: selectable cards (styling Drupal's native
