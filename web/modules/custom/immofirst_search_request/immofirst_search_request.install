@@ -41,25 +41,7 @@ use Drupal\taxonomy\Entity\Vocabulary;
  * search_request architecture is managed by Config Sync.
  */
 function immofirst_search_request_install(): void {
-  if (!FieldStorageConfig::loadByName('node', 'field_search_criteria')) {
-    FieldStorageConfig::create([
-      'field_name' => 'field_search_criteria',
-      'entity_type' => 'node',
-      'type' => 'string_long',
-      'translatable' => TRUE,
-    ])->save();
-  }
 
-  if (!FieldConfig::loadByName('node', 'suchauftrag', 'field_search_criteria')) {
-    FieldConfig::create([
-      'field_name' => 'field_search_criteria',
-      'entity_type' => 'node',
-      'bundle' => 'suchauftrag',
-      'label' => 'Suchkriterien (JSON)',
-      'description' => 'Legacy wizard JSON payload.',
-      'required' => FALSE,
-    ])->save();
-  }
 }
 
 /**
