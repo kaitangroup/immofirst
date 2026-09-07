@@ -9,6 +9,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\immofirst_search_request\Service\SearchCriteriaData;
+use Drupal\immofirst_search_request\Service\SearchCriteriaTermRepository;
 use Drupal\immofirst_search_request\Service\SearchRequestNodeCreator;
 use Drupal\immofirst_search_request\Service\SearchRequestSession;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -238,18 +239,28 @@ final class SearchRequestWizardForm extends FormBase {
    */
   protected SearchRequestNodeCreator $nodeCreator;
 
+  /**
+   * Loads Step 3's checkbox options from the search_criteria taxonomy.
+   *
+   * See the note on $session above; the same applies here.
+   */
+  protected SearchCriteriaTermRepository $criteriaTermRepository;
+
   public function __construct(
     SearchRequestSession $session,
     SearchRequestNodeCreator $nodeCreator,
+    SearchCriteriaTermRepository $criteriaTermRepository,
   ) {
     $this->session = $session;
     $this->nodeCreator = $nodeCreator;
+    $this->criteriaTermRepository = $criteriaTermRepository;
   }
 
   public static function create(ContainerInterface $container): self {
     return new self(
       $container->get('immofirst_search_request.session'),
       $container->get('immofirst_search_request.node_creator'),
+      $container->get('immofirst_search_request.criteria_term_repository'),
     );
   }
 
@@ -258,19 +269,21 @@ final class SearchRequestWizardForm extends FormBase {
    *
    * The Form API stores this form object in the form cache between AJAX
    * requests and restores it via PHP's native unserialize(), which
-   * never runs the constructor (or ::create()). That leaves $session
-   * and $nodeCreator — both typed properties with no default value —
-   * uninitialized on the restored object, causing a fatal "must not be
-   * accessed before initialization" error the first time they're used
-   * (e.g. in persistCurrentStep()). __wakeup() is PHP's hook for this
-   * exact situation: it runs immediately after unserialize() rebuilds
-   * the object, so re-fetching both services from the container here
-   * restores them before any other method can run.
+   * never runs the constructor (or ::create()). That leaves $session,
+   * $nodeCreator, and $criteriaTermRepository — all typed properties
+   * with no default value — uninitialized on the restored object,
+   * causing a fatal "must not be accessed before initialization" error
+   * the first time they're used (e.g. in persistCurrentStep()).
+   * __wakeup() is PHP's hook for this exact situation: it runs
+   * immediately after unserialize() rebuilds the object, so
+   * re-fetching all three services from the container here restores
+   * them before any other method can run.
    */
   public function __wakeup(): void {
     $container = \Drupal::getContainer();
     $this->session = $container->get('immofirst_search_request.session');
     $this->nodeCreator = $container->get('immofirst_search_request.node_creator');
+    $this->criteriaTermRepository = $container->get('immofirst_search_request.criteria_term_repository');
   }
 
   public function getFormId(): string {
@@ -1063,193 +1076,80 @@ SVG,
   }
 
   /**
-   * "Zusätzliche Kriterien" groups, transcribed verbatim from Tab.2.1
-   * of ImmoFirst_260826.xlsx ("Wohnung / Apartment", "Haus / House",
-   * "Grundstück / Land", "Garage / Stellplatz / Garage/parking
-   * space", "Gewerbe" columns). Group headings were identified in the
-   * workbook by bold formatting + a blank separator row above them
-   * (the pattern every unambiguous heading in the sheet follows);
-   * every other cell is a checkbox option under the nearest heading
-   * above it. This replaces the previous shared/incomplete mapping —
-   * nothing here is invented, renamed, merged, or translated from
-   * what the workbook contains, with two documented exceptions where
-   * the raw cell data itself is ambiguous:
-   *
-   * - Grundstück "Erschlossen": in the workbook this cell is NOT
-   *   bold and has NO blank row above it (unlike every other
-   *   heading), so it fails both of the sheet's own heading signals.
-   *   Read literally it would just be a 4th option tacked onto
-   *   "Bebauung". It's kept here as its own group — heading
-   *   "Erschlossen", options [Erschlossen, Teilerschlossen, Nicht
-   *   erschlossen] — because that's what the already-shipped,
-   *   design-approved UI renders (a dedicated "Erschlossen" card with
-   *   exactly those 3 chips), and a heading with only 2 of its 3
-   *   natural states selectable would be a broken control either way.
-   *   Flagged here for the client to confirm/fix at the source.
-   * - "Beim Kauf": bold in every column's "Bonität & zusätzliche
-   *   Angaben" list, but — unlike every real heading — has no blank
-   *   row above it and sits mid-list between "Keine Haustiere" and
-   *   "Finanzierung gesichert". Treated as a normal option (matches
-   *   the shipped UI), not a heading; the bolding looks like a sheet
-   *   formatting slip.
-   *
-   * Two labels ("Finanzierung gesichert ", "Eigenkapital vorhanden ")
-   * have a trailing space in the workbook cell itself; trimmed here
-   * as whitespace normalization only — the words are unchanged.
-   *
-   * Keyed by the same property-type machine values Step 2's cards
-   * already submit (apartment/house/land/garage), plus 'commercial'
-   * for the workbook's "Gewerbe" column — Tab.2.1 gives Gewerbe only
-   * one group ("Bonität & zusätzliche Angaben"), included here for
-   * completeness even though Step 2 has no "Gewerbe" card yet (out of
-   * scope for this fix — Step 2's cards were not touched).
-   *
-   * @var array<string, array<string, string[]>>
+   * Step 3's checkbox groups (previously the hardcoded CRITERIA_GROUPS
+   * constant, a verbatim transcription of Tab.2.1 of
+   * ImmoFirst_260826.xlsx) now live as taxonomy terms in the
+   * "search_criteria" vocabulary instead — see
+   * immofirst_search_request.install's
+   * _immofirst_search_request_criteria_term_definitions() for the
+   * same Excel-sourced data (including the two documented exceptions,
+   * Grundstück's "Erschlossen" and the "Beim Kauf" sub-category, both
+   * handled exactly as before) and SearchCriteriaTermRepository for
+   * how buildStep3() below loads and groups them per Objektart.
    */
-  private const CRITERIA_GROUPS = [
-    'apartment' => [
-      'Ausstattung' => [
-        'Balkon', 'Terrasse', 'Garten / Gartennutzung', 'Aufzug', 'Keller',
-        'Abstellraum', 'Gäste-WC', 'Einbauküche', 'Barrierefrei / barrierearm',
-        'Seniorengerecht', 'Kamin', 'Fußbodenheizung', 'Klimaanlage', 'Smart-Home-System',
-      ],
-      'Gebäude & Zustand' => [
-        'Neubau', 'Erstbezug', 'Erstbezug nach Sanierung', 'Renoviert / saniert', 'Denkmalgeschützt',
-      ],
-      'Parkmöglichkeiten' => [
-        'Garage', 'Doppelgarage', 'Carport', 'Außenstellplätze', 'Mit Stromanschluss', 'Mit Wallbox / E-Ladestation',
-      ],
-      'Lage im Gebäude' => [
-        'Erdgeschoss', 'Etagenwohnung', 'Penthouse / Dachgeschoss', 'Maisonette',
-      ],
-      'Außenbereiche' => [
-        'Gemeinschaftsgarten', 'Dachterrasse',
-      ],
-      'Sonstige Kriterien' => [
-        'Haustiere erlaubt (bei Miete)', 'Möbliert', 'WG-geeignet',
-      ],
-      'Bonität & zusätzliche Angaben' => [
-        'SCHUFA-Auskunft vorhanden', 'Positive Bonität', 'Einkommensnachweise vorhanden',
-        'Selbstauskunft vorhanden', 'Flexible Übergabe / Einzug', 'Langfristiges Interesse',
-        'Nichtraucher', 'Keine Haustiere', 'Beim Kauf', 'Finanzierung gesichert',
-        'Eigenkapital vorhanden', 'Kauf ohne Finanzierung möglich',
-      ],
-    ],
-    'house' => [
-      'Ausstattung' => [
-        'Gäste-WC', 'Kamin', 'Fußbodenheizung', 'Klimaanlage', 'Smart-Home-System',
-        'Sauna', 'Einbauküche', 'Barrierefrei / barrierearm', 'Seniorengerecht',
-      ],
-      'Haustyp' => [
-        'Einfamilienhaus', 'Doppelhaushälfte', 'Reihenhaus', 'Mehrfamilienhaus', 'Bungalow', 'Villa', 'Landhaus',
-      ],
-      'Grundstück & Außenbereich' => [
-        'Garten', 'Terrasse', 'Balkon', 'Wintergarten', 'Pool', 'Gartenhaus',
-      ],
-      'Parkmöglichkeiten' => [
-        'Garage', 'Doppelgarage', 'Carport', 'Außenstellplätze', 'Mit Stromanschluss', 'Mit Wallbox / E-Ladestation',
-      ],
-      'Zustand' => [
-        'Neubau', 'Erstbezug', 'Renovierungsbedürftig', 'Modernisiert', 'Denkmalgeschützt',
-      ],
-      'Nutzung' => [
-        'Einliegerwohnung vorhanden', 'Gewerbliche Nutzung möglich', 'Mehrgenerationenhaus geeignet',
-      ],
-      'Bonität & zusätzliche Angaben' => [
-        'SCHUFA-Auskunft vorhanden', 'Positive Bonität', 'Einkommensnachweise vorhanden',
-        'Selbstauskunft vorhanden', 'Flexible Übergabe / Einzug', 'Langfristiges Interesse',
-        'Nichtraucher', 'Keine Haustiere', 'Beim Kauf', 'Finanzierung gesichert',
-        'Eigenkapital vorhanden', 'Kauf ohne Finanzierung möglich',
-      ],
-    ],
-    'land' => [
-      'Grundstücksart' => [
-        'Baugrundstück', 'Bauerwartungsland', 'Freizeitgrundstück', 'Landwirtschaftliche Fläche', 'Gewerbegrundstück',
-      ],
-      'Bebauung' => [
-        'Sofort bebaubar', 'Mit Baugenehmigung', 'Ohne Baubindung',
-      ],
-      // See the "Erschlossen" note in this constant's docblock.
-      'Erschlossen' => [
-        'Erschlossen', 'Teilerschlossen', 'Nicht erschlossen',
-      ],
-      'Bebauungsmöglichkeiten' => [
-        'Einfamilienhaus möglich', 'Doppelhaus möglich', 'Mehrfamilienhaus möglich', 'Gewerbebebauung möglich',
-      ],
-      'Lage / Besonderheiten' => [
-        'Hanglage', 'Seeblick', 'Feldrandlage', 'Waldnähe', 'Ruhige Lage',
-      ],
-      'Bonität & zusätzliche Angaben' => [
-        'SCHUFA-Auskunft vorhanden', 'Positive Bonität', 'Einkommensnachweise vorhanden',
-        'Selbstauskunft vorhanden', 'Flexible Übergabe / Einzug', 'Langfristiges Interesse',
-        'Nichtraucher', 'Keine Haustiere', 'Beim Kauf', 'Finanzierung gesichert',
-        'Eigenkapital vorhanden', 'Kauf ohne Finanzierung möglich',
-      ],
-    ],
-    'garage' => [
-      'Art' => [
-        'Garage', 'Doppelgarage', 'Tiefgarage', 'Carport', 'Außenstellplatz', 'Duplex-Stellplatz',
-      ],
-      'Nutzung' => [
-        'Abschließbar', 'Überdacht', 'Mit Stromanschluss', 'Mit Wallbox / E-Ladestation',
-      ],
-      'Größe / Nutzung' => [
-        'Für SUV geeignet', 'Für Motorrad geeignet', 'Extra Stauraum vorhand',
-      ],
-      'Bonität & zusätzliche Angaben' => [
-        'SCHUFA-Auskunft vorhanden', 'Positive Bonität', 'Einkommensnachweise vorhanden',
-        'Selbstauskunft vorhanden', 'Flexible Übergabe / Einzug', 'Langfristiges Interesse',
-        'Nichtraucher', 'Keine Haustiere', 'Beim Kauf', 'Finanzierung gesichert',
-        'Eigenkapital vorhanden', 'Kauf ohne Finanzierung möglich',
-      ],
-    ],
-    // Tab.2.1's "Gewerbe" column — one group only, per the workbook.
-    // Not yet reachable from Step 2 (no "Gewerbe" card there); see
-    // this constant's docblock.
-    'commercial' => [
-      'Bonität & zusätzliche Angaben' => [
-        'SCHUFA-Auskunft vorhanden', 'Positive Bonität', 'Einkommensnachweise vorhanden',
-        'Selbstauskunft vorhanden', 'Flexible Übergabe / Einzug', 'Langfristiges Interesse',
-        'Nichtraucher', 'Keine Haustiere', 'Beim Kauf', 'Finanzierung gesichert',
-        'Eigenkapital vorhanden', 'Kauf ohne Finanzierung möglich',
-      ],
-    ],
+
+  /**
+   * The three "Beim Kauf" sub-category options from Tab.2.1, verbatim.
+   *
+   * Per the workbook's note, these only apply when the customer
+   * selected Kaufen — see filterCriteriaOptionsForRequestType(). The
+   * "Beim Kauf" sub-heading itself is never a taxonomy term (see
+   * _immofirst_search_request_criteria_term_definitions()), so unlike
+   * these three it needs no runtime filtering at all — it structurally
+   * cannot appear.
+   *
+   * @var string[]
+   */
+  private const PURCHASE_ONLY_CRITERIA = [
+    'Finanzierung gesichert',
+    'Eigenkapital vorhanden',
+    'Kauf ohne Finanzierung möglich',
   ];
 
   /**
    * Step 3: "Zusätzliche Kriterien" chip groups + notes.
    *
-   * Groups/options come verbatim from self::CRITERIA_GROUPS (a
-   * complete, property-specific transcription of Tab.2.1 — see that
-   * constant's docblock) — nothing here invents or drops an option.
-   * Each option renders as a pill-style chip (checked checkbox
-   * visually hidden, its <label> styled as the chip — see
-   * .wizard-checkbox-grid in wizard.css) instead of a plain checkbox
-   * list, per FIX 5. Only ONE property type's groups render at a
-   * time — the one the visitor picked on Step 2 (falling back to
-   * 'apartment' if, for any reason, that hasn't been set yet) — never
-   * a merged/generic list and never more than one property type's
-   * groups at once.
+   * Groups/options are loaded from the search_criteria taxonomy
+   * vocabulary via SearchCriteriaTermRepository (a complete,
+   * property-specific transcription of Tab.2.1 — see that service and
+   * _immofirst_search_request_criteria_term_definitions()) — nothing
+   * here invents or drops an option. Each option renders as a
+   * pill-style chip (checked checkbox visually hidden, its <label>
+   * styled as the chip — see .wizard-checkbox-grid in wizard.css)
+   * instead of a plain checkbox list, per FIX 5. Only ONE property
+   * type's groups render at a time — the one the visitor picked on
+   * Step 2 (falling back to 'apartment' if, for any reason, that
+   * hasn't been set yet) — never a merged/generic list and never more
+   * than one property type's groups at once.
    */
   private function buildStep3(array &$form, FormStateInterface $form_state): void {
     $propertyType = $this->session->getStepData('step2')['property_type'] ?? 'apartment';
+    $requestType = $this->session->getStepData('step1')['request_type'] ?? 'kaufen';
     $stored = $this->session->getStepData('step4');
+    // Term IDs (int), not label strings — see extractStep4Values().
     $storedCriteria = array_flip($stored['criteria'] ?? []);
 
-    $groups = self::CRITERIA_GROUPS[$propertyType] ?? self::CRITERIA_GROUPS['apartment'];
+    $groups = $this->criteriaTermRepository->groupsForPropertyType($propertyType);
 
     $form['step_content']['#attributes']['data-property-type'] = $propertyType;
 
-    foreach ($groups as $groupLabel => $optionLabels) {
+    foreach ($groups as $groupLabel => $termOptions) {
+      // $termOptions is already [term id => term label], exactly the
+      // shape '#options' needs — no extra machineKey()'d array to
+      // build here (unlike the old label-string version), since the
+      // taxonomy term id itself is a stable, unique option key.
+      $options = $this->filterCriteriaOptionsForRequestType($termOptions, $requestType);
+
+      if (!$options) {
+        continue;
+      }
+
       $groupKey = SearchCriteriaData::machineKey($groupLabel);
 
-      $options = [];
       $defaults = [];
-      foreach ($optionLabels as $optionLabel) {
-        $optionKey = SearchCriteriaData::machineKey($optionLabel);
-        $options[$optionKey] = $optionLabel;
-        if (isset($storedCriteria[$optionKey])) {
-          $defaults[] = $optionKey;
+      foreach (array_keys($options) as $tid) {
+        if (isset($storedCriteria[$tid])) {
+          $defaults[] = $tid;
         }
       }
 
@@ -1290,11 +1190,41 @@ SVG,
   }
 
   /**
+   * Applies Tab.2.1's "Beim Kauf" condition to one criteria group's
+   * term options.
+   *
+   * The three PURCHASE_ONLY_CRITERIA options are only kept for
+   * Kaufen; for Mieten they're simply absent from the render array
+   * (not CSS-hidden), so they can never be checked, submitted, or
+   * persisted for a rental request. A no-op for any group that
+   * doesn't contain these labels (every group except "Bonität &
+   * zusätzliche Angaben").
+   *
+   * @param array<int, string> $options
+   *   One group's [term id => term label] pairs, as loaded from
+   *   SearchCriteriaTermRepository::groupsForPropertyType().
+   * @param string $requestType
+   *   The session's step1 request_type ('kaufen' or 'mieten').
+   *
+   * @return array<int, string>
+   *   The same [term id => term label] pairs, with
+   *   PURCHASE_ONLY_CRITERIA removed unless $requestType is 'kaufen'.
+   */
+  private function filterCriteriaOptionsForRequestType(array $options, string $requestType): array {
+    if ($requestType === 'kaufen') {
+      return $options;
+    }
+
+    return array_diff($options, self::PURCHASE_ONLY_CRITERIA);
+  }
+
+  /**
    * Picks a header icon for a Step 3 criteria group, by keyword.
    *
    * Purely decorative styling — falls back to a generic list icon for
    * any group label that doesn't match a known keyword, so nothing in
-   * self::CRITERIA_GROUPS ever renders without an icon.
+   * a group loaded from SearchCriteriaTermRepository ever renders
+   * without an icon.
    *
    * @return string
    *   A <span> wrapping the icon SVG.
@@ -1759,9 +1689,15 @@ HTML;
   /**
    * Flattens all dynamic checkbox groups' checked options into one list.
    *
+   * Since buildStep3() now keys each checkbox '#options' entry by its
+   * search_criteria taxonomy term id (not a machine-key'd label
+   * string), the checked keys collected here already ARE term ids —
+   * exactly what SearchRequestNodeCreator needs for field_criteria's
+   * entity reference values, with no separate label→term lookup step.
+   *
    * @param array<string, mixed> $values
    *
-   * @return array{criteria: string[], notes: string}
+   * @return array{criteria: int[], notes: string}
    */
   private function extractStep4Values(array $values): array {
     $criteria = [];
@@ -1769,7 +1705,7 @@ HTML;
     foreach ($values['criteria_groups'] ?? [] as $group) {
       $checked = array_filter($group['options'] ?? []);
       foreach (array_keys($checked) as $key) {
-        $criteria[] = $key;
+        $criteria[] = (int) $key;
       }
     }
 

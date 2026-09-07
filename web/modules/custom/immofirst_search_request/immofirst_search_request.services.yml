@@ -8,3 +8,8 @@ services:
     class: Drupal\immofirst_search_request\Service\SearchRequestNodeCreator
     arguments:
       - '@entity_type.manager'
+
+  immofirst_search_request.criteria_term_repository:
+    class: Drupal\immofirst_search_request\Service\SearchCriteriaTermRepository
+    arguments:
+      - '@entity_type.manager'
