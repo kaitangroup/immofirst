@@ -455,9 +455,12 @@ textarea.form-textarea:focus{
 }
 
 /* ===== Step 3: criteria group cards + checkbox pills =====
- * Always-open cards (not collapsible accordions): each group is a
- * static bordered card with an icon + title header and its checkbox
- * pills always visible below.
+ * Each group is a bordered card with an icon + title header. The
+ * FIRST card ("Ausstattung der Wohnung", .is-always-open) always
+ * shows its checkbox pills below and cannot be collapsed. Every
+ * other card (.is-collapsible) is a click/keyboard-toggleable
+ * accordion section, collapsed by default — see wizard.js for the
+ * toggle behavior and the header chevron's rotation below.
  *
  * REAL DOM (same underlying Drupal quirk as the Step 1 radios fix
  * above): 'options' (#type => checkboxes) has no #title of its own,
@@ -505,6 +508,60 @@ textarea.form-textarea:focus{
   background:var(--if-primary-bg);
   color:var(--if-primary);
   flex-shrink:0;
+}
+/* Header row layout: lets the trailing chevron sit flush right of the
+   icon + title, on the same line, without touching the icon/title
+   styling above. '.fieldset-legend' is the real element '#title'
+   content renders inside (see the REAL DOM note above) — the
+   <legend> itself only ever has this one child. */
+.wizard-criteria-card > legend{
+  width:100%;
+}
+.wizard-criteria-card > legend > .fieldset-legend{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  width:100%;
+}
+.wizard-criteria-card__chevron{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-left:auto;
+  flex-shrink:0;
+  color:var(--if-primary);
+  transition:transform .18s ease;
+}
+.wizard-criteria-card__chevron svg{
+  display:block;
+}
+/* Always-open card: chevron stays pointed up, permanently, and its
+   header never gets pointer/keyboard affordances — there is nothing
+   to toggle. */
+.wizard-criteria-card.is-always-open .wizard-criteria-card__chevron{
+  transform:rotate(180deg);
+}
+/* Collapsible cards: collapsed by default (content hidden), chevron
+   pointing down; clicking/activating the header (wizard.js) adds
+   'is-expanded', which reveals the content and flips the chevron to
+   match the always-open card's "up" look. */
+.wizard-criteria-card.is-collapsible > legend{
+  cursor:pointer;
+  user-select:none;
+}
+.wizard-criteria-card.is-collapsible > legend:focus-visible{
+  outline:2px solid var(--if-primary);
+  outline-offset:2px;
+  border-radius:8px;
+}
+.wizard-criteria-card.is-collapsible .fieldset-wrapper{
+  display:none;
+}
+.wizard-criteria-card.is-collapsible.is-expanded .fieldset-wrapper{
+  display:block;
+}
+.wizard-criteria-card.is-collapsible.is-expanded .wizard-criteria-card__chevron{
+  transform:rotate(180deg);
 }
 .wizard-checkbox-grid{
   display:block;

@@ -818,6 +818,13 @@ SVG,
   <path d="M7 9.5l.6 2M10.5 8.9l.6 2M14 8.3l.6 2M17.5 7.7l.6 2"/>
 </svg>
 SVG,
+      /* Step 3 card-header chevron (open/collapsible indicator) — see
+         criteriaGroupChevron(). */
+      'chevron-down' => <<<SVG
+<svg {$attrs} stroke-width="1.8">
+  <path d="M5.5 8.5 12 15l6.5-6.5"/>
+</svg>
+SVG,
       default => '',
     };
   }
@@ -1133,6 +1140,16 @@ SVG,
 
     $form['step_content']['#attributes']['data-property-type'] = $propertyType;
 
+    // Per the client's Step 3 accordion requirement: the FIRST criteria
+    // group ("Ausstattung der Wohnung") always stays open and is not
+    // collapsible; every subsequent group is a collapsible accordion
+    // section, collapsed by default. This flag is the only thing that
+    // decides which of the two a given group becomes — purely a
+    // rendering/markup distinction (see is-always-open/is-collapsible
+    // below and wizard.js's accordion behavior), it does not change
+    // which groups load, their options, or their order.
+    $isFirstGroup = TRUE;
+
     foreach ($groups as $groupLabel => $termOptions) {
       // $termOptions is already [term id => term label], exactly the
       // shape '#options' needs — no extra machineKey()'d array to
@@ -1153,10 +1170,24 @@ SVG,
         }
       }
 
+      // Card-level modifier class: 'is-always-open' for the first group
+      // (no collapse behavior at all — see wizard.js, which never
+      // attaches its accordion toggle to this class), 'is-collapsible'
+      // for every group after it (collapsed by default via wizard.css;
+      // wizard.js adds the click/keyboard toggle that flips
+      // 'is-expanded'). This is the only per-group difference; the
+      // fieldset, its icon, and its checkbox options are built exactly
+      // the same way either way.
+      $stateClass = $isFirstGroup ? 'is-always-open' : 'is-collapsible';
+
       $form['step_content']['criteria_groups'][$groupKey] = [
         '#type' => 'fieldset',
-        '#title' => Markup::create($this->criteriaGroupIcon($groupLabel) . '<span>' . $groupLabel . '</span>'),
-        '#attributes' => ['class' => ['wizard-criteria-card']],
+        '#title' => Markup::create(
+          $this->criteriaGroupIcon($groupLabel)
+          . '<span>' . $groupLabel . '</span>'
+          . $this->criteriaGroupChevron()
+        ),
+        '#attributes' => ['class' => ['wizard-criteria-card', $stateClass]],
         'options' => [
           '#type' => 'checkboxes',
           '#options' => $options,
@@ -1177,6 +1208,8 @@ SVG,
           '#suffix' => '</div>',
         ],
       ];
+
+      $isFirstGroup = FALSE;
     }
 
     $form['step_content']['notes'] = [
@@ -1248,6 +1281,33 @@ SVG,
     };
 
     return '<span class="wizard-criteria-card__icon">' . $this->overviewIcon($icon, 18) . '</span>';
+  }
+
+  /**
+   * The open/collapsible indicator chevron in a Step 3 card header.
+   *
+   * Purely decorative/state-indicating — wizard.css rotates it to
+   * point up for an always-open or expanded card and down for a
+   * collapsed one; wizard.js is what actually toggles 'is-expanded' on
+   * click for collapsible cards. This markup itself is identical
+   * either way (aria-hidden, no interactive attributes of its own —
+   * the click/keyboard handling targets the card's <legend>).
+   *
+   * The same markup is used for the always-open card and every
+   * collapsible one — wizard.css's .is-always-open/.is-collapsible
+   * rules are what actually rotate it, based on the card's own class,
+   * so this helper needs no arguments.
+   *
+   * @return string
+   *   A <span> wrapping the chevron SVG.
+   */
+  private function criteriaGroupChevron(): string {
+    // Purely visual; the accordion's actual accessible state
+    // (role="button"/aria-expanded) is set by wizard.js on the card's
+    // <legend>, not here.
+    return '<span class="wizard-criteria-card__chevron" aria-hidden="true">'
+      . $this->overviewIcon('chevron-down', 18)
+      . '</span>';
   }
 
   /**

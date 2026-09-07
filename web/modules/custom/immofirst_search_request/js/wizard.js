@@ -150,6 +150,43 @@
       });
 
       /* ============================================
+         Step 3: criteria card accordion.
+
+         Only cards carrying '.is-collapsible' (every
+         group after the first, "Ausstattung der
+         Wohnung") get a toggle at all — the first
+         card's '.is-always-open' class is never
+         selected here, so it has no click handler and
+         can't be collapsed. Toggling only flips a
+         presentation class ('is-expanded') on the card
+         and updates aria-expanded on its header; it
+         never touches the checkboxes inside, so
+         selections, session persistence, and the
+         "Weiter" AJAX step change are all unaffected.
+         ============================================ */
+      once('immofirst-criteria-accordion', '.wizard-criteria-card.is-collapsible', context).forEach(function (card) {
+        var legend = card.querySelector('legend');
+        if (!legend) { return; }
+
+        legend.setAttribute('role', 'button');
+        legend.setAttribute('tabindex', '0');
+        legend.setAttribute('aria-expanded', card.classList.contains('is-expanded') ? 'true' : 'false');
+
+        var toggle = function () {
+          var expanded = card.classList.toggle('is-expanded');
+          legend.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        };
+
+        legend.addEventListener('click', toggle);
+        legend.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+            event.preventDefault();
+            toggle();
+          }
+        });
+      });
+
+      /* ============================================
          Step 5 success screen: copy the reference
          number ("SA-2026-000123") to the clipboard
          when its button is clicked, with a brief
