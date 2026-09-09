@@ -97,10 +97,12 @@ final class SearchRequestNodeCreator {
    *   - step1: request_type
    *   - step2: property_type
    *   - step3: location, radius, plus whichever of
-   *     area/rooms/price/land_size (each {min,max}) and
+   *     area/rooms/price/lease_price/land_size (each {min,max}) and
    *     baujahr/usage/parking_type/vehicle_type/commercial_type apply
    *     for the selected request_type + property_type
-   *     (see SearchRequestWizardForm::step2FieldsForSelection()).
+   *     (see SearchRequestWizardForm::step2FieldsForSelection()) —
+   *     lease_price only appears for Mieten + Grundstück, in place of
+   *     price.
    *   - step4: criteria (string[] of machine keys), notes
    *   - step5: firstname, lastname, email, phone, consent
    *
@@ -139,6 +141,13 @@ final class SearchRequestNodeCreator {
       'field_rooms_max' => $this->numOrNull($step3['rooms']['max'] ?? NULL),
       'field_price_min' => $this->numOrNull($step3['price']['min'] ?? NULL),
       'field_price_max' => $this->numOrNull($step3['price']['max'] ?? NULL),
+      // Mieten + Grundstück only: a dedicated "Pachtpreis" range,
+      // deliberately its own field rather than reusing
+      // field_price_min/max — a ground rent/lease price is a distinct
+      // concept from a Grundstück's purchase price (Kaufen +
+      // Grundstück still uses field_price_min/max above).
+      'field_lease_price_min' => $this->numOrNull($step3['lease_price']['min'] ?? NULL),
+      'field_lease_price_max' => $this->numOrNull($step3['lease_price']['max'] ?? NULL),
       'field_construction_year' => (string) ($step3['baujahr'] ?? ''),
       'field_land_size_min' => $this->intOrNull($step3['land_size']['min'] ?? NULL),
       'field_land_size_max' => $this->intOrNull($step3['land_size']['max'] ?? NULL),

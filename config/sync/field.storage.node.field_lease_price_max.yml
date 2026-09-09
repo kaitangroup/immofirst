@@ -1,0 +1,20 @@
+uuid: 107da7bb-bf6a-4ec2-9a7e-67bf9e2da68b
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_lease_price_max
+field_name: field_lease_price_max
+entity_type: node
+type: decimal
+settings:
+  precision: 12
+  scale: 2
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

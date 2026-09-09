@@ -1,0 +1,25 @@
+uuid: 3ebf7199-062a-4ddc-b409-0dda649d9dee
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_lease_price_max
+    - node.type.search_request
+  module:
+    - node
+id: node.search_request.field_lease_price_max
+field_name: field_lease_price_max
+entity_type: node
+bundle: search_request
+label: 'Pachtpreis max. (€)'
+description: 'Mieten + Grundstück only (see step2FieldsForSelection() in SearchRequestWizardForm). Maximum monthly ground rent / lease price. Empty means "Egal" — never populated for any other Anfrageart/Objektart combination.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: 0.0
+  max: null
+  prefix: ''
+  suffix: ' €'
+field_type: decimal

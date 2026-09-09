@@ -29,6 +29,91 @@ function immofirst_search_request_theme(array $existing, string $type, string $t
 }
 
 /**
+ * Implements hook_node_view().
+ *
+ * Adds a computed "Pachtpreis" row to the search_request detail page
+ * (node canonical view), Mieten + Grundstück only — field_lease_price_
+ * min/max is only ever populated for that one combination (see
+ * SearchRequestWizardForm::step2FieldsForSelection()), so this is a
+ * no-op for every other request_type/property_type pairing without
+ * needing to check them explicitly. Hidden entirely when both min and
+ * max are empty, per spec.
+ *
+ * Deliberately implemented here rather than in the theme: this only
+ * adds a new render array key to the node's existing $build (standard
+ * Drupal API, no theme template or CSS involved), so it can't affect
+ * Kaufen/Wohnung/Haus/Garage/Gewerbe's existing markup or styling.
+ */
+function immofirst_search_request_node_view(array &$build, \Drupal\node\NodeInterface $node, \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display, string $view_mode): void {
+  if ($node->bundle() !== 'search_request') {
+    return;
+  }
+
+  if (!$node->hasField('field_request_type') || !$node->hasField('field_property_type')
+    || !$node->hasField('field_lease_price_min') || !$node->hasField('field_lease_price_max')) {
+    // Fields not yet present on this site (e.g. config not imported
+    // yet) — nothing to show, and nothing to error on.
+    return;
+  }
+
+  if ((string) $node->get('field_request_type')->value !== 'mieten'
+    || (string) $node->get('field_property_type')->value !== 'land') {
+    return;
+  }
+
+  $min = $node->get('field_lease_price_min')->value;
+  $max = $node->get('field_lease_price_max')->value;
+  $minEmpty = $min === NULL || $min === '';
+  $maxEmpty = $max === NULL || $max === '';
+
+  if ($minEmpty && $maxEmpty) {
+    return;
+  }
+
+  $build['field_lease_price_display'] = [
+    '#type' => 'container',
+    '#attributes' => ['class' => ['search-request-pachtpreis']],
+    '#weight' => 40,
+    'label' => [
+      '#type' => 'html_tag',
+      '#tag' => 'div',
+      '#value' => t('Pachtpreis'),
+      '#attributes' => ['class' => ['search-request-pachtpreis__label']],
+    ],
+    'value' => [
+      '#type' => 'html_tag',
+      '#tag' => 'div',
+      '#value' => _immofirst_search_request_format_lease_price_range(
+        $minEmpty ? NULL : (string) $min,
+        $maxEmpty ? NULL : (string) $max,
+      ),
+      '#attributes' => ['class' => ['search-request-pachtpreis__value']],
+    ],
+  ];
+}
+
+/**
+ * Formats a Pachtpreis min/max pair as "500 € – 900 €".
+ *
+ * Open-ended ranges (only one side set) render as "ab 500 €" / "bis
+ * 900 €" instead of a dangling "500 € –"; the both-empty case never
+ * reaches here (see the caller's early return).
+ */
+function _immofirst_search_request_format_lease_price_range(?string $min, ?string $max): string {
+  $format = static fn (string $value): string => number_format((float) $value, 0, ',', '.') . ' €';
+
+  if ($min === NULL) {
+    return t('bis @max', ['@max' => $format($max)])->render();
+  }
+
+  if ($max === NULL) {
+    return t('ab @min', ['@min' => $format($min)])->render();
+  }
+
+  return $format($min) . ' – ' . $format($max);
+}
+
+/**
  * Implements hook_preprocess_HOOK() for search-request-wizard.html.twig.
  *
  * IMPORTANT: because this template overrides the 'form' render element's

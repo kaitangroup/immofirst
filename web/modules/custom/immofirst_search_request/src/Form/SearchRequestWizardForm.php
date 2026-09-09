@@ -34,8 +34,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * layout and still expect wizard data bucketed as step1=request_type,
  * step2=property_type, step3=location/radius/rooms/area/price/baujahr
  * (plus, since Step 2 became conditional on Objektart: land_size,
- * usage, parking_type, vehicle_type, commercial_type — new keys added
- * to the SAME 'step3' bucket, nothing renamed), step4=criteria/notes,
+ * usage, parking_type, vehicle_type, commercial_type, lease_price
+ * (Mieten + Grundstück only) — new keys added to the SAME 'step3'
+ * bucket, nothing renamed), step4=criteria/notes,
  * step5=contact. Since those bucket names are baked into
  * SearchRequestNodeCreator::createFromWizardData() (a file this
  * refactor must not touch), persistCurrentStep() below maps *this*
@@ -196,10 +197,12 @@ final class SearchRequestWizardForm extends FormBase {
    *
    * Shared between Kaufen and Mieten — the price field's label changes
    * per combination (see priceFieldLabel()) and, for Mieten +
-   * Grundstück only, disappears entirely; both are handled as small
-   * exceptions in step2FieldsForSelection() rather than a second,
-   * near-duplicate table, since that's the only place a field actually
-   * disappears rather than just getting relabeled.
+   * Grundstück only, is swapped for a dedicated "Pachtpreis" field
+   * (see field_lease_price_min/max) instead of just being relabeled;
+   * both are handled as small exceptions in step2FieldsForSelection()
+   * rather than a second, near-duplicate table, since that's the only
+   * combination where a field's underlying storage actually differs
+   * rather than just its on-screen label.
    *
    * @var array<string, string[]>
    */
@@ -989,11 +992,20 @@ SVG,
     $fields = self::STEP2_FIELDS_BY_PROPERTY_TYPE[$propertyType]
       ?? self::STEP2_FIELDS_BY_PROPERTY_TYPE['apartment'];
 
-    // The one case where a field disappears outright rather than just
-    // being relabeled by priceFieldLabel(): renting land has no price
-    // field at all, per spec.
+    // The one case where a field's underlying storage actually
+    // changes rather than just its on-screen label: renting land uses
+    // a dedicated "Pachtpreis" range (field_lease_price_min/max), not
+    // the regular Kaufpreis/Kaltmiete field_price_min/max, per the
+    // ImmoFirst Tab.2 spec (a ground rent/lease price is a distinct
+    // concept from a Grundstück's purchase price). Swapping in place
+    // keeps 'lease_price' at the same position 'price' held in
+    // STEP2_FIELDS_BY_PROPERTY_TYPE['land'], i.e. straight after
+    // land_size and before usage.
     if ($requestType === 'mieten' && $propertyType === 'land') {
-      $fields = array_values(array_diff($fields, ['price']));
+      $fields = array_map(
+        static fn (string $field): string => $field === 'price' ? 'lease_price' : $field,
+        $fields,
+      );
     }
 
     return $fields;
@@ -1004,8 +1016,8 @@ SVG,
    *
    * @param string $field
    *   One of the keys returned by step2FieldsForSelection(): area,
-   *   rooms, price, baujahr, land_size, usage, parking_type,
-   *   vehicle_type, or commercial_type.
+   *   rooms, price, lease_price, baujahr, land_size, usage,
+   *   parking_type, vehicle_type, or commercial_type.
    * @param array $stored
    *   The 'step3' TempStore bucket's current values (for defaults).
    * @param string $requestType
@@ -1027,6 +1039,12 @@ SVG,
       ),
       'price' => $this->buildMinMaxPair(
         $this->priceFieldLabel($requestType, $propertyType), $stored['price'] ?? [], $this->t('€'),
+      ),
+      // Mieten + Grundstück only (see step2FieldsForSelection()) —
+      // same shared min/max range component as Kaufpreis/Kaltmiete/
+      // Wohnfläche/Grundstück, just its own field and label.
+      'lease_price' => $this->buildMinMaxPair(
+        $this->t('Pachtpreis (€)'), $stored['lease_price'] ?? [], $this->t('€'),
       ),
       'land_size' => $this->buildMinMaxPair(
         $this->t('Grundstück (m²)'), $stored['land_size'] ?? [], $this->t('m²'),
@@ -1055,9 +1073,9 @@ SVG,
    * Depends on BOTH request type and property type, not just request
    * type: Mieten uses "Kaltmiete" for Wohnung/Haus, "Mietpreis" for
    * Garage, and "Miete" for Gewerbe; Kaufen always uses "Kaufpreis".
-   * (Mieten + Grundstück has no price field at all — filtered out of
-   * the field list in step2FieldsForSelection() before this is ever
-   * called for that combination.)
+   * (Mieten + Grundstück uses a separate "Pachtpreis" field instead of
+   * this one entirely — swapped out in step2FieldsForSelection()
+   * before this is ever called for that combination.)
    */
   private function priceFieldLabel(string $requestType, string $propertyType): TranslatableMarkup {
     if ($requestType !== 'mieten') {
@@ -1897,11 +1915,12 @@ HTML;
    *
    * @return array{min: mixed, max: mixed}|string
    *   A min/max pair for the numeric fields (area, rooms, price,
-   *   land_size), or a plain string for the dropdown fields.
+   *   lease_price, land_size), or a plain string for the dropdown
+   *   fields.
    */
   private function extractStep2FieldValue(string $field, array $values): array|string {
     return match ($field) {
-      'area', 'rooms', 'price', 'land_size' => [
+      'area', 'rooms', 'price', 'lease_price', 'land_size' => [
         'min' => $values[$field]['fields']['min'] ?? NULL,
         'max' => $values[$field]['fields']['max'] ?? NULL,
       ],

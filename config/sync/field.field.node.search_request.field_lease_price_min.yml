@@ -1,0 +1,25 @@
+uuid: 6538d63c-8e98-4d17-b851-786582eceba2
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_lease_price_min
+    - node.type.search_request
+  module:
+    - node
+id: node.search_request.field_lease_price_min
+field_name: field_lease_price_min
+entity_type: node
+bundle: search_request
+label: 'Pachtpreis min. (€)'
+description: 'Mieten + Grundstück only (see step2FieldsForSelection() in SearchRequestWizardForm). Minimum monthly ground rent / lease price. Empty means "Egal" — never populated for any other Anfrageart/Objektart combination.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: 0.0
+  max: null
+  prefix: ''
+  suffix: ' €'
+field_type: decimal
