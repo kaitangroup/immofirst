@@ -6,7 +6,6 @@
  */
 
 use Drupal\Core\Template\Attribute;
-use Drupal\views\ViewExecutable;
 
 /**
  * Implements hook_preprocess_HOOK() for page.html.twig.
@@ -38,17 +37,50 @@ function suchauftrag_theme_preprocess_page(array &$variables) {
 function suchauftrag_theme_preprocess_page__front(array &$variables) {
   suchauftrag_theme_preprocess_page($variables);
 
-  // Build the Search Requests view as a render array (core-only approach —
-  // avoids requiring the contrib Twig Tweak module's drupal_view() function).
-  // Printed in page--front.html.twig as {{ search_requests_view }}.
-  $variables['search_requests_view'] = views_embed_view('search_requests', 'block_1');
+  // Read the search form's submitted GET parameters and pass them to the
+  // View as its exposed input.
+  //
+  // suchauftrag_theme_views_pre_view() further down this file was written
+  // to do exactly this, but hook_views_pre_view() is a general-purpose
+  // hook — Drupal's ModuleHandler only scans enabled MODULES for it
+  // (invokeAll() -> getImplementationInfo() iterates $this->moduleList
+  // only), never theme .theme files. So that function has always been
+  // dead code: it silently never ran, the View's exposed input was
+  // always empty, and every request returned the same unfiltered
+  // (newest-first, first 6) results regardless of the URL. It has been
+  // removed below in favor of this fix, which lives in a hook Drupal
+  // DOES invoke for themes (preprocess hooks) and runs early enough
+  // (before the view is built/executed) to actually affect filtering.
+  //
+  // Only genuinely-provided, non-empty values are passed through — an
+  // absent or empty-string query parameter must mean "no filter on this
+  // field", never "filter for an empty value" (which would incorrectly
+  // hide every result, since no node has e.g. field_request_type_value
+  // stored as an empty string).
+  $request = \Drupal::request();
+  $exposed_input = [];
+  foreach (['art', 'immobilienart', 'ort'] as $filter_identifier) {
+    $value = $request->query->get($filter_identifier);
+    if ($value !== NULL && $value !== '') {
+      $exposed_input[$filter_identifier] = $value;
+    }
+  }
+
+  // Build + execute the Search Requests view ONCE, with that exposed
+  // input, and reuse the same executed $view for both the rendered
+  // block (search_requests_view, printed in page--front.html.twig) and
+  // the result count (search_requests_count) — rather than the previous
+  // code's two separate, independently-unfiltered Views::getView() calls
+  // for the same view. This guarantees the count badge and the actual
+  // results are always counting/showing the exact same filtered set.
+  $variables['search_requests_view'] = [];
   $variables['search_requests_count'] = 0;
 
-  // Pull the real result count from the executed view, if it loaded.
   $view = \Drupal\views\Views::getView('search_requests');
-  if ($view) {
+  if ($view && $view->access('block_1')) {
     $view->setDisplay('block_1');
-    $view->execute();
+    $view->setExposedInput($exposed_input);
+    $variables['search_requests_view'] = $view->preview('block_1');
     $variables['search_requests_count'] = $view->total_rows ?? count($view->result);
   }
 
@@ -575,33 +607,13 @@ function suchauftrag_theme_theme($existing, $type, $theme, $path) {
   ];
 }
 
-/**
- * Implements hook_views_pre_view().
- *
- * templates/components/search-form.html.twig is a plain custom GET
- * form, not Views' own auto-rendered exposed form — so on its own,
- * Views has no idea the visitor just submitted ?art=&immobilienart=&ort=
- * in the URL. This hook is what actually connects the two: it reads
- * those query parameters and feeds them into the View as exposed
- * input before the query executes, for every display of this View
- * (including the "block_1" display embedded on the front page via
- * views_embed_view() in suchauftrag_theme_preprocess_page__front()).
- *
- * Identifiers here MUST match the exposed filter identifiers declared
- * in views.view.search_requests.yml (art, immobilienart, ort) AND the
- * <input>/<select> "name" attributes in search-form.html.twig — all
- * three already agree as of this fix.
+/*
+ * NOTE: this file previously had a suchauftrag_theme_views_pre_view()
+ * implementation here, written to feed the search form's GET parameters
+ * into the search_requests View's exposed input. It has been removed:
+ * hook_views_pre_view() is a general-purpose hook, and Drupal's
+ * ModuleHandler only ever scans enabled MODULES for it — never theme
+ * .theme files — so it silently never ran. The same fix now lives in
+ * suchauftrag_theme_preprocess_page__front() above, in a hook Drupal
+ * actually invokes for themes.
  */
-function suchauftrag_theme_views_pre_view(ViewExecutable $view, $display_id, array &$args) {
-  if ($view->id() !== 'search_requests') {
-    return;
-  }
-
-  $request = \Drupal::request();
-
-  $view->setExposedInput([
-    'art' => $request->query->get('art', ''),
-    'immobilienart' => $request->query->get('immobilienart', ''),
-    'ort' => $request->query->get('ort', ''),
-  ]);
-}

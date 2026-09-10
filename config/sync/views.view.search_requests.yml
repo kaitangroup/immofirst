@@ -7,6 +7,7 @@ dependencies:
     - node.type.suchauftrag
   module:
     - node
+    - options
     - user
 id: search_requests
 label: Suchaufträge
@@ -83,6 +84,125 @@ display:
             suchauftrag: suchauftrag
           expose:
             operator: ''
+        field_request_type_value:
+          id: field_request_type_value
+          table: node__field_request_type
+          field: field_request_type_value
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: list_field
+          operator: or
+          value: {  }
+          group: 1
+          exposed: true
+          expose:
+            operator_id: field_request_type_value_op
+            label: 'Anfrageart '
+            description: ''
+            use_operator: false
+            operator: field_request_type_value_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: art
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+            reduce: false
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+          reduce_duplicates: false
+        field_property_icon_value:
+          id: field_property_icon_value
+          table: node__field_property_icon
+          field: field_property_icon_value
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: list_field
+          operator: or
+          value: {  }
+          group: 1
+          exposed: true
+          expose:
+            operator_id: field_property_icon_value_op
+            label: 'Immobilienart (Icon) (field_property_icon)'
+            description: ''
+            use_operator: false
+            operator: field_property_icon_value_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: immobilienart
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+            reduce: false
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+          reduce_duplicates: false
+        field_location_value:
+          id: field_location_value
+          table: node__field_location
+          field: field_location_value
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: string
+          operator: contains
+          value: ''
+          group: 1
+          exposed: true
+          expose:
+            operator_id: field_location_value_op
+            label: 'Ort oder PLZ (field_location)'
+            description: ''
+            use_operator: false
+            operator: field_location_value_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: ort
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+            placeholder: ''
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
       style:
         type: default
       row:
@@ -99,6 +219,7 @@ display:
           replica: false
           query_tags: {  }
       relationships: {  }
+      use_ajax: true
       header: {  }
       footer: {  }
       display_extenders: {  }
@@ -106,6 +227,7 @@ display:
       max-age: -1
       contexts:
         - 'languages:language_interface'
+        - url
         - 'user.node_grants:view'
         - user.permissions
       tags: {  }
@@ -122,6 +244,7 @@ display:
       max-age: -1
       contexts:
         - 'languages:language_interface'
+        - url
         - 'user.node_grants:view'
         - user.permissions
       tags: {  }

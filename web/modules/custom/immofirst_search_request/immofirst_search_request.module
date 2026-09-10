@@ -146,3 +146,144 @@ function template_preprocess_search_request_wizard(array &$variables): void {
   // actual step markup built in the form class.
   $variables['form'] = $form;
 }
+
+/**
+ * Implements hook_views_pre_view().
+ *
+ * Feeds the homepage's custom search form (a plain <form method="get">
+ * in the theme, not Views' own auto-rendered exposed form — submitting
+ * it just navigates to ?art=..&immobilienart=..&ort=..) into the
+ * search_requests View's exposed input.
+ *
+ * This exact logic previously lived in suchauftrag_theme.theme, as
+ * suchauftrag_theme_views_pre_view(). It never ran: hook_views_pre_view()
+ * is a general-purpose hook, and Drupal's ModuleHandler::invokeAll()
+ * only scans enabled MODULES for hook implementations — via
+ * getImplementationInfo(), which iterates $this->moduleList only — never
+ * theme .theme files (those are limited to hook_preprocess_*(),
+ * hook_theme(), and theme-suggestion hooks). So the exposed input was
+ * always empty and every request returned the same unfiltered result
+ * set regardless of the URL, no matter how the .theme file's version of
+ * this function was written.
+ *
+ * This module IS scanned for hook_views_pre_view(), so implementing it
+ * here actually fires — and it fires for every execution of this view,
+ * however it's triggered (views_embed_view(), the Block Layout system,
+ * a Views UI preview, etc.), which is more robust than any single call
+ * site setting exposed input manually.
+ *
+ * Only genuinely-provided, non-empty query parameters are applied — an
+ * absent or empty value must mean "no filter on this field", never
+ * "filter for an empty value" (which would hide every result, since no
+ * node stores e.g. field_request_type_value as an empty string).
+ *
+ * Starts from the view's own getExposedInput() (which itself already
+ * falls back to the current request's query string) rather than a
+ * blank array, so this only ever adds/overrides these three specific
+ * identifiers instead of discarding any exposed input Views may already
+ * have assembled through some other path.
+ *
+ * ---------------------------------------------------------------------
+ * TEMPORARY DEBUG INSTRUMENTATION (see channel 'immofirst_search_request',
+ * severity DEBUG) — added to determine exactly why filtering still isn't
+ * taking effect, per the outstanding "Views filtering not working"
+ * investigation. Every stage of this function now logs its state. Two
+ * log entries are emitted UNCONDITIONALLY, for every view this fires
+ * for (not just 'search_requests'), specifically so the logs can prove
+ * or disprove "the hook never runs at all" independently of whether
+ * it's the right view. No behavior below has changed — only logging
+ * was added. Remove the \Drupal::logger() calls (and this block) once
+ * the root cause is confirmed and fixed.
+ * ---------------------------------------------------------------------
+ */
+// function immofirst_search_request_views_pre_view(\Drupal\views\ViewExecutable $view, $display_id, array &$args): void {
+//   $logger = \Drupal::logger('immofirst_search_request');
+
+//   // Unconditional — fires for ANY view, before the search_requests
+//   // check below, so the logs alone prove hook_views_pre_view() is
+//   // being invoked at all, regardless of which view triggered it.
+//   $logger->debug('Views pre_view hook called. View ID: @view_id | Display ID: @display_id', [
+//     '@view_id' => $view->id(),
+//     '@display_id' => $display_id,
+//   ]);
+
+//   if ($view->id() !== 'search_requests') {
+//     $logger->debug('Views pre_view hook: skipping view @view_id (not search_requests).', [
+//       '@view_id' => $view->id(),
+//     ]);
+//     return;
+//   }
+
+//   $request = \Drupal::request();
+
+//   $logger->debug('Views pre_view hook: request path = @path | full URI = @uri', [
+//     '@path' => $request->getPathInfo(),
+//     '@uri' => $request->getRequestUri(),
+//   ]);
+
+//   // E. The complete relevant query parameters (raw, exactly as
+//   // received — no normalization applied here, matching the existing
+//   // implementation's behavior; see the DEBUG note logged below about
+//   // this).
+//   $logger->debug('Query parameters: art=@art | immobilienart=@immobilienart | ort=@ort | radius=@radius', [
+//     '@art' => $request->query->get('art') ?? '<absent>',
+//     '@immobilienart' => $request->query->get('immobilienart') ?? '<absent>',
+//     '@ort' => $request->query->get('ort') ?? '<absent>',
+//     '@radius' => $request->query->get('radius') ?? '<absent>',
+//   ]);
+
+//   // D/C. What Views itself actually has configured as the exposed
+//   // filter identifiers for this display, read straight off the live,
+//   // already-initialized display handler — NOT the YAML (which isn't
+//   // available to inspect directly in this environment) and NOT an
+//   // assumption. This is the authoritative answer to "are art /
+//   // immobilienart / ort really the View's exposed-input keys?".
+//   $filter_handlers = [];
+//   foreach ($view->display_handler->getHandlers('filter') as $filter_id => $handler) {
+//     $options = $handler->options ?? [];
+//     $filter_handlers[] = sprintf(
+//       '%s (field/plugin: %s, exposed: %s, identifier: %s)',
+//       $filter_id,
+//       $options['field'] ?? $options['plugin_id'] ?? '?',
+//       !empty($options['exposed']) ? 'yes' : 'no',
+//       $options['expose']['identifier'] ?? '<not exposed>'
+//     );
+//   }
+//   $logger->debug('View @view_id / @display_id configured filters: @filters', [
+//     '@view_id' => $view->id(),
+//     '@display_id' => $display_id,
+//     '@filters' => $filter_handlers ? implode(' | ', $filter_handlers) : '<none found>',
+//   ]);
+
+//   $exposed_input = $view->getExposedInput();
+
+//   // F. Exposed input BEFORE modification.
+//   $logger->debug('Exposed input BEFORE: @before', [
+//     '@before' => json_encode($exposed_input),
+//   ]);
+
+//   foreach (['art', 'immobilienart', 'ort'] as $filter_identifier) {
+//     $value = $request->query->get($filter_identifier);
+
+//     // G. Each value read from the URL, whether used or skipped.
+//     $logger->debug('Read from URL: @key = @value', [
+//       '@key' => $filter_identifier,
+//       '@value' => $value ?? '<absent>',
+//     ]);
+
+//     if ($value !== NULL && $value !== '') {
+//       $logger->debug('Setting filter: @key = @value', [
+//         '@key' => $filter_identifier,
+//         '@value' => $value,
+//       ]);
+//       $exposed_input[$filter_identifier] = $value;
+//     }
+//   }
+
+//   $view->setExposedInput($exposed_input);
+
+//   // H. Exposed input AFTER modification.
+//   $logger->debug('Exposed input AFTER: @after', [
+//     '@after' => json_encode($exposed_input),
+//   ]);
+// }
