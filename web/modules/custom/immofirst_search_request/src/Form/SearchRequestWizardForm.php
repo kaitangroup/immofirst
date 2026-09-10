@@ -1124,15 +1124,19 @@ SVG,
 
   /**
    * Step 3's checkbox groups (previously the hardcoded CRITERIA_GROUPS
-   * constant, a verbatim transcription of Tab.2.1 of
-   * ImmoFirst_260826.xlsx) now live as taxonomy terms in the
-   * "search_criteria" vocabulary instead — see
+   * constant, a verbatim transcription of Tab.2.1) now live as
+   * taxonomy terms in the "search_criteria" vocabulary instead — see
    * immofirst_search_request.install's
    * _immofirst_search_request_criteria_term_definitions() for the
-   * same Excel-sourced data (including the two documented exceptions,
-   * Grundstück's "Erschlossen" and the "Beim Kauf" sub-category, both
-   * handled exactly as before) and SearchCriteriaTermRepository for
-   * how buildStep3() below loads and groups them per Objektart.
+   * same Excel-sourced data (current source: ImmoFirst_260909.xlsx;
+   * Grundstück's Bebauung options — including Erschlossen /
+   * Teilerschlossen / Nicht erschlossen — all live in that one group,
+   * with no separate "Erschlossen" heading) and
+   * SearchCriteriaTermRepository for how buildStep3() below loads and
+   * groups them per Objektart, in the taxonomy's own weight order.
+   * PURCHASE_ONLY_CRITERIA ("Beim Kauf") and MIETEN_ONLY_CRITERIA
+   * ("Haustiere erlaubt") below are the sheet's two request-type
+   * conditions on individual options.
    */
 
   /**
@@ -1151,6 +1155,22 @@ SVG,
     'Finanzierung gesichert',
     'Eigenkapital vorhanden',
     'Kauf ohne Finanzierung möglich',
+  ];
+
+  /**
+   * The mirror-image condition to PURCHASE_ONLY_CRITERIA above: per
+   * Tab.2.1 (ImmoFirst_260909.xlsx), "Haustiere erlaubt" only makes
+   * sense for Mieten (a tenant asking whether the landlord allows
+   * pets), so it's simply absent from the render array whenever
+   * Kaufen is selected — see filterCriteriaOptionsForRequestType().
+   * Only this one option is conditional; the "Sonstige Kriterien"
+   * group it lives in (Wohnung and Haus) still renders normally with
+   * its other options ("Möbliert", "WG-geeignet") for Kaufen.
+   *
+   * @var string[]
+   */
+  private const MIETEN_ONLY_CRITERIA = [
+    'Haustiere erlaubt',
   ];
 
   /**
@@ -1263,15 +1283,19 @@ SVG,
   }
 
   /**
-   * Applies Tab.2.1's "Beim Kauf" condition to one criteria group's
+   * Applies Tab.2.1's request-type conditions to one criteria group's
    * term options.
    *
-   * The three PURCHASE_ONLY_CRITERIA options are only kept for
-   * Kaufen; for Mieten they're simply absent from the render array
-   * (not CSS-hidden), so they can never be checked, submitted, or
-   * persisted for a rental request. A no-op for any group that
-   * doesn't contain these labels (every group except "Bonität &
-   * zusätzliche Angaben").
+   * Two conditions, in opposite directions:
+   * - PURCHASE_ONLY_CRITERIA ("Beim Kauf") options are only kept for
+   *   Kaufen; absent from the render array for Mieten.
+   * - MIETEN_ONLY_CRITERIA ("Haustiere erlaubt") is only kept for
+   *   Mieten; absent from the render array for Kaufen.
+   *
+   * Either way the option is simply missing from the render array
+   * (not CSS-hidden), so it can never be checked, submitted, or
+   * persisted for the request type it doesn't apply to. A no-op for
+   * any group that contains neither of these labels.
    *
    * @param array<int, string> $options
    *   One group's [term id => term label] pairs, as loaded from
@@ -1280,15 +1304,19 @@ SVG,
    *   The session's step1 request_type ('kaufen' or 'mieten').
    *
    * @return array<int, string>
-   *   The same [term id => term label] pairs, with
-   *   PURCHASE_ONLY_CRITERIA removed unless $requestType is 'kaufen'.
+   *   The same [term id => term label] pairs, with whichever
+   *   condition doesn't match $requestType removed.
    */
   private function filterCriteriaOptionsForRequestType(array $options, string $requestType): array {
-    if ($requestType === 'kaufen') {
-      return $options;
+    if ($requestType !== 'kaufen') {
+      $options = array_diff($options, self::PURCHASE_ONLY_CRITERIA);
     }
 
-    return array_diff($options, self::PURCHASE_ONLY_CRITERIA);
+    if ($requestType !== 'mieten') {
+      $options = array_diff($options, self::MIETEN_ONLY_CRITERIA);
+    }
+
+    return $options;
   }
 
   /**

@@ -100,15 +100,118 @@ function immofirst_search_request_update_11003(): void {
   _immofirst_search_request_install_search_criteria_terms();
 }
 
+/**
+ * Corrects search_criteria terms seeded from the older
+ * ImmoFirst_260826.xlsx transcription so they match the new
+ * ImmoFirst_260909.xlsx (Tab.2.1) source of truth:
+ *
+ * - "Haustiere erlaubt (bei Miete)" is renamed to "Haustiere erlaubt"
+ *   and its Gilt-für-Objektart(en) is widened from Wohnung-only to
+ *   Wohnung + Haus (the new sheet lists it under both property
+ *   types' "Sonstige Kriterien" group).
+ * - "Möbliert" and "WG-geeignet" (same "Sonstige Kriterien" group)
+ *   likewise gain Haus alongside Wohnung.
+ * - "Erschlossen" / "Teilerschlossen" / "Nicht erschlossen" move from
+ *   their own "Erschlossen" Group into "Bebauung" — the new sheet has
+ *   no separate "Erschlossen" heading; all six Bebauung options
+ *   (Sofort bebaubar, Mit Baugenehmigung, Ohne Baubindung,
+ *   Erschlossen, Teilerschlossen, Nicht erschlossen) live in one
+ *   group.
+ *
+ * Existing terms are updated in place by (vid, name) lookup rather
+ * than recreated, so no duplicates are introduced and each term keeps
+ * its term id (and therefore stays valid on any search_request node
+ * that already references it via field_criteria). Safe to run more
+ * than once.
+ */
+function immofirst_search_request_update_11004(): void {
+  $storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
+
+  // "Haustiere erlaubt (bei Miete)" -> "Haustiere erlaubt", now shared
+  // by Wohnung + Haus. Renamed in place (rather than matched by old
+  // name and left alone) so the term id — and therefore any
+  // field_criteria reference already pointing at it — survives.
+  $renamed = $storage->loadByProperties([
+    'vid' => 'search_criteria',
+    'name' => 'Haustiere erlaubt (bei Miete)',
+  ]);
+  foreach ($renamed as $term) {
+    $term->setName('Haustiere erlaubt');
+    $existing = $term->get('field_property_types')->getValue();
+    $values = array_unique(array_merge(array_column($existing, 'value'), ['apartment', 'house']));
+    $term->set('field_property_types', array_values($values));
+    $term->save();
+  }
+
+  // In case a term named "Haustiere erlaubt" already exists (e.g. this
+  // update runs on a site where the rename above already happened, or
+  // after a partial run), make sure its property types are widened
+  // too rather than skipped.
+  $alreadyRenamed = $storage->loadByProperties([
+    'vid' => 'search_criteria',
+    'name' => 'Haustiere erlaubt',
+  ]);
+  foreach ($alreadyRenamed as $term) {
+    $existing = $term->get('field_property_types')->getValue();
+    $values = array_unique(array_merge(array_column($existing, 'value'), ['apartment', 'house']));
+    if (count($values) !== count($existing)) {
+      $term->set('field_property_types', array_values($values));
+      $term->save();
+    }
+  }
+
+  // "Möbliert" and "WG-geeignet": add Haus alongside the existing
+  // Wohnung tag.
+  foreach (['Möbliert', 'WG-geeignet'] as $label) {
+    $terms = $storage->loadByProperties([
+      'vid' => 'search_criteria',
+      'name' => $label,
+      'field_group' => 'Sonstige Kriterien',
+    ]);
+    foreach ($terms as $term) {
+      $existing = $term->get('field_property_types')->getValue();
+      $values = array_unique(array_merge(array_column($existing, 'value'), ['apartment', 'house']));
+      if (count($values) !== count($existing)) {
+        $term->set('field_property_types', array_values($values));
+        $term->save();
+      }
+    }
+  }
+
+  // "Erschlossen" / "Teilerschlossen" / "Nicht erschlossen": move from
+  // the old standalone "Erschlossen" Group into "Bebauung".
+  foreach (['Erschlossen', 'Teilerschlossen', 'Nicht erschlossen'] as $label) {
+    $terms = $storage->loadByProperties([
+      'vid' => 'search_criteria',
+      'name' => $label,
+      'field_group' => 'Erschlossen',
+    ]);
+    foreach ($terms as $term) {
+      $term->set('field_group', 'Bebauung');
+      $term->save();
+    }
+  }
+
+  // Finally, create any terms that are missing outright (e.g. a fresh
+  // site running this update before 11003 ever ran) using the now-
+  // corrected canonical definitions. Existing terms are left alone by
+  // the (vid, name, field_group) guard inside this helper.
+  _immofirst_search_request_install_search_criteria_terms();
+}
+
 
 
 /**
  * search_criteria taxonomy term definitions, transcribed verbatim
- * from Tab.2.1 of ImmoFirst_260826.xlsx — the same source data and
- * same two documented exceptions (Grundstück's "Erschlossen" heading,
- * and "Beim Kauf" being an internal condition rather than a checkbox
- * or heading) that previously lived in
- * SearchRequestWizardForm::CRITERIA_GROUPS. Deduplicated across
+ * from Tab.2.1 of ImmoFirst_260909.xlsx (supersedes the prior
+ * ImmoFirst_260826.xlsx transcription — see
+ * immofirst_search_request_update_11004() for the corrections that
+ * moved this data onto the new workbook: "Erschlossen" is folded into
+ * "Bebauung" rather than kept as its own heading, and "Haustiere
+ * erlaubt" drops the "(bei Miete)" suffix and is now shared by
+ * Wohnung + Haus, per Sonstige Kriterien in the new sheet).
+ * "Beim Kauf" is still an internal condition rather than a checkbox
+ * or heading, exactly as before. Deduplicated across
  * property types: a label that's identical AND under the same Group
  * heading for more than one Objektart (e.g. every "Bonität &
  * zusätzliche Angaben" option, shared by all five property types)
@@ -171,9 +274,9 @@ function _immofirst_search_request_criteria_term_definitions(): array {
     ['label' => 'Gemeinschaftsgarten', 'group' => 'Außenbereiche', 'weight' => 290, 'property_types' => ['apartment']],
     ['label' => 'Dachterrasse', 'group' => 'Außenbereiche', 'weight' => 300, 'property_types' => ['apartment']],
     // ---- Sonstige Kriterien ----
-    ['label' => 'Haustiere erlaubt (bei Miete)', 'group' => 'Sonstige Kriterien', 'weight' => 310, 'property_types' => ['apartment']],
-    ['label' => 'Möbliert', 'group' => 'Sonstige Kriterien', 'weight' => 320, 'property_types' => ['apartment']],
-    ['label' => 'WG-geeignet', 'group' => 'Sonstige Kriterien', 'weight' => 330, 'property_types' => ['apartment']],
+    ['label' => 'Haustiere erlaubt', 'group' => 'Sonstige Kriterien', 'weight' => 310, 'property_types' => ['apartment', 'house']],
+    ['label' => 'Möbliert', 'group' => 'Sonstige Kriterien', 'weight' => 320, 'property_types' => ['apartment', 'house']],
+    ['label' => 'WG-geeignet', 'group' => 'Sonstige Kriterien', 'weight' => 330, 'property_types' => ['apartment', 'house']],
     // ---- Bonität & zusätzliche Angaben ----
     ['label' => 'SCHUFA-Auskunft vorhanden', 'group' => 'Bonität & zusätzliche Angaben', 'weight' => 340, 'property_types' => ['apartment', 'house', 'land', 'garage', 'commercial']],
     ['label' => 'Positive Bonität', 'group' => 'Bonität & zusätzliche Angaben', 'weight' => 350, 'property_types' => ['apartment', 'house', 'land', 'garage', 'commercial']],
@@ -223,10 +326,15 @@ function _immofirst_search_request_criteria_term_definitions(): array {
     ['label' => 'Sofort bebaubar', 'group' => 'Bebauung', 'weight' => 720, 'property_types' => ['land']],
     ['label' => 'Mit Baugenehmigung', 'group' => 'Bebauung', 'weight' => 730, 'property_types' => ['land']],
     ['label' => 'Ohne Baubindung', 'group' => 'Bebauung', 'weight' => 740, 'property_types' => ['land']],
-    // ---- Erschlossen ----
-    ['label' => 'Erschlossen', 'group' => 'Erschlossen', 'weight' => 750, 'property_types' => ['land']],
-    ['label' => 'Teilerschlossen', 'group' => 'Erschlossen', 'weight' => 760, 'property_types' => ['land']],
-    ['label' => 'Nicht erschlossen', 'group' => 'Erschlossen', 'weight' => 770, 'property_types' => ['land']],
+    // "Erschlossen" / "Teilerschlossen" / "Nicht erschlossen" belong
+    // inside the "Bebauung" group per Tab.2.1 (ImmoFirst_260909.xlsx) —
+    // there is no separate "Erschlossen" heading in the new workbook.
+    // Weights 750-770 deliberately continue straight on from
+    // "Ohne Baubindung" (740) so they sort as the back half of the
+    // same "Bebauung" group, ahead of "Bebauungsmöglichkeiten" (780).
+    ['label' => 'Erschlossen', 'group' => 'Bebauung', 'weight' => 750, 'property_types' => ['land']],
+    ['label' => 'Teilerschlossen', 'group' => 'Bebauung', 'weight' => 760, 'property_types' => ['land']],
+    ['label' => 'Nicht erschlossen', 'group' => 'Bebauung', 'weight' => 770, 'property_types' => ['land']],
     // ---- Bebauungsmöglichkeiten ----
     ['label' => 'Einfamilienhaus möglich', 'group' => 'Bebauungsmöglichkeiten', 'weight' => 780, 'property_types' => ['land']],
     ['label' => 'Doppelhaus möglich', 'group' => 'Bebauungsmöglichkeiten', 'weight' => 790, 'property_types' => ['land']],
