@@ -70,7 +70,7 @@ final class SearchCriteriaTermRepository {
       'Bonität & zusätzliche Angaben',
     ],
     'garage' => [
-      'Art',
+      'Ausführungsart',
       'Nutzung',
       'Größe / Nutzung',
       'Bonität & zusätzliche Angaben',

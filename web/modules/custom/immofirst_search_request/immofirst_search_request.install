@@ -199,6 +199,39 @@ function immofirst_search_request_update_11004(): void {
   _immofirst_search_request_install_search_criteria_terms();
 }
 
+/**
+ * Renames the Garage/Stellplatz group label from "Art" to
+ * "Ausführungsart".
+ *
+ * Only the Group value on the six existing terms (Garage,
+ * Doppelgarage, Tiefgarage, Carport, Außenstellplatz,
+ * Duplex-Stellplatz) changes — their term ids, weights (so option
+ * order within the group is unaffected), names, and
+ * field_property_types are untouched, so any search_request node
+ * that already references one of them via field_criteria keeps
+ * working exactly as before. Nothing else (other groups, group
+ * order, visibility) is touched.
+ *
+ * Matches by (vid, field_group) rather than by term name, so it finds
+ * and renames these terms even if this hook runs more than once — the
+ * second run simply finds no term left with field_group "Art" and is
+ * a no-op. No new term is created, so no duplicate group is
+ * introduced.
+ */
+function immofirst_search_request_update_11005(): void {
+  $storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
+
+  $terms = $storage->loadByProperties([
+    'vid' => 'search_criteria',
+    'field_group' => 'Art',
+  ]);
+
+  foreach ($terms as $term) {
+    $term->set('field_group', 'Ausführungsart');
+    $term->save();
+  }
+}
+
 
 
 /**
@@ -346,13 +379,17 @@ function _immofirst_search_request_criteria_term_definitions(): array {
     ['label' => 'Feldrandlage', 'group' => 'Lage / Besonderheiten', 'weight' => 840, 'property_types' => ['land']],
     ['label' => 'Waldnähe', 'group' => 'Lage / Besonderheiten', 'weight' => 850, 'property_types' => ['land']],
     ['label' => 'Ruhige Lage', 'group' => 'Lage / Besonderheiten', 'weight' => 860, 'property_types' => ['land']],
-    // ---- Art ----
-    ['label' => 'Garage', 'group' => 'Art', 'weight' => 870, 'property_types' => ['garage']],
-    ['label' => 'Doppelgarage', 'group' => 'Art', 'weight' => 880, 'property_types' => ['garage']],
-    ['label' => 'Tiefgarage', 'group' => 'Art', 'weight' => 890, 'property_types' => ['garage']],
-    ['label' => 'Carport', 'group' => 'Art', 'weight' => 900, 'property_types' => ['garage']],
-    ['label' => 'Außenstellplatz', 'group' => 'Art', 'weight' => 910, 'property_types' => ['garage']],
-    ['label' => 'Duplex-Stellplatz', 'group' => 'Art', 'weight' => 920, 'property_types' => ['garage']],
+    // ---- Ausführungsart ----
+    // Renamed from "Art" — see
+    // immofirst_search_request_update_11005() for the corrective
+    // update hook that renames it on already-installed sites without
+    // creating a duplicate group or touching these terms' ids.
+    ['label' => 'Garage', 'group' => 'Ausführungsart', 'weight' => 870, 'property_types' => ['garage']],
+    ['label' => 'Doppelgarage', 'group' => 'Ausführungsart', 'weight' => 880, 'property_types' => ['garage']],
+    ['label' => 'Tiefgarage', 'group' => 'Ausführungsart', 'weight' => 890, 'property_types' => ['garage']],
+    ['label' => 'Carport', 'group' => 'Ausführungsart', 'weight' => 900, 'property_types' => ['garage']],
+    ['label' => 'Außenstellplatz', 'group' => 'Ausführungsart', 'weight' => 910, 'property_types' => ['garage']],
+    ['label' => 'Duplex-Stellplatz', 'group' => 'Ausführungsart', 'weight' => 920, 'property_types' => ['garage']],
     // ---- Nutzung ----
     ['label' => 'Abschließbar', 'group' => 'Nutzung', 'weight' => 930, 'property_types' => ['garage']],
     ['label' => 'Überdacht', 'group' => 'Nutzung', 'weight' => 940, 'property_types' => ['garage']],
