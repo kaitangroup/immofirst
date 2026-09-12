@@ -31,6 +31,7 @@ module:
   image: 0
   imce: 0
   immofirst_search_request: 0
+  inline_form_errors: 0
   jquery_ui: 0
   jquery_ui_autocomplete: 0
   jquery_ui_menu: 0

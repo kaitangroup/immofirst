@@ -8,7 +8,7 @@
  *   - Card selection visuals (Next-button enable/disable feedback;
  *     the actual selected look is pure CSS via :checked, see wizard.css)
  *   - Progress bar fill animation
- *   - Auto-scroll to top of the wizard on step change
+ *   - Auto-scroll to the wizard heading ("Schritt X von 5") on step change
  *   - Character counter for textareas
  *   - Number input enhancements (no negative values, clean blur format)
  *   - Keyboard focus management on every step change (accessibility)
@@ -22,24 +22,76 @@
 (function (Drupal, once) {
   'use strict';
 
+  // Module-scoped (NOT per-element) record of the step we last saw,
+  // read directly from '.wizard__step-content[data-wizard-step]'s own
+  // attribute value — deliberately NOT tracked via once()'s node-
+  // identity de-duplication (see the scroll behavior below for why).
+  // Starts at null so the very first attach (whether that's the Step 0
+  // overview or a direct/reloaded load of any step) never scrolls;
+  // only a genuine CHANGE in this value — a real Weiter/Zurück step
+  // transition — triggers it.
+  var lastSeenStep = null;
+
+  // How much breathing room to leave above the "Schritt X von 5"
+  // label after scrolling (per spec: ~24-32px; 28px is the midpoint).
+  var SCROLL_OFFSET = 28;
+
   Drupal.behaviors.immofirstWizard = {
     attach: function (context) {
 
       /* ============================================
-         Auto-scroll to top of the wizard card on load
-         (covers both the initial page load and every
-         AJAX step transition, since attach() re-runs
-         each time ajax.js swaps in new content).
+         Auto-scroll to the wizard heading ("Schritt X
+         von 5") on every step change (Weiter, Zurück,
+         and the final "Suchauftrag anlegen" step), but
+         not on the very first full page load, and not
+         on the Step 0 -> Step 1 transition.
+
+         ROOT CAUSE of the previous version's inconsistent
+         behavior (worked on Steps 2/4/5, not on Step 3):
+         it tracked "have I already scrolled for this
+         node" via once()'s own node-identity de-duplication
+         against '.wizard-progress' — which only behaves
+         correctly if Drupal's AJAX response always
+         constructs a genuinely NEW DOM node for that
+         element on every single step change. That should
+         normally hold (the '#ajax' ReplaceCommand on
+         '#immofirst-wizard-form' replaces the whole form
+         wholesale), but it means this behavior's
+         correctness was silently riding on an assumption
+         about DOM node identity/reuse rather than on
+         anything about the step itself — a fragile
+         foundation for "does every transition behave
+         identically" specifically.
+
+         FIX: track the STEP NUMBER's VALUE instead (from
+         '.wizard__step-content[data-wizard-step]', already
+         present on every step 1-5's markup — see
+         buildForm() in SearchRequestWizardForm.php), in a
+         module-scoped variable compared across attach()
+         calls. This only cares whether the step actually
+         changed, never whether any particular DOM node was
+         "new" — so it behaves identically for every
+         transition (1->2, 2->3, 3->4, 4->5, and Zurück in
+         either direction) regardless of how any one step's
+         AJAX response happens to construct its DOM.
+
+         Scroll position: scrolls to '.wizard-progress'
+         (the "Schritt X von 5" heading + progress bar)
+         with ~28px of space kept above it, per spec,
+         rather than flush against the very top of the
+         viewport.
          ============================================ */
-      once('immofirst-scroll', '.wizard', context).forEach(function (wizardEl) {
-        // Skip the very first attach on initial full page load so we
-        // don't yank the scroll position on a fresh visit; only scroll
-        // when this is a re-attach triggered by an AJAX step change.
-        if (wizardEl.dataset.immofirstSeen) {
-          wizardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      var stepEl = document.querySelector('.wizard__step-content[data-wizard-step]');
+      var currentStep = stepEl ? stepEl.getAttribute('data-wizard-step') : null;
+
+      if (currentStep !== null && lastSeenStep !== null && lastSeenStep !== currentStep) {
+        var progressEl = document.querySelector('.wizard-progress');
+        if (progressEl) {
+          var targetY = progressEl.getBoundingClientRect().top + window.pageYOffset - SCROLL_OFFSET;
+          window.scrollTo({ top: Math.max(targetY, 0), behavior: 'smooth' });
         }
-        wizardEl.dataset.immofirstSeen = 'true';
-      });
+      }
+      lastSeenStep = currentStep;
 
       /* ============================================
          Step 1: disable "Weiter" until EVERY card
@@ -152,17 +204,18 @@
       /* ============================================
          Step 3: criteria card accordion.
 
-         Only cards carrying '.is-collapsible' (every
-         group after the first, "Ausstattung der
-         Wohnung") get a toggle at all — the first
-         card's '.is-always-open' class is never
-         selected here, so it has no click handler and
-         can't be collapsed. Toggling only flips a
-         presentation class ('is-expanded') on the card
-         and updates aria-expanded on its header; it
-         never touches the checkboxes inside, so
-         selections, session persistence, and the
-         "Weiter" AJAX step change are all unaffected.
+         Every card, including the first one, now carries
+         '.is-collapsible' and gets this same toggle — the
+         first group's only difference is that it also
+         starts with '.is-expanded' already in the markup
+         (see buildStep3() in SearchRequestWizardForm.php),
+         so it's the one group visibly open before the user
+         clicks anything. Toggling only flips a presentation
+         class ('is-expanded') on the card and updates
+         aria-expanded on its header; it never touches the
+         checkboxes inside, so selections, session
+         persistence, and the "Weiter" AJAX step change are
+         all unaffected.
          ============================================ */
       once('immofirst-criteria-accordion', '.wizard-criteria-card.is-collapsible', context).forEach(function (card) {
         var legend = card.querySelector('legend');

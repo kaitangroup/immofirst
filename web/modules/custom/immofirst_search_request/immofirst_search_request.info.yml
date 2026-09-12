@@ -6,3 +6,15 @@ core_version_requirement: ^10 || ^11
 dependencies:
   - drupal:node
   - drupal:user
+  # Required for '#error_no_message' (set on every Step 4 field in
+  # SearchRequestWizardForm::buildStep4()) to actually do anything.
+  # That flag is ONLY read by \Drupal\inline_form_errors\FormErrorHandler
+  # — the service this core module registers to replace Drupal's
+  # default \Drupal\Core\Form\FormErrorHandler, whose own
+  # displayErrorMessages() unconditionally pushes every form error to
+  # Messenger, no matter what any element's render array says. Without
+  # this module enabled, '#error_no_message' is silently ignored and
+  # every required-field error also appears as a page-level status
+  # message — see the inline-error-vs-messenger note above
+  # attachInlineFieldError() in SearchRequestWizardForm.php.
+  - drupal:inline_form_errors

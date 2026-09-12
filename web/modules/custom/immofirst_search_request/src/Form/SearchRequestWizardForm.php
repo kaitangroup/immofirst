@@ -893,15 +893,22 @@ SVG,
     $stored2 = $this->session->getStepData('step2');
     $stored3 = $this->session->getStepData('step3');
 
+    // Errors from a previous failed validation pass, keyed the same
+    // way Drupal's own required-field validation keys them — see
+    // attachSiblingFieldError()'s docblock (introduced for Step 4) for
+    // why this needs to be read before the fields below are built.
+    $errors = $form_state->getErrors();
+
     $form['step_content']['request_type'] = [
       '#type' => 'radios',
       '#title' => $this->t('Ich suche zum...'),
-      // '#required' => TRUE, // TEMP: button validation disabled for now
+      // Not required: Kaufen is always preselected below, so there is
+      // no "nothing selected" state to validate against for Buy/Rent.
       '#options' => [
         'kaufen' => $this->t('Kaufen'),
         'mieten' => $this->t('Mieten'),
       ],
-      '#default_value' => $stored1['request_type'] ?? NULL,
+      '#default_value' => $stored1['request_type'] ?? 'kaufen',
       '#attributes' => ['class' => ['wizard-cards', 'wizard-cards--gesuchsart']],
     ];
 
@@ -913,11 +920,25 @@ SVG,
     $form['step_content']['property_type'] = [
       '#type' => 'radios',
       '#title' => $this->t('Was suchen Sie?'),
-      // '#required' => TRUE, // TEMP: button validation disabled for now
+      '#required' => TRUE,
+      '#required_error' => $this->t('Bitte wählen Sie eine Objektart aus.'),
       '#options' => $options,
       '#default_value' => $stored2['property_type'] ?? NULL,
       '#attributes' => ['class' => ['wizard-cards', 'wizard-cards--objektart']],
+      // Set unconditionally (not only once an error is known) — see
+      // attachSiblingFieldError()'s docblock for why.
+      '#error_no_message' => TRUE,
     ];
+    // NOT the old '#field_suffix'-based approach: '#field_suffix' is
+    // only ever read by template_preprocess_form_element() /
+    // form-element.html.twig — the theme hook used for plain
+    // single-value elements (textfield, email, tel, etc.). A TITLED
+    // '#type' => 'radios' element like this one is themed via
+    // fieldset.html.twig instead (Drupal wraps it in a real
+    // <fieldset>), which has no concept of '#field_suffix' at all —
+    // so it was silently never rendered anywhere here. See
+    // attachSiblingFieldError()'s docblock for the fix.
+    $this->attachSiblingFieldError($form['step_content']['property_type'], $form['step_content'], 'property_type', $errors, 'step_content][property_type', 'property-type-error');
 
     $form['step_content']['location_section'] = [
       '#type' => 'container',
@@ -934,21 +955,27 @@ SVG,
         'location' => [
           '#type' => 'textfield',
           '#title' => $this->t('Ort oder PLZ'),
-          // '#required' => TRUE, // TEMP: button validation disabled for now
+          '#required' => TRUE,
+          '#required_error' => $this->t('Bitte geben Sie einen Ort oder eine Postleitzahl ein.'),
           '#placeholder' => $this->t('z. B. München oder 80331'),
           '#default_value' => $stored3['location'] ?? '',
           '#autocomplete_route_name' => 'immofirst_search_request.location_autocomplete',
           '#attributes' => ['class' => ['wizard-input', 'wizard-input--location']],
+          '#error_no_message' => TRUE,
         ],
         'radius' => [
           '#type' => 'select',
           '#title' => $this->t('Umkreis'),
           '#options' => self::RADIUS_OPTIONS,
-          '#default_value' => $stored3['radius'] ?? '25',
+          // Default 10 km — the user can change it, but is never
+          // required to touch it just to get a sensible starting
+          // value.
+          '#default_value' => $stored3['radius'] ?? '10',
           '#attributes' => ['class' => ['wizard-input', 'wizard-select', 'wizard-input--radius']],
         ],
       ],
     ];
+    $this->attachSiblingFieldError($form['step_content']['location_section']['fields']['location'], $form['step_content']['location_section'], 'fields', $errors, 'step_content][location_section][fields][location', 'location-error');
   }
 
   /**
@@ -1200,14 +1227,16 @@ SVG,
 
     $form['step_content']['#attributes']['data-property-type'] = $propertyType;
 
-    // Per the client's Step 3 accordion requirement: the FIRST criteria
-    // group ("Ausstattung der Wohnung") always stays open and is not
-    // collapsible; every subsequent group is a collapsible accordion
-    // section, collapsed by default. This flag is the only thing that
-    // decides which of the two a given group becomes — purely a
-    // rendering/markup distinction (see is-always-open/is-collapsible
-    // below and wizard.js's accordion behavior), it does not change
-    // which groups load, their options, or their order.
+    // Per the updated Step 3 accordion requirement: the FIRST criteria
+    // group only starts open — it is now a NORMAL, click/keyboard-
+    // toggleable accordion section like every other group (it carries
+    // the same '.is-collapsible' class wizard.js already attaches its
+    // toggle to), it just also carries '.is-expanded' from the very
+    // first render so it's the one group visibly open before the user
+    // interacts with anything. Every subsequent group is collapsed by
+    // default, exactly as before. This flag only decides which group
+    // gets that extra starting class — it does not change which
+    // groups load, their options, or their order.
     $isFirstGroup = TRUE;
 
     foreach ($groups as $groupLabel => $termOptions) {
@@ -1230,15 +1259,19 @@ SVG,
         }
       }
 
-      // Card-level modifier class: 'is-always-open' for the first group
-      // (no collapse behavior at all — see wizard.js, which never
-      // attaches its accordion toggle to this class), 'is-collapsible'
-      // for every group after it (collapsed by default via wizard.css;
-      // wizard.js adds the click/keyboard toggle that flips
-      // 'is-expanded'). This is the only per-group difference; the
-      // fieldset, its icon, and its checkbox options are built exactly
-      // the same way either way.
-      $stateClass = $isFirstGroup ? 'is-always-open' : 'is-collapsible';
+      // Card-level modifier classes: every group is '.is-collapsible'
+      // now, so every group behaves identically as an accordion
+      // (wizard.js attaches its click/keyboard toggle to that class
+      // alone, unconditionally). The only difference for the first
+      // group is that it additionally starts with '.is-expanded'
+      // already present in the markup, so it renders open on first
+      // load without needing a click — wizard.css's existing
+      // ".is-collapsible.is-expanded" rule (unchanged) is what keeps
+      // its content visible until the user closes it, exactly like
+      // any other group the user has opened.
+      $stateClasses = $isFirstGroup
+        ? ['is-collapsible', 'is-expanded']
+        : ['is-collapsible'];
 
       $form['step_content']['criteria_groups'][$groupKey] = [
         '#type' => 'fieldset',
@@ -1247,7 +1280,7 @@ SVG,
           . '<span>' . $groupLabel . '</span>'
           . $this->criteriaGroupChevron()
         ),
-        '#attributes' => ['class' => ['wizard-criteria-card', $stateClass]],
+        '#attributes' => ['class' => array_merge(['wizard-criteria-card'], $stateClasses)],
         'options' => [
           '#type' => 'checkboxes',
           '#options' => $options,
@@ -1409,14 +1442,14 @@ SVG,
       '#default_value' => $stored['firstname'] ?? '',
       '#attributes' => ['class' => ['wizard-input']],
       // Set unconditionally (NOT only once we know there's an error):
-      // finalizeValidation() checks THIS SAME initial build — the one
-      // handed to validateForm() before any error exists yet — so the
-      // flag has to already be present here, not added later once
-      // $form_state->getErrors() is populated. See
-      // attachInlineFieldError()'s docblock for what it does.
+      // this field's initial build (below) happens before
+      // $form_state->getErrors() has anything in it, so setting the
+      // flag only once an error is already known would always be one
+      // request too late. See attachSiblingFieldError()'s docblock for
+      // what it does.
       '#error_no_message' => TRUE,
     ];
-    $this->attachInlineFieldError($form['step_content']['firstname'], $errors, 'step_content][firstname', 'firstname-error');
+    $this->attachSiblingFieldError($form['step_content']['firstname'], $form['step_content'], 'firstname', $errors, 'step_content][firstname', 'firstname-error');
 
     $form['step_content']['lastname'] = [
       '#type' => 'textfield',
@@ -1428,7 +1461,7 @@ SVG,
       '#attributes' => ['class' => ['wizard-input']],
       '#error_no_message' => TRUE,
     ];
-    $this->attachInlineFieldError($form['step_content']['lastname'], $errors, 'step_content][lastname', 'lastname-error');
+    $this->attachSiblingFieldError($form['step_content']['lastname'], $form['step_content'], 'lastname', $errors, 'step_content][lastname', 'lastname-error');
 
     $form['step_content']['email'] = [
       '#type' => 'email',
@@ -1445,7 +1478,7 @@ SVG,
     // '#type' => 'email' element — whichever one $form_state actually
     // holds for this field is what gets shown, so the existing email
     // format validation (untouched) is preserved as-is per FIX 6.
-    $this->attachInlineFieldError($form['step_content']['email'], $errors, 'step_content][email', 'email-error');
+    $this->attachSiblingFieldError($form['step_content']['email'], $form['step_content'], 'email', $errors, 'step_content][email', 'email-error');
 
     $form['step_content']['phone_group'] = [
       '#type' => 'container',
@@ -1510,18 +1543,59 @@ SVG,
   }
 
   /**
-   * Attaches an existing $form_state validation error to one Step 4
-   * field so it renders directly underneath that field, instead of
-   * (only) in Drupal's global status-message / AJAX message area.
+   * Attaches an existing $form_state validation error to one field by
+   * inserting a genuine SIBLING render array immediately after it (or
+   * after its whole row, for a multi-field composite), rather than
+   * via any '#suffix'-style property on the field itself.
    *
    * Does NOT add, remove, or reword any validation rule or message —
    * it only reads whatever message Drupal's own validation (required
    * fields, the email element's built-in format check, etc.) already
    * put into $form_state for this element, per FIX 3/6.
    *
+   * ROOT CAUSE this method now fixes (previously
+   * attachInlineFieldError()): that version assigned the error markup
+   * to '#field_suffix', on the theory that — unlike '#suffix', which
+   * renders OUTSIDE the field's '.form-item' wrapper entirely — that
+   * property is read by template_preprocess_form_element() and
+   * printed by form-element.html.twig INSIDE that same wrapper,
+   * immediately after the input. That fix is real, but incomplete:
+   * form-element.html.twig, and therefore '#field_suffix', is only
+   * ever used for PLAIN single-value elements (textfield, email, tel,
+   * etc.). A TITLED '#type' => 'radios'/'checkboxes' element — e.g.
+   * Step 1's "Was suchen Sie?" property-type group — is themed via
+   * fieldset.html.twig instead (Drupal wraps titled radios/checkboxes
+   * groups in a real <fieldset>), which has no concept of
+   * '#field_suffix' at all. So on that field specifically,
+   * '#field_suffix' was silently never read or rendered anywhere,
+   * regardless of how correctly $form_state's errors were computed.
+   *
+   * A plain sibling render array sidesteps this distinction entirely:
+   * it always renders exactly where it is placed in the array,
+   * unconditionally, regardless of which '#theme'/'#theme_wrappers'
+   * the preceding element resolves to. This is the exact pattern this
+   * class already used (correctly, and unaffected by the bug above)
+   * for the Step 4 WhatsApp field's own hand-rolled error handling —
+   * now generalized here and applied consistently to every inline
+   * field error instead of two different (one working, one not)
+   * mechanisms side by side.
+   *
    * @param array $element
-   *   The field's render array, by reference (e.g.
-   *   $form['step_content']['firstname']).
+   *   The specific field to decorate with the 'error' class and
+   *   aria-* attributes, by reference — e.g.
+   *   $form['step_content']['firstname'], or
+   *   $form['step_content']['location_section']['fields']['location'].
+   *   This is NOT necessarily the same array as $siblingParent below.
+   * @param array $siblingParent
+   *   The render array to insert the sibling error message into, by
+   *   reference — e.g. $form['step_content'] for a standalone field,
+   *   or $form['step_content']['location_section'] when the message
+   *   should sit below an entire row (fields + radius) rather than
+   *   wedged inside that row's own grid/flex layout.
+   * @param string $siblingKey
+   *   The key, within $siblingParent, that the error message renders
+   *   after — e.g. 'firstname', or 'fields' for the location row. The
+   *   message itself is inserted as "{$siblingKey}_error".
    * @param array<string, mixed> $errors
    *   $form_state->getErrors(), keyed by the element's '][' -joined
    *   '#parents' path.
@@ -1531,22 +1605,46 @@ SVG,
    *   HTML id for the rendered error message, referenced by the
    *   field's aria-describedby (FIX 5/19).
    *
-   * NOTE on '#error_no_message': that property is what stops Drupal
-   * from ALSO surfacing this same error as a top-of-page/AJAX status
-   * message (FIX 10) — see
-   * \Drupal\Core\Form\FormValidator::finalizeValidation(), which
-   * skips its $this->messenger->addError() call for any element
-   * carrying '#error_no_message' => TRUE. It is set directly on each
-   * field's definition in buildStep4() (unconditionally, every
-   * render), NOT here — finalizeValidation() checks the form array
-   * from BEFORE validation ran, i.e. before $form_state->getErrors()
+   * NOTE on '#error_no_message' — ROOT CAUSE of the "messages above the
+   * wizard" bug and its actual fix: '#error_no_message' is NOT read by
+   * Drupal's DEFAULT error handler. \Drupal\Core\Form\FormErrorHandler
+   * ::displayErrorMessages() (core/lib/Drupal/Core/Form/FormErrorHandler.php)
+   * unconditionally does `foreach ($form_state->getErrors() as $error)
+   * { $this->messenger->addError($error); }` — every error, every
+   * field, no exceptions, regardless of any '#error_no_message' flag.
+   * '#error_no_message' is only ever consulted by
+   * \Drupal\inline_form_errors\FormErrorHandler, the alternate service
+   * the CORE 'inline_form_errors' module registers to replace the
+   * default one. That module is a normal optional core module — not
+   * enabled by having its code present in Drupal core — so simply
+   * setting '#error_no_message' here does nothing on a site that
+   * hasn't installed it. This module declares 'drupal:
+   * inline_form_errors' as a dependency (see
+   * immofirst_search_request.info.yml) specifically so its
+   * FormErrorHandler is the one Drupal actually uses — but adding a
+   * dependency to an already-installed module's .info.yml does NOT
+   * retroactively enable it on a site where immofirst_search_request
+   * was installed before that line existed. If messenger duplicates
+   * are still appearing at the top of the page, run `drush en
+   * inline_form_errors -y` (or reinstall this module) to confirm it is
+   * actually enabled. With that service active, '#error_no_message' =>
+   * TRUE genuinely suppresses BOTH the top-of-page Messenger duplicate
+   * AND that module's own "jump to field" summary link for this
+   * element — leaving only the custom inline markup built below, and
+   * the module's own buildValidationSummary() banner at the bottom of
+   * Step 4 (a plain render array, unrelated to Messenger, so it
+   * renders exactly as before either way).
+   *
+   * It is set directly on each field's definition in buildStep1()/
+   * buildStep4() (unconditionally, every render), NOT here — the
+   * initial build of each field happens before $form_state->getErrors()
    * has anything in it, so setting it only once an error is already
-   * known (as this method does for everything else here) would always
-   * be one request too late. The error is still fully tracked in
-   * $form_state either way (server-side validation is untouched, FIX
-   * 11) — this only ever affects where the message is *displayed*.
+   * known would always be one request too late. The error is still
+   * fully tracked in $form_state either way (server-side validation is
+   * untouched) — this only ever affects where the Messenger duplicate
+   * is suppressed, and is unaffected by the sibling-error fix above.
    */
-  private function attachInlineFieldError(array &$element, array $errors, string $errorKey, string $errorId): void {
+  private function attachSiblingFieldError(array &$element, array &$siblingParent, string $siblingKey, array $errors, string $errorKey, string $errorId): void {
     if (!isset($errors[$errorKey])) {
       return;
     }
@@ -1558,10 +1656,24 @@ SVG,
     // Tightens the gap between the input and its own error message
     // (see the '.form-item--has-inline-error' rule in wizard.css);
     // the field's normal spacing to the NEXT field is then restored
-    // by the error message's own margin-bottom.
+    // by the error message's own margin-bottom. Harmless no-op if
+    // $element resolves to a fieldset-themed composite that doesn't
+    // read '#wrapper_attributes' the same way — the message below
+    // still renders correctly either way.
     $element['#wrapper_attributes']['class'][] = 'form-item--has-inline-error';
 
-    $element['#suffix'] = Markup::create($this->inlineFieldErrorMarkup($errorId, (string) $errors[$errorKey]));
+    // Appended as a genuine new array key, immediately after the
+    // caller already set $siblingParent[$siblingKey] — Drupal's
+    // renderer sorts children by '#weight', and for the equal
+    // (absent, treated as 0) weights every field/row here uses,
+    // preserves that original insertion order. That means this
+    // reliably renders directly below the field or row it belongs to
+    // with no '#weight' bookkeeping needed, exactly like the existing
+    // Step 4 WhatsApp field's own "$form['step_content']['phone_group']
+    // ['error']" below it.
+    $siblingParent[$siblingKey . '_error'] = [
+      '#markup' => Markup::create($this->inlineFieldErrorMarkup($errorId, (string) $errors[$errorKey])),
+    ];
   }
 
   /**
@@ -1882,18 +1994,42 @@ HTML;
 
     switch ($step) {
       case 1:
+        $newRequestType = $values['request_type'] ?? NULL;
+        $newPropertyType = $values['property_type'] ?? NULL;
+
+        // Changing either Buy/Rent or Objektart invalidates every
+        // property-specific selection made under the OLD combination
+        // (rooms, price, land size, criteria, notes, etc. — a
+        // Grundstück's "Nutzung" value means nothing once the search
+        // becomes a Wohnung). Detected by comparing against what was
+        // stored before this submission overwrites it below.
+        $requestTypeChanged = ($this->session->getStepData('step1')['request_type'] ?? NULL) !== $newRequestType;
+        $propertyTypeChanged = ($this->session->getStepData('step2')['property_type'] ?? NULL) !== $newPropertyType;
+
         $this->session->setStepData('step1', [
-          'request_type' => $values['request_type'] ?? NULL,
+          'request_type' => $newRequestType,
         ]);
 
         $this->session->setStepData('step2', [
-          'property_type' => $values['property_type'] ?? NULL,
+          'property_type' => $newPropertyType,
         ]);
 
         $locationFields = $values['location_section']['fields'] ?? [];
         $step3 = $this->session->getStepData('step3');
         $step3['location'] = $locationFields['location'] ?? ($step3['location'] ?? '');
-        $step3['radius'] = $locationFields['radius'] ?? ($step3['radius'] ?? '25');
+        $step3['radius'] = $locationFields['radius'] ?? ($step3['radius'] ?? '10');
+
+        if ($requestTypeChanged || $propertyTypeChanged) {
+          // Postal code and radius describe WHERE the person is
+          // searching, not WHAT — they're deliberately the only two
+          // keys carried over. Everything else Step 2 wrote into this
+          // same bucket (area, rooms, price, baujahr, land_size,
+          // usage, parking_type, vehicle_type, commercial_type) is
+          // dropped along with Step 3's criteria/notes below.
+          $step3 = array_intersect_key($step3, ['location' => TRUE, 'radius' => TRUE]);
+          $this->session->setStepData('step4', []);
+        }
+
         $this->session->setStepData('step3', $step3);
         break;
 
