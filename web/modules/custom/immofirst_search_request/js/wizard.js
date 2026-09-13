@@ -33,8 +33,8 @@
   var lastSeenStep = null;
 
   // How much breathing room to leave above the "Schritt X von 5"
-  // label after scrolling (per spec: ~24-32px; 28px is the midpoint).
-  var SCROLL_OFFSET = 28;
+  // label after scrolling (spec: ~24px).
+  var SCROLL_OFFSET = 24;
 
   Drupal.behaviors.immofirstWizard = {
     attach: function (context) {
@@ -46,50 +46,69 @@
          not on the very first full page load, and not
          on the Step 0 -> Step 1 transition.
 
-         ROOT CAUSE of the previous version's inconsistent
-         behavior (worked on Steps 2/4/5, not on Step 3):
-         it tracked "have I already scrolled for this
-         node" via once()'s own node-identity de-duplication
-         against '.wizard-progress' — which only behaves
-         correctly if Drupal's AJAX response always
-         constructs a genuinely NEW DOM node for that
-         element on every single step change. That should
-         normally hold (the '#ajax' ReplaceCommand on
-         '#immofirst-wizard-form' replaces the whole form
-         wholesale), but it means this behavior's
-         correctness was silently riding on an assumption
-         about DOM node identity/reuse rather than on
-         anything about the step itself — a fragile
-         foundation for "does every transition behave
-         identically" specifically.
-
-         FIX: track the STEP NUMBER's VALUE instead (from
-         '.wizard__step-content[data-wizard-step]', already
-         present on every step 1-5's markup — see
-         buildForm() in SearchRequestWizardForm.php), in a
-         module-scoped variable compared across attach()
-         calls. This only cares whether the step actually
-         changed, never whether any particular DOM node was
-         "new" — so it behaves identically for every
-         transition (1->2, 2->3, 3->4, 4->5, and Zurück in
-         either direction) regardless of how any one step's
-         AJAX response happens to construct its DOM.
+         HISTORY:
+         - v1 tracked "have I already scrolled for this
+           node" via once()'s own node-identity
+           de-duplication against '.wizard-progress' —
+           only correct if Drupal's AJAX response always
+           constructs a genuinely NEW DOM node for that
+           element on every step change. Fragile: made
+           this behave differently per step depending on
+           incidental DOM-construction details rather than
+           on the step change itself.
+         - v2 (this file, below) instead tracks the STEP
+           NUMBER's VALUE, from
+           '.wizard__step-content[data-wizard-step]'
+           (present on every step 1-5's markup — see
+           buildForm() in SearchRequestWizardForm.php), in
+           a module-scoped variable compared across
+           attach() calls — correct regardless of DOM node
+           identity. But this alone still wasn't enough
+           for the 2 -> 3 transition specifically: see the
+           ROOT CAUSE note just below.
 
          Scroll position: scrolls to '.wizard-progress'
          (the "Schritt X von 5" heading + progress bar)
-         with ~28px of space kept above it, per spec,
+         with ~24px of space kept above it, per spec,
          rather than flush against the very top of the
          viewport.
          ============================================ */
       var stepEl = document.querySelector('.wizard__step-content[data-wizard-step]');
       var currentStep = stepEl ? stepEl.getAttribute('data-wizard-step') : null;
 
+      // ROOT CAUSE of Step 2 -> 3 specifically missing the scroll
+      // (while 1->2, 3->4, and 4->5 all worked, even with the v2 fix
+      // above already in place): this behavior's scroll-target
+      // measurement (getBoundingClientRect()) ran SYNCHRONOUSLY, in
+      // the same tick '#ajax' inserts the new DOM. Step 3 adds far
+      // more markup than any other step (a full set of criteria-group
+      // cards, each with its own checkbox grid) on top of the '#ajax'
+      // submit button's own 'effect: fade' animation — between the
+      // fade-in not having visually settled yet and the browser's own
+      // scroll-anchoring compensating for such a large layout change
+      // landing on top of it, '.wizard-progress' could still be at an
+      // in-flux position at the exact moment this used to run — so
+      // the computed target silently came out wrong only for this
+      // one, unusually tall transition. Every other transition adds
+      // little enough markup that this race was never wide enough to
+      // actually miss.
+      //
+      // FIX: defer both the measurement AND the scroll itself by one
+      // frame (requestAnimationFrame), so layout has already settled
+      // by the time '.wizard-progress' is measured — this doesn't
+      // special-case Step 3 (or any step); it just removes the race
+      // for all of them equally. See also wizard.css's
+      // 'overflow-anchor: none' on .wizard__step-content, which stops
+      // the browser's own scroll-anchoring from fighting this for the
+      // same reason.
       if (currentStep !== null && lastSeenStep !== null && lastSeenStep !== currentStep) {
-        var progressEl = document.querySelector('.wizard-progress');
-        if (progressEl) {
-          var targetY = progressEl.getBoundingClientRect().top + window.pageYOffset - SCROLL_OFFSET;
-          window.scrollTo({ top: Math.max(targetY, 0), behavior: 'smooth' });
-        }
+        requestAnimationFrame(function () {
+          var progressEl = document.querySelector('.wizard-progress');
+          if (progressEl) {
+            var targetY = progressEl.getBoundingClientRect().top + window.pageYOffset - SCROLL_OFFSET;
+            window.scrollTo({ top: Math.max(targetY, 0), behavior: 'smooth' });
+          }
+        });
       }
       lastSeenStep = currentStep;
 

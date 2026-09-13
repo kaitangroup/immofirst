@@ -73,7 +73,18 @@
 }
 
 /* ===== Progress ===== */
-.wizard-progress{ margin-bottom:28px; }
+.wizard-progress{
+  margin-bottom:28px;
+  /* Scroll-anchoring is a browser default meant to stop the page
+     jumping when content changes ABOVE the viewport — but here it can
+     fight our OWN explicit scroll-to-progress-heading call (wizard.js)
+     right after a large layout change (e.g. Step 3's many criteria
+     cards), silently nudging the just-set scroll position again a
+     moment later. Turning it off for this element specifically (it's
+     exactly what wizard.js scrolls TO) removes that fight without
+     affecting scroll-anchoring anywhere else on the page. */
+  overflow-anchor:none;
+}
 .wizard-progress__label{
   font-size:13px;
   font-weight:600;
@@ -771,6 +782,18 @@ textarea.form-textarea:focus{
 .wizard__step-content .form-item-consent label{
   font-weight:400;
   font-size:14px;
+  /* Requirement: the whole sentence — including both links — reads as
+     one inline line on desktop/tablet, never breaking mid-phrase
+     between "Datenschutzerklärung" and "und die AGB". Only genuinely
+     small mobile widths (see the override below) fall back to normal
+     wrapping so the sentence doesn't overflow a narrow card. */
+  white-space:nowrap;
+}
+@media (max-width:380px){
+  .wizard__step-content .js-form-item-consent label,
+  .wizard__step-content .form-item-consent label{
+    white-space:normal;
+  }
 }
 .wizard__step-content .js-form-item-consent label a,
 .wizard__step-content .form-item-consent label a{

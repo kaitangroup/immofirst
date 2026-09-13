@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Drupal\immofirst_search_request\Form;
 
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\immofirst_search_request\Service\SearchCriteriaData;
@@ -925,9 +928,6 @@ SVG,
       '#options' => $options,
       '#default_value' => $stored2['property_type'] ?? NULL,
       '#attributes' => ['class' => ['wizard-cards', 'wizard-cards--objektart']],
-      // Set unconditionally (not only once an error is known) — see
-      // attachSiblingFieldError()'s docblock for why.
-      '#error_no_message' => TRUE,
     ];
     // NOT the old '#field_suffix'-based approach: '#field_suffix' is
     // only ever read by template_preprocess_form_element() /
@@ -961,7 +961,6 @@ SVG,
           '#default_value' => $stored3['location'] ?? '',
           '#autocomplete_route_name' => 'immofirst_search_request.location_autocomplete',
           '#attributes' => ['class' => ['wizard-input', 'wizard-input--location']],
-          '#error_no_message' => TRUE,
         ],
         'radius' => [
           '#type' => 'select',
@@ -1441,13 +1440,6 @@ SVG,
       '#placeholder' => $this->t('z. B. Max'),
       '#default_value' => $stored['firstname'] ?? '',
       '#attributes' => ['class' => ['wizard-input']],
-      // Set unconditionally (NOT only once we know there's an error):
-      // this field's initial build (below) happens before
-      // $form_state->getErrors() has anything in it, so setting the
-      // flag only once an error is already known would always be one
-      // request too late. See attachSiblingFieldError()'s docblock for
-      // what it does.
-      '#error_no_message' => TRUE,
     ];
     $this->attachSiblingFieldError($form['step_content']['firstname'], $form['step_content'], 'firstname', $errors, 'step_content][firstname', 'firstname-error');
 
@@ -1459,7 +1451,6 @@ SVG,
       '#placeholder' => $this->t('z. B. Mustermann'),
       '#default_value' => $stored['lastname'] ?? '',
       '#attributes' => ['class' => ['wizard-input']],
-      '#error_no_message' => TRUE,
     ];
     $this->attachSiblingFieldError($form['step_content']['lastname'], $form['step_content'], 'lastname', $errors, 'step_content][lastname', 'lastname-error');
 
@@ -1471,7 +1462,6 @@ SVG,
       '#placeholder' => $this->t('z. B. max@mustermann.de'),
       '#default_value' => $stored['email'] ?? '',
       '#attributes' => ['class' => ['wizard-input']],
-      '#error_no_message' => TRUE,
     ];
     // Covers BOTH the empty-field case (#required_error above) and
     // Drupal core's own "not a valid email address" message from the
@@ -1509,9 +1499,6 @@ SVG,
           '#placeholder' => $this->t('z. B. 171 1234567'),
           '#default_value' => $stored['phone_local'] ?? '',
           '#attributes' => ['class' => ['wizard-input', 'wizard-phone-group__number']],
-          // Set unconditionally — see the firstname field's comment
-          // above for why this can't wait until $errors is populated.
-          '#error_no_message' => TRUE,
         ],
       ],
     ];
@@ -1605,44 +1592,20 @@ SVG,
    *   HTML id for the rendered error message, referenced by the
    *   field's aria-describedby (FIX 5/19).
    *
-   * NOTE on '#error_no_message' — ROOT CAUSE of the "messages above the
-   * wizard" bug and its actual fix: '#error_no_message' is NOT read by
-   * Drupal's DEFAULT error handler. \Drupal\Core\Form\FormErrorHandler
-   * ::displayErrorMessages() (core/lib/Drupal/Core/Form/FormErrorHandler.php)
-   * unconditionally does `foreach ($form_state->getErrors() as $error)
-   * { $this->messenger->addError($error); }` — every error, every
-   * field, no exceptions, regardless of any '#error_no_message' flag.
-   * '#error_no_message' is only ever consulted by
-   * \Drupal\inline_form_errors\FormErrorHandler, the alternate service
-   * the CORE 'inline_form_errors' module registers to replace the
-   * default one. That module is a normal optional core module — not
-   * enabled by having its code present in Drupal core — so simply
-   * setting '#error_no_message' here does nothing on a site that
-   * hasn't installed it. This module declares 'drupal:
-   * inline_form_errors' as a dependency (see
-   * immofirst_search_request.info.yml) specifically so its
-   * FormErrorHandler is the one Drupal actually uses — but adding a
-   * dependency to an already-installed module's .info.yml does NOT
-   * retroactively enable it on a site where immofirst_search_request
-   * was installed before that line existed. If messenger duplicates
-   * are still appearing at the top of the page, run `drush en
-   * inline_form_errors -y` (or reinstall this module) to confirm it is
-   * actually enabled. With that service active, '#error_no_message' =>
-   * TRUE genuinely suppresses BOTH the top-of-page Messenger duplicate
-   * AND that module's own "jump to field" summary link for this
-   * element — leaving only the custom inline markup built below, and
-   * the module's own buildValidationSummary() banner at the bottom of
-   * Step 4 (a plain render array, unrelated to Messenger, so it
-   * renders exactly as before either way).
-   *
-   * It is set directly on each field's definition in buildStep1()/
-   * buildStep4() (unconditionally, every render), NOT here — the
-   * initial build of each field happens before $form_state->getErrors()
-   * has anything in it, so setting it only once an error is already
-   * known would always be one request too late. The error is still
-   * fully tracked in $form_state either way (server-side validation is
-   * untouched) — this only ever affects where the Messenger duplicate
-   * is suppressed, and is unaffected by the sibling-error fix above.
+   * SUPERSEDED NOTE on '#error_no_message': this class used to set
+   * '#error_no_message' on every validated field and depend on the
+   * core 'inline_form_errors' module being enabled to make it do
+   * anything (see the info.yml history). That precondition — a
+   * specific optional module being not just present but genuinely
+   * *enabled* on the target site — couldn't be verified from here, so
+   * whether the top-of-page Messenger duplicate actually disappeared
+   * depended on deployment state this class had no way to check.
+   * ajaxRefresh() now clears Messenger's error queue directly for
+   * every AJAX response from this form instead, which has no such
+   * precondition (see its docblock) — '#error_no_message' and the
+   * inline_form_errors dependency have been removed as unnecessary.
+   * None of this affects the sibling-error markup below, which was
+   * never routed through Messenger or that module either way.
    */
   private function attachSiblingFieldError(array &$element, array &$siblingParent, string $siblingKey, array $errors, string $errorKey, string $errorId): void {
     if (!isset($errors[$errorKey])) {
@@ -2133,9 +2096,42 @@ HTML;
    * screen (visual Step 5) now renders in place instead of redirecting
    * (see submitFinish()), so there's nothing a dedicated finish
    * callback needs to do beyond what this already does.
+   *
+   * FIX (duplicate top-of-page validation messages): returning a plain
+   * render array here (as this used to) hands control of the AJAX
+   * response to \Drupal\Core\Form\FormAjaxResponseBuilder, which wraps
+   * it in an AjaxResponse of its OWN construction. Building the
+   * AjaxResponse ourselves instead — a single explicit ReplaceCommand,
+   * nothing else — is what actually determines what shows up in the
+   * response; every field's own inline error (attachSiblingFieldError()
+   * in buildStep1()/buildStep4()) already renders as part of $form
+   * regardless of which path builds the response, so this only changes
+   * whether anything ELSE gets added alongside it.
+   *
+   * This module previously tried to suppress that duplicate by
+   * installing the core 'inline_form_errors' module and setting
+   * '#error_no_message' on every validated field — real, but fragile:
+   * it only does anything if that specific optional module is not just
+   * present but genuinely *enabled* on the target site (a dependency
+   * in .info.yml does not retroactively enable an already-installed
+   * module), so whether the duplicate actually disappeared depended on
+   * deployment state this class has no way to verify. Clearing
+   * Messenger's error queue directly, right here, has no such
+   * precondition — \Drupal\Core\Form\FormErrorHandler (core's DEFAULT
+   * handler, active or not) always finishes queuing its per-field
+   * duplicates during validateForm(), which completes before this
+   * callback ever runs, so by this point there is nothing left to lose
+   * by clearing it. Scoped to this one AJAX request/response only —
+   * it does not touch Messenger for the page's next load, or for any
+   * other form.
    */
-  public function ajaxRefresh(array &$form, FormStateInterface $form_state): array {
-    return $form;
+  public function ajaxRefresh(array &$form, FormStateInterface $form_state): AjaxResponse {
+    $this->messenger()->deleteByType(MessengerInterface::TYPE_ERROR);
+
+    $response = new AjaxResponse();
+    $response->addCommand(new ReplaceCommand('#immofirst-wizard-form', $form));
+
+    return $response;
   }
 
 }
