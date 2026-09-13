@@ -3,11 +3,18 @@
  * @file
  * Reusable search-form component — wired to the search_requests View's
  * exposed filters (see views.view.search_requests.yml). This is a real
- * GET form: submitting it reloads the front page with query parameters
- * that Drupal Views reads via hook_views_pre_view() (see
- * suchauftrag_theme_views_pre_view() in suchauftrag_theme.theme), since
- * this form's markup is fully custom rather than Views' own
- * auto-generated exposed form.
+ * GET form (method="get", action=""), kept as a genuine progressive-
+ * enhancement fallback: with JS disabled/failed it still fully reloads
+ * the front page with query parameters that Drupal reads as the View's
+ * exposed input (suchauftrag_theme_preprocess_page__front() in
+ * suchauftrag_theme.theme), since this form's markup is fully custom
+ * rather than Views' own auto-generated exposed form.
+ *
+ * With JS available, js/search-ajax.js intercepts the submit event and
+ * instead sends the same field values to Drupal's own /views/ajax
+ * endpoint (Views AJAX — same endpoint + rendering Views' native pager/
+ * exposed-form AJAX uses), swapping only #search-results-region in
+ * page--front.html.twig and updating the URL via history.pushState().
  *
  * Field name <-> View filter identifier map:
  *   art            <-> field_request_type_value (Kaufen/Mieten)

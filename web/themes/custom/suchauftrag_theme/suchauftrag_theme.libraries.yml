@@ -16,6 +16,24 @@ fonts:
     theme:
       https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap: { type: external }
 
+# NEW library — used only by templates/page--front.html.twig via
+# {{ attach_library('suchauftrag_theme/search-ajax') }}. Connects the
+# custom search form + "Weitere Suchaufträge laden" button to Drupal's
+# existing Views AJAX (/views/ajax) for the search_requests view. Kept
+# separate from "global" for the same reason as "auth"/"search-request-
+# detail" below: no other page's JS payload changes. Needs
+# drupalSettings (reads drupalSettings.views.ajax_path/ajaxViews,
+# populated by the view itself since use_ajax: true is already set in
+# views.view.search_requests.yml) and core/drupal (Drupal.behaviors /
+# Drupal.attachBehaviors) — not "suchauftrag_theme/global", since it
+# doesn't call anything theme.js defines.
+search-ajax:
+  js:
+    js/search-ajax.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+
 # NEW library — used only by templates/page--user-login.html.twig via
 # {{ attach_library('suchauftrag_theme/auth') }}. Kept separate from
 # "global" so no other page's CSS payload changes.

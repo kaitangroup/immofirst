@@ -17,6 +17,9 @@
  *
  * theme.js rotates the chevron via [data-select] / .is-open, and syncs
  * the hidden input's value + the trigger's visible label text on choice.
+ * search-ajax.js reads/restores both of those on browser back/forward;
+ * data-placeholder (on [data-select-value]) is what it falls back to
+ * when a restored state has no matching option, i.e. selected === ''.
  */
 #}
 {% set selected_label = placeholder|default('Bitte wählen') %}
@@ -31,7 +34,7 @@
           id="{{ id }}"
           aria-haspopup="listbox"
           aria-expanded="false">
-    <span data-select-value>{{ selected_label }}</span>
+    <span data-select-value data-placeholder="{{ placeholder|default('Bitte wählen') }}">{{ selected_label }}</span>
     <svg class="select__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>

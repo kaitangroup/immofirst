@@ -135,9 +135,52 @@ function suchauftrag_theme_preprocess_property_card(array &$variables) {
  * like drupal_view(), does not exist in core Twig without the contrib
  * Twig Tweak module. This keeps the theme dependency-free.
  *
- * IMPORTANT: adjust the field machine names below once the real
- * "search_requests" View/content type exists (see the comments in
- * templates/views/views-view-unformatted--search-requests.html.twig).
+ * Reads "search_request" node fields (migrated from "suchauftrag" —
+ * see the Views YAML migration this shipped alongside). Field machine
+ * names, confirmed against SearchRequestNodeCreator's mapping, not
+ * guessed:
+ *   field_request_type       (unchanged name/values: kaufen|mieten)
+ *   field_property_type      apartment|house|land|garage|commercial
+ *                            (suchauftrag's field_property_icon used a
+ *                            different value set — home|apartment|
+ *                            plot|garage — so this is translated via
+ *                            _suchauftrag_theme_property_type_to_card_icon()
+ *                            below, not read directly as the icon key)
+ *   title                    (base field, unchanged — already reads as
+ *                            "<Rooms>-Zimmer <Objektart> in <Ort>
+ *                            gesucht", generated once at submission by
+ *                            SearchRequestNodeCreator, not regenerated
+ *                            here)
+ *   field_location           (unchanged name)
+ *   field_area_min           (suchauftrag's field_area had one value;
+ *                            search_request stores a min/max range —
+ *                            per the task spec, the card's single
+ *                            "area" stat uses the min)
+ *   field_rooms_min          (same reasoning as area)
+ *   field_price_max          (per the task spec, the card's price stat
+ *                            uses the MAX of the range, not the min —
+ *                            arguably more useful to a provider
+ *                            browsing requests: "will pay up to X")
+ *   field_notes              (suchauftrag's field_description — a
+ *                            provider's own listing blurb — has no
+ *                            equivalent on search_request; field_notes,
+ *                            "Besondere Wünsche oder Hinweise", is the
+ *                            closest existing field and is what the
+ *                            reference screenshot's card description
+ *                            text actually reads like: a buyer's own
+ *                            wish, not a listing description)
+ *   field_reference_number  (new — passed through for completeness/
+ *                            future use; property-card.html.twig does
+ *                            not currently render it anywhere, and
+ *                            adding new visible markup to the card is
+ *                            out of scope for this migration)
+ *   created (base field)     (suchauftrag's field_request_date has no
+ *                            equivalent on search_request — every node
+ *                            already has Drupal's own base "created"
+ *                            timestamp, which is exactly "when this
+ *                            request was submitted", so the existing
+ *                            Heute/Gestern/d.m.Y formatting is kept,
+ *                            just fed from this instead)
  */
 function suchauftrag_theme_preprocess_views_view_unformatted__search_requests(array &$variables) {
   $variables['property_cards'] = [];
@@ -165,13 +208,23 @@ function suchauftrag_theme_preprocess_views_view_unformatted__search_requests(ar
         : '';
     };
 
-    // Format field_request_date (stored as Y-m-d) into "Heute" / "Gestern"
-    // / "d.m.Y", matching the reference design's card header.
+    // Format the node's own submission date (the base `created` field)
+    // into "Heute" / "Gestern" / "d.m.Y", matching the reference
+    // design's card header — same formatting as before, just no longer
+    // reading a dedicated date field that search_request never had.
     $date_label = '';
-    $raw_date = $get('field_request_date');
-    if ($raw_date) {
+    $created_timestamp = $node->getCreatedTime();
+    if ($created_timestamp) {
       try {
-        $date = new \DateTime($raw_date);
+        $date = new \DateTime('@' . $created_timestamp);
+        // The "@timestamp" constructor form always yields a UTC
+        // DateTime regardless of the site's configured timezone — set
+        // it explicitly before comparing Y-m-d against "today"/
+        // "yesterday" (which use the site's local timezone), or a
+        // request made shortly before/after midnight could be off by
+        // a day depending on how far the site's timezone sits from
+        // UTC.
+        $date->setTimezone(new \DateTimeZone(date_default_timezone_get()));
         $today = new \DateTime('today');
         $yesterday = new \DateTime('yesterday');
         if ($date->format('Y-m-d') === $today->format('Y-m-d')) {
@@ -185,7 +238,7 @@ function suchauftrag_theme_preprocess_views_view_unformatted__search_requests(ar
         }
       }
       catch (\Exception $e) {
-        $date_label = $raw_date;
+        $date_label = '';
       }
     }
 
@@ -202,17 +255,45 @@ function suchauftrag_theme_preprocess_views_view_unformatted__search_requests(ar
       '#request_type' => $type,
       '#badge_label' => $type === 'kaufen' ? 'KAUFEN' : 'MIETEN',
       '#date' => $date_label,
-      '#icon' => $get('field_property_icon') ?: 'home',
+      '#icon' => _suchauftrag_theme_property_type_to_card_icon($get('field_property_type') ?: 'apartment'),
       '#title' => $node->label(),
       '#location' => $get('field_location'),
-      '#area' => $get('field_area'),
-      '#rooms' => $get('field_rooms'),
-      '#price' => $get('field_price'),
-      '#description' => $get('field_description'),
+      '#area' => $get('field_area_min'),
+      '#rooms' => $get('field_rooms_min'),
+      '#price' => $get('field_price_max'),
+      '#description' => $get('field_notes'),
       '#details_url' => $node->toUrl()->toString(),
       '#offer_url' => $node->toUrl()->toString() . '/angebot',
+      // Not yet rendered anywhere in property-card.html.twig (see that
+      // template's variable list) — passed through per the task's
+      // field mapping table so it's available the moment the card is
+      // ever updated to show it, without adding new visible markup to
+      // the card as part of this migration.
+      '#reference_number' => $get('field_reference_number'),
     ];
   }
+}
+
+/**
+ * Maps a search_request "field_property_type" value to the icon
+ * keyword property-card.html.twig actually understands.
+ *
+ * The two vocabularies don't match: field_property_type's values are
+ * apartment|house|land|garage|commercial (Step 2 of the wizard), while
+ * property-card.html.twig only special-cases 'apartment' | 'plot' |
+ * 'garage' and falls back to a plain house icon for anything else (see
+ * that template). 'house' therefore intentionally maps to the same
+ * fallback as 'commercial' — the card template has no commercial-
+ * specific icon of its own, and adding one is a template/design change
+ * this migration does not make (see the migration report).
+ */
+function _suchauftrag_theme_property_type_to_card_icon(string $property_type): string {
+  return match ($property_type) {
+    'apartment' => 'apartment',
+    'land' => 'plot',
+    'garage' => 'garage',
+    default => 'house',
+  };
 }
 
 /**

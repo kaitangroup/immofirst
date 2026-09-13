@@ -920,7 +920,12 @@ SVG,
       $options[$value] = $label;
     }
 
-    $form['step_content']['property_type'] = [
+    $form['step_content']['property_type_wrapper'] = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['wizard-property-type-wrapper']],
+    ];
+
+    $form['step_content']['property_type_wrapper']['property_type'] = [
       '#type' => 'radios',
       '#title' => $this->t('Was suchen Sie?'),
       '#required' => TRUE,
@@ -929,16 +934,65 @@ SVG,
       '#default_value' => $stored2['property_type'] ?? NULL,
       '#attributes' => ['class' => ['wizard-cards', 'wizard-cards--objektart']],
     ];
-    // NOT the old '#field_suffix'-based approach: '#field_suffix' is
-    // only ever read by template_preprocess_form_element() /
-    // form-element.html.twig — the theme hook used for plain
-    // single-value elements (textfield, email, tel, etc.). A TITLED
-    // '#type' => 'radios' element like this one is themed via
-    // fieldset.html.twig instead (Drupal wraps it in a real
-    // <fieldset>), which has no concept of '#field_suffix' at all —
-    // so it was silently never rendered anywhere here. See
-    // attachSiblingFieldError()'s docblock for the fix.
-    $this->attachSiblingFieldError($form['step_content']['property_type'], $form['step_content'], 'property_type', $errors, 'step_content][property_type', 'property-type-error');
+
+    // Nested one level under 'property_type_wrapper' (immediately
+    // above) specifically so this field's own error can be fully
+    // separated from Drupal's native one — see the property-type-error
+    // block below. #tree => TRUE (set once, near the top of
+    // buildForm()) means this nesting changes the field's #parents,
+    // and therefore both its error key and its submitted-value path:
+    // 'step_content][property_type' before this fix,
+    // 'step_content][property_type_wrapper][property_type' now. The
+    // ONE place that reads the submitted value,
+    // persistCurrentStep()'s $values['property_type'], has been
+    // updated to $values['property_type_wrapper']['property_type']
+    // to match (confirmed, by grep, to be the only such place).
+    $propertyTypeErrorKey = 'step_content][property_type_wrapper][property_type';
+
+    if (isset($errors[$propertyTypeErrorKey])) {
+      // ROOT CAUSE (confirmed against the actual rendered HTML, not
+      // guessed): a titled '#type' => 'radios' element is themed via
+      // fieldset.html.twig, whose own preprocessing renders Drupal's
+      // native '#errors' INSIDE '.fieldset-wrapper', BEFORE
+      // {{ children }} — i.e. before the actual property cards — in
+      // its own unstyled markup. That is a completely separate render
+      // path from this class's own sibling-error mechanism
+      // (attachSiblingFieldError(), still used below for location,
+      // and for every Step 4 field), and it renders in addition to,
+      // not instead of, that sibling. An earlier attempt to suppress
+      // it via a '#pre_render' callback (stripNativeInlineError())
+      // did not reliably stop it for this specific fieldset-themed
+      // element — see attachSiblingFieldError()'s docblock for why
+      // that approach remains in place for the fields it does work
+      // for. Setting '#errors' directly to NULL here, unconditionally
+      // once we already know there IS an error, is the one approach
+      // confirmed (against the real rendered output) to remove
+      // fieldset.html.twig's own error block entirely, leaving only
+      // the 'property_type_error' sibling below as this field's sole
+      // error message.
+      $form['step_content']['property_type_wrapper']['property_type']['#errors'] = NULL;
+
+      // The red border / aria-* wiring attachSiblingFieldError() would
+      // normally add — done directly here since this field no longer
+      // goes through that helper (its whole point, #field_suffix, was
+      // never applicable to a fieldset-themed element in the first
+      // place; only the sibling-insertion half was ever relevant to
+      // it).
+      $form['step_content']['property_type_wrapper']['property_type']['#attributes']['class'][] = 'error';
+      $form['step_content']['property_type_wrapper']['property_type']['#attributes']['aria-invalid'] = 'true';
+      $form['step_content']['property_type_wrapper']['property_type']['#attributes']['aria-describedby'] = 'property-type-error';
+
+      // Positioned after the whole property_type element (i.e. after
+      // the property card grid) since it is property_type_wrapper's
+      // second and last child. Reuses inlineFieldErrorMarkup() —
+      // exactly the same '.form-item--error-message' markup/class
+      // 'Ort oder PLZ' (location) already renders below itself — so
+      // this is visually and structurally identical to every other
+      // inline field error in the wizard, not a one-off.
+      $form['step_content']['property_type_wrapper']['property_type_error'] = [
+        '#markup' => Markup::create($this->inlineFieldErrorMarkup('property-type-error', (string) $errors[$propertyTypeErrorKey])),
+      ];
+    }
 
     $form['step_content']['location_section'] = [
       '#type' => 'container',
@@ -1592,20 +1646,22 @@ SVG,
    *   HTML id for the rendered error message, referenced by the
    *   field's aria-describedby (FIX 5/19).
    *
-   * SUPERSEDED NOTE on '#error_no_message': this class used to set
-   * '#error_no_message' on every validated field and depend on the
-   * core 'inline_form_errors' module being enabled to make it do
-   * anything (see the info.yml history). That precondition — a
-   * specific optional module being not just present but genuinely
-   * *enabled* on the target site — couldn't be verified from here, so
-   * whether the top-of-page Messenger duplicate actually disappeared
-   * depended on deployment state this class had no way to check.
-   * ajaxRefresh() now clears Messenger's error queue directly for
-   * every AJAX response from this form instead, which has no such
-   * precondition (see its docblock) — '#error_no_message' and the
-   * inline_form_errors dependency have been removed as unnecessary.
-   * None of this affects the sibling-error markup below, which was
-   * never routed through Messenger or that module either way.
+   * CORRECTION to an earlier version of this note: it previously
+   * claimed setting '#error_no_message' here would suppress each
+   * field's own native inline '#errors' rendering (whatever its own
+   * theme template does with it) — form-element.html.twig for plain
+   * textfields, fieldset.html.twig for property_type's radios. It did
+   * not: '#error_no_message' proved unreliable in practice (still
+   * showing property_type's native black message above its cards even
+   * with the flag set), so it's been replaced below with a '#pre_render'
+   * callback that unsets '#errors' directly and unconditionally —
+   * see stripNativeInlineError()'s own docblock for why that approach
+   * is the one guaranteed to actually work regardless of exactly when
+   * Drupal itself populates '#errors' internally. ajaxRefresh()'s
+   * Messenger-clearing (a separate, later addition, still correct and
+   * still in place) handles the DIFFERENT concern of top-of-page
+   * Messenger duplicates; the two were never the same mechanism and
+   * fixing one was never a substitute for the other.
    */
   private function attachSiblingFieldError(array &$element, array &$siblingParent, string $siblingKey, array $errors, string $errorKey, string $errorId): void {
     if (!isset($errors[$errorKey])) {
@@ -1615,6 +1671,39 @@ SVG,
     $element['#attributes']['class'][] = 'error';
     $element['#attributes']['aria-invalid'] = 'true';
     $element['#attributes']['aria-describedby'] = $errorId;
+
+    // ROOT CAUSE of property_type specifically showing a SECOND,
+    // black, wrongly-positioned message above its own radio cards
+    // (while this method's own sibling message — its whole point —
+    // still rendered correctly too, below them): Drupal's own default
+    // \Drupal\Core\Form\FormErrorHandler sets '#errors' on every
+    // invalid element as part of the normal validate/rebuild cycle,
+    // independently of anything this method does — and THAT is what
+    // each element's own theme template renders natively, alongside
+    // (not instead of) this method's sibling. Which markup that native
+    // rendering produces depends on which template themes the element:
+    // - A titled '#type' => 'radios' (property_type) or 'checkboxes'
+    //   is themed via fieldset.html.twig, whose own errors block sits
+    //   BEFORE {{ children }} — i.e. between the legend/title and the
+    //   actual options — in its OWN class, never styled by this
+    //   module's CSS, hence unstyled/black and in the wrong place.
+    // - A plain '#type' => 'textfield'/'email'/'tel' (location, and
+    //   every Step 4 field) is themed via form-element.html.twig,
+    //   whose own errors block happens to already use THIS SAME class
+    //   ('.form-item--error-message') in the same position as this
+    //   method's sibling — so on those fields the duplicate is a
+    //   second, identical-looking copy in the DOM rather than an
+    //   obviously-wrong one, but it's still a duplicate.
+    // FIX: append a '#pre_render' callback that strips '#errors' at
+    // render time — the one point in the request lifecycle guaranteed
+    // to run AFTER Drupal has already set it (if it was going to set
+    // it at all), regardless of the exact, hard-to-pin-down timing of
+    // the build/validate/rebuild cycle. See stripNativeInlineError()'s
+    // own docblock. Appended (not assigned) so any '#pre_render'
+    // callback(s) Drupal's own composite-element processing already
+    // attached to this element (e.g. for radios) are preserved
+    // alongside it, not replaced.
+    $element['#pre_render'][] = [static::class, 'stripNativeInlineError'];
 
     // Tightens the gap between the input and its own error message
     // (see the '.form-item--has-inline-error' rule in wizard.css);
@@ -1637,6 +1726,45 @@ SVG,
     $siblingParent[$siblingKey . '_error'] = [
       '#markup' => Markup::create($this->inlineFieldErrorMarkup($errorId, (string) $errors[$errorKey])),
     ];
+  }
+
+  /**
+   * '#pre_render' callback (see attachSiblingFieldError()): strips
+   * Drupal's own native '#errors' from an element right before it's
+   * themed, so neither fieldset.html.twig's (property_type) nor
+   * form-element.html.twig's (every plain textfield/email/tel field)
+   * own error block ever prints — leaving this class's own sibling
+   * message (inlineFieldErrorMarkup(), rendered after the field/card
+   * grid) as the ONLY error markup for that field.
+   *
+   * Must be a '#pre_render' callback specifically, not something run
+   * during the initial build (buildStep1()/buildStep4() themselves):
+   * whatever internally sets '#errors' on an element as part of
+   * Drupal's own validate/rebuild cycle does so independently of, and
+   * not reliably before, this class's own PHP — a previous version of
+   * this fix tried unsetting/suppressing it directly inside
+   * attachSiblingFieldError() (an inline unset(), then
+   * '#error_no_message') and neither reliably stopped property_type's
+   * native message from still appearing. '#pre_render' callbacks run
+   * during the RENDER phase specifically — strictly after the entire
+   * form has been built, validated, and (if applicable) rebuilt, the
+   * last possible point before the theme template actually reads
+   * '#errors' — so unsetting it here is guaranteed to run after
+   * Drupal has already set it, if it was ever going to be set at all.
+   *
+   * Public + static: '#pre_render' callables in Drupal's render array
+   * format ([ClassName::class, 'method']) must be able to be invoked
+   * without an existing object instance.
+   *
+   * @param array $element
+   *   The element about to be themed.
+   *
+   * @return array
+   *   The same element, with '#errors' removed.
+   */
+  public static function stripNativeInlineError(array $element): array {
+    unset($element['#errors']);
+    return $element;
   }
 
   /**
@@ -1958,7 +2086,10 @@ HTML;
     switch ($step) {
       case 1:
         $newRequestType = $values['request_type'] ?? NULL;
-        $newPropertyType = $values['property_type'] ?? NULL;
+        // Nested under 'property_type_wrapper' since buildStep1()
+        // wraps this field in its own container — see the property
+        // Type error-handling block there for why.
+        $newPropertyType = $values['property_type_wrapper']['property_type'] ?? NULL;
 
         // Changing either Buy/Rent or Objektart invalidates every
         // property-specific selection made under the OLD combination
@@ -2108,17 +2239,21 @@ HTML;
    * regardless of which path builds the response, so this only changes
    * whether anything ELSE gets added alongside it.
    *
-   * This module previously tried to suppress that duplicate by
-   * installing the core 'inline_form_errors' module and setting
-   * '#error_no_message' on every validated field — real, but fragile:
-   * it only does anything if that specific optional module is not just
-   * present but genuinely *enabled* on the target site (a dependency
-   * in .info.yml does not retroactively enable an already-installed
-   * module), so whether the duplicate actually disappeared depended on
-   * deployment state this class has no way to verify. Clearing
-   * Messenger's error queue directly, right here, has no such
-   * precondition — \Drupal\Core\Form\FormErrorHandler (core's DEFAULT
-   * handler, active or not) always finishes queuing its per-field
+   * This module previously (mistakenly) attributed the top-of-page
+   * Messenger duplicate to '#error_no_message' needing the optional
+   * core 'inline_form_errors' module enabled, and removed both as
+   * unnecessary. That diagnosis was wrong on two counts: (1)
+   * '#error_no_message' is read by Drupal's DEFAULT error handler with
+   * no such module required (see attachSiblingFieldError()'s docblock
+   * — it's back, and unconditional, for a completely different reason:
+   * suppressing each field's own native inline '#errors' rendering
+   * alongside this method's sibling message), and (2) suppressing that
+   * per-field '#errors' rendering was never what put a duplicate at
+   * the TOP of the page in the first place — that's Messenger, a
+   * separate mechanism entirely, which is what clearing it here
+   * actually addresses. Clearing Messenger's error queue directly has
+   * no dependency on any optional module: \Drupal\Core\Form\FormErrorHandler
+   * (core's DEFAULT handler) always finishes queuing its per-field
    * duplicates during validateForm(), which completes before this
    * callback ever runs, so by this point there is nothing left to lose
    * by clearing it. Scoped to this one AJAX request/response only —

@@ -4,7 +4,7 @@ status: true
 dependencies:
   config:
     - core.entity_view_mode.node.teaser
-    - node.type.suchauftrag
+    - node.type.search_request
   module:
     - node
     - options
@@ -12,7 +12,7 @@ dependencies:
 id: search_requests
 label: Suchaufträge
 module: views
-description: 'Listet veröffentlichte Suchauftrag-Inhalte, neueste zuerst. Wird von suchauftrag_theme über views_embed_view() eingebettet.'
+description: 'Listet veröffentlichte Search-Request-Inhalte (Suchanfragen aus dem Wizard), neueste zuerst. Wird von suchauftrag_theme über views_embed_view() eingebettet. Vor dieser Migration wurden Suchauftrag-Inhalte gelistet — siehe node.type.search_request in den Dependencies.'
 tag: ''
 base_table: node_field_data
 base_field: nid
@@ -81,7 +81,7 @@ display:
           entity_field: type
           plugin_id: bundle
           value:
-            suchauftrag: suchauftrag
+            search_request: search_request
           expose:
             operator: ''
         field_request_type_value:
@@ -124,24 +124,24 @@ display:
             default_group_multiple: {  }
             group_items: {  }
           reduce_duplicates: false
-        field_property_icon_value:
-          id: field_property_icon_value
-          table: node__field_property_icon
-          field: field_property_icon_value
+        field_property_type_value:
+          id: field_property_type_value
+          table: node__field_property_type
+          field: field_property_type_value
           relationship: none
           group_type: group
           admin_label: ''
-          plugin_id: list_field
-          operator: or
-          value: {  }
+          plugin_id: string
+          operator: '='
+          value: ''
           group: 1
           exposed: true
           expose:
-            operator_id: field_property_icon_value_op
-            label: 'Immobilienart (Icon) (field_property_icon)'
+            operator_id: field_property_type_value_op
+            label: 'Immobilienart (field_property_type)'
             description: ''
             use_operator: false
-            operator: field_property_icon_value_op
+            operator: field_property_type_value_op
             operator_limit_selection: false
             operator_list: {  }
             identifier: immobilienart
@@ -150,7 +150,7 @@ display:
             multiple: false
             remember_roles:
               authenticated: authenticated
-            reduce: false
+            placeholder: ''
           is_grouped: false
           group_info:
             label: ''

@@ -11,18 +11,20 @@
  * "theme()" Twig function, which does not exist in core Twig (only the
  * contrib Twig Tweak module adds functions like that).
  *
- * Field machine names used in the preprocess function (adjust to match
- * your actual "search_requests" View once it is built in
- * /admin/structure/views):
+ * Field machine names read in the preprocess function, now migrated
+ * from "suchauftrag" to the "search_request" content type (see that
+ * function's own docblock for the full old -> new mapping):
  *   field_request_type      (list: kaufen|mieten)
- *   field_request_date      (datetime)
- *   field_property_icon     (list: home|apartment|plot|garage)
+ *   created                 (base field — search_request has no
+ *                            dedicated request-date field)
+ *   field_property_type     (list: apartment|house|land|garage|commercial —
+ *                            translated to the card's icon keyword)
  *   title                   (base field)
  *   field_location
- *   field_area
- *   field_rooms
- *   field_price
- *   field_description
+ *   field_area_min
+ *   field_rooms_min
+ *   field_price_max
+ *   field_notes
  *   (details/offer links are built from the entity URL)
  */
 #}

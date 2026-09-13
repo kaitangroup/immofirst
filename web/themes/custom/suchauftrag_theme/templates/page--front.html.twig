@@ -7,6 +7,7 @@
  * individual sections lives in this file.
  */
 #}
+{{ attach_library('suchauftrag_theme/search-ajax') }}
 {% include '@suchauftrag_theme/templates/includes/header.html.twig' %}
 
 <main id="main-content" class="main-content" role="main">
@@ -37,7 +38,7 @@
       <div class="search-requests__head">
         <div>
           <h2 id="search-requests-title" class="search-requests__title">Aktuelle Suchaufträge</h2>
-          <p class="search-requests__count">{{ search_requests_count is defined ? search_requests_count : 0 }} Suchaufträge gefunden</p>
+          <p class="search-requests__count" id="search-requests-count">{{ search_requests_count is defined ? search_requests_count : 0 }} Suchaufträge gefunden</p>
         </div>
         <div class="search-requests__sort">
           <label for="sort-select" class="sort__label">Sortieren nach</label>
@@ -61,19 +62,28 @@
         </div>
       </div>
 
-      {# Drupal View placeholder — do not hardcode cards here.
-         Built in suchauftrag_theme_preprocess_page__front() via
-         views_embed_view(), core-only (no Twig Tweak dependency).
-         Twig Tweak's drupal_view() would also work now that it's
-         installed, but this approach needs no contrib dependency. #}
-      {% if search_requests_view %}
-        {{ search_requests_view }}
-      {% else %}
-        <div class="property-grid__empty-state">
-          <p>Aktuell wurden keine Suchaufträge gefunden.</p>
-          <p class="u-text-muted">Bitte passen Sie Ihre Filter an oder versuchen Sie es später erneut.</p>
-        </div>
-      {% endif %}
+      {# Drupal View placeholder — do not hardcode cards here. Built in
+         suchauftrag_theme_preprocess_page__front() via $view->preview()
+         (views.view.search_requests.yml has use_ajax: true, so this
+         also carries the drupalSettings.views.ajaxViews entry
+         search-ajax.js needs to talk to Drupal's own /views/ajax).
+
+         #search-results-region is the one stable element search-ajax.js
+         replaces on every search — on both branches below, never just
+         the inner {{ search_requests_view }} — because which branch
+         renders can change between requests (e.g. going from "view
+         loaded" to "access denied"), and the wrapper must stay put
+         either way for JS to keep finding it. #}
+      <div id="search-results-region" aria-live="polite">
+        {% if search_requests_view %}
+          {{ search_requests_view }}
+        {% else %}
+          <div class="property-grid__empty-state">
+            <p>Aktuell wurden keine Suchaufträge gefunden.</p>
+            <p class="u-text-muted">Bitte passen Sie Ihre Filter an oder versuchen Sie es später erneut.</p>
+          </div>
+        {% endif %}
+      </div>
 
       <div class="search-requests__load-more">
         <button type="button" class="btn btn--outline" data-load-more>

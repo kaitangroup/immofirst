@@ -219,6 +219,14 @@ textarea.form-textarea:focus{
   content:" *";
   color:var(--if-danger);
 }
+/* Step 1 only ("Was suchen Sie?" / "Ort oder PLZ"): hide the red
+   required asterisk per the design. Both fields stay '#required' in
+   PHP — this is purely visual and doesn't touch validation — and it's
+   scoped to [data-wizard-step="1"] specifically so Steps 2-5's own
+   required asterisks are completely unaffected. */
+.wizard__step-content[data-wizard-step="1"] .form-required::after{
+  content:"";
+}
 .description,
 .wizard__step-content .form-item__description{
   font-size:12.5px;

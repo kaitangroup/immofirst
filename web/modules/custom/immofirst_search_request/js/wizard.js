@@ -22,14 +22,25 @@
 (function (Drupal, once) {
   'use strict';
 
+  // Prevents the browser's own default scroll-restoration (restoring
+  // wherever the user last scrolled to on this URL, e.g. after a
+  // reload or back/forward navigation) from fighting the explicit
+  // scroll-to-top handled below for Step 1's own first paint. Setting
+  // this once, at parse time, doesn't affect any other page on the
+  // site — it's scoped to whatever page wizard.js is loaded on.
+  if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual';
+  }
+
   // Module-scoped (NOT per-element) record of the step we last saw,
   // read directly from '.wizard__step-content[data-wizard-step]'s own
   // attribute value — deliberately NOT tracked via once()'s node-
   // identity de-duplication (see the scroll behavior below for why).
   // Starts at null so the very first attach (whether that's the Step 0
-  // overview or a direct/reloaded load of any step) never scrolls;
-  // only a genuine CHANGE in this value — a real Weiter/Zurück step
-  // transition — triggers it.
+  // overview or a direct/reloaded load of any step) is treated as
+  // "just arrived", not a transition — see the ROOT CAUSE note in the
+  // scroll behavior below for what that means specifically for a
+  // fresh Step 1 load.
   var lastSeenStep = null;
 
   // How much breathing room to leave above the "Schritt X von 5"
@@ -101,7 +112,27 @@
       // 'overflow-anchor: none' on .wizard__step-content, which stops
       // the browser's own scroll-anchoring from fighting this for the
       // same reason.
-      if (currentStep !== null && lastSeenStep !== null && lastSeenStep !== currentStep) {
+      // ROOT CAUSE of Step 1 starting the page scrolled down near the
+      // location field/"Weiter" button instead of at the top: this
+      // behavior (correctly) never auto-scrolled on the very first
+      // attach — otherwise the Step 0 overview page would jump around
+      // on its own initial load too. But that same guard also skipped
+      // a genuine FRESH load of Step 1 itself, which — unlike Step 0 —
+      // does have a "Schritt X von 5" heading it should land on.
+      // Combined with the browser's own default scroll-restoration
+      // (restoring wherever the page was last scrolled to on this URL,
+      // e.g. after a reload) — now turned off above — a fresh Step 1
+      // load had nothing forcing it to the top, so it would show
+      // wherever the browser/QA had last left it.
+      //
+      // FIX: treat a first-ever attach that's ALREADY on Step 1 as
+      // "just arrived at Step 1", not as "no transition happened" —
+      // scrolling it the same way any other transition does. A first
+      // attach on Step 0, or a bookmarked/reloaded Step 2-5, is left
+      // exactly as before (no auto-scroll).
+      var isFreshStep1Load = (lastSeenStep === null && currentStep === '1');
+
+      if (currentStep !== null && (isFreshStep1Load || (lastSeenStep !== null && lastSeenStep !== currentStep))) {
         requestAnimationFrame(function () {
           var progressEl = document.querySelector('.wizard-progress');
           if (progressEl) {
@@ -163,6 +194,34 @@
         sync();
       });
       */
+
+      /* ============================================
+         Step 1: "Bitte wählen Sie eine Objektart aus."
+         clears the instant a property-type card is
+         picked, without waiting for another "Weiter"
+         click. Presentation only — attachSiblingFieldError()
+         in SearchRequestWizardForm.php (server-side
+         '#required' validation) is what actually enforces
+         the rule; this just removes the already-satisfied
+         warning's markup from the DOM. Does not touch the
+         location field's own validation/error handling.
+         ============================================ */
+      once('immofirst-clear-property-type-error', '.wizard-cards--objektart', context).forEach(function (fieldset) {
+        fieldset.addEventListener('change', function (event) {
+          var radio = event.target;
+          if (!radio || radio.type !== 'radio' || !radio.checked) {
+            return;
+          }
+
+          fieldset.classList.remove('error');
+          fieldset.removeAttribute('aria-invalid');
+
+          var errorEl = document.getElementById('property-type-error');
+          if (errorEl) {
+            errorEl.remove();
+          }
+        });
+      });
 
       /* ============================================
          Progress bar: (re)trigger the width transition

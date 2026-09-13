@@ -503,6 +503,24 @@
 .property-grid__empty-state p{ font-size:15px; margin-bottom:6px; }
 .property-grid__empty-state p:last-child{ margin-bottom:0; font-size:13.5px; }
 
+/* search-ajax.js: transient state while a fetch to /views/ajax is in
+   flight. No layout/design change — same tokens as the states above. */
+.property-grid__empty{
+  text-align:center;
+  padding:60px 20px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+}
+#search-results-region[aria-busy="true"]{
+  opacity:.6;
+  transition:opacity .15s ease;
+}
+[data-load-more][aria-busy="true"]{
+  opacity:.6;
+  pointer-events:none;
+}
+
 /* ==========================================================
    PROPERTY CARD
    ========================================================== */
