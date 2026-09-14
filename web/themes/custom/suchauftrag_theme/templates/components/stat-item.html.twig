@@ -2,13 +2,19 @@
 /**
  * @file
  * Single stat used in the property-card stats row.
- * Variables: icon (area|rooms|price), value, label.
+ * Variables: icon (area|land|type|year|price), value, label.
  */
 #}
 <div class="stat-item">
   <span class="stat-item__icon" aria-hidden="true">
     {% if icon == 'area' %}
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 4H4v5M15 4h5v5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    {% elseif icon == 'land' %}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 19.5L12 4l8 15.5H4z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 19.5h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    {% elseif icon == 'type' %}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 10.3L12 4l9 6.3V20H3v-9.7z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 20v-6.3h11V20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    {% elseif icon == 'year' %}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15.5" rx="1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 9.5h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     {% elseif icon == 'rooms' %}
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 18v-6.5A2.5 2.5 0 015.5 9H11v3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 18v-3.5h18V18M21 14.5V11a2 2 0 00-2-2h-6a2 2 0 00-2 2v3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 18v2M20 18v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     {% elseif icon == 'price' %}

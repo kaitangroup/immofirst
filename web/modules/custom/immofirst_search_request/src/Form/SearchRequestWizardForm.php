@@ -947,30 +947,66 @@ SVG,
     // persistCurrentStep()'s $values['property_type'], has been
     // updated to $values['property_type_wrapper']['property_type']
     // to match (confirmed, by grep, to be the only such place).
+    //
+    // Looked up defensively rather than via a single hardcoded key:
+    // the exact expected key is tried first, but if that key isn't
+    // present in $errors, every key is scanned for one that resolves
+    // to this field. This exists because the exact key Drupal used
+    // could not be confirmed live — a previous version of this code
+    // used only the exact expected key, and in production the whole
+    // block silently never ran (confirmed from real rendered HTML:
+    // no 'property_type_error' sibling was present at all, meaning
+    // this isset() check was false), most plausibly because
+    // validation for this specific submission ran against a form
+    // instance still cached from BEFORE this property_type_wrapper
+    // restructuring was deployed (Drupal validates AJAX submissions
+    // against the form_build_id-cached structure the browser already
+    // had loaded, not necessarily this file's current version) — in
+    // which case the error would still be keyed the OLD way,
+    // 'step_content][property_type'. A full page reload (not just
+    // resubmitting an already-open tab) after deploying should make
+    // the exact-key match hit directly; the scan below is a
+    // corroborating safety net either way, not a replacement for
+    // confirming that.
     $propertyTypeErrorKey = 'step_content][property_type_wrapper][property_type';
 
+    if (!isset($errors[$propertyTypeErrorKey])) {
+      foreach ($errors as $candidateKey => $candidateMessage) {
+        $segments = explode('][', (string) $candidateKey);
+        if (end($segments) === 'property_type') {
+          $propertyTypeErrorKey = $candidateKey;
+          break;
+        }
+      }
+    }
+
     if (isset($errors[$propertyTypeErrorKey])) {
-      // ROOT CAUSE (confirmed against the actual rendered HTML, not
-      // guessed): a titled '#type' => 'radios' element is themed via
-      // fieldset.html.twig, whose own preprocessing renders Drupal's
-      // native '#errors' INSIDE '.fieldset-wrapper', BEFORE
-      // {{ children }} — i.e. before the actual property cards — in
-      // its own unstyled markup. That is a completely separate render
-      // path from this class's own sibling-error mechanism
-      // (attachSiblingFieldError(), still used below for location,
-      // and for every Step 4 field), and it renders in addition to,
-      // not instead of, that sibling. An earlier attempt to suppress
-      // it via a '#pre_render' callback (stripNativeInlineError())
-      // did not reliably stop it for this specific fieldset-themed
-      // element — see attachSiblingFieldError()'s docblock for why
-      // that approach remains in place for the fields it does work
-      // for. Setting '#errors' directly to NULL here, unconditionally
-      // once we already know there IS an error, is the one approach
-      // confirmed (against the real rendered output) to remove
-      // fieldset.html.twig's own error block entirely, leaving only
-      // the 'property_type_error' sibling below as this field's sole
-      // error message.
+      // Drupal's native fieldset error: a titled '#type' => 'radios'
+      // element is themed via fieldset.html.twig, whose own
+      // preprocessing renders '#errors' INSIDE '.fieldset-wrapper',
+      // BEFORE {{ children }} — i.e. before the actual property
+      // cards — in its own unstyled markup. That is a completely
+      // separate render path from this class's own sibling-error
+      // mechanism (attachSiblingFieldError(), still used below for
+      // location, and for every Step 4 field), and would render in
+      // addition to, not instead of, that sibling if left alone.
+      //
+      // Two suppression mechanisms, deliberately layered, since it is
+      // not yet confirmed which one actually wins against wherever
+      // Drupal's own FormErrorHandler sets '#errors' on this element:
+      // a direct '#errors' => NULL assignment, AND
+      // stripNativeInlineError() (defined further down this class,
+      // originally written for this exact purpose) re-attached as a
+      // '#pre_render' callback. Neither was ever confirmed working
+      // against a real request before now — this whole `if` block
+      // was never actually reached in production, due to the
+      // key-matching bug fixed above (isset() was always false, for
+      // the wrong reason). If the native fieldset message still
+      // appears after this fix, that narrows the problem specifically
+      // to these two suppression mechanisms rather than the lookup
+      // above.
       $form['step_content']['property_type_wrapper']['property_type']['#errors'] = NULL;
+      $form['step_content']['property_type_wrapper']['property_type']['#pre_render'][] = [static::class, 'stripNativeInlineError'];
 
       // The red border / aria-* wiring attachSiblingFieldError() would
       // normally add — done directly here since this field no longer

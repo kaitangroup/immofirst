@@ -151,16 +151,17 @@ function suchauftrag_theme_preprocess_property_card(array &$variables) {
  *                            gesucht", generated once at submission by
  *                            SearchRequestNodeCreator, not regenerated
  *                            here)
- *   field_location           (unchanged name)
- *   field_area_min           (suchauftrag's field_area had one value;
- *                            search_request stores a min/max range —
- *                            per the task spec, the card's single
- *                            "area" stat uses the min)
- *   field_rooms_min          (same reasoning as area)
- *   field_price_max          (per the task spec, the card's price stat
- *                            uses the MAX of the range, not the min —
- *                            arguably more useful to a provider
- *                            browsing requests: "will pay up to X")
+ *   field_location, field_radius
+ *   field_area_min / field_land_size_min / field_construction_year /
+ *   field_price_min / field_price_max / field_criteria
+ *                            — see _suchauftrag_theme_property_card_stats()
+ *                            below for exactly which of these feed
+ *                            which of the 3 stat columns, per property
+ *                            type; this is the client's Excel field-
+ *                            mapping table (KAUFEN/MIETEN x Haus/
+ *                            Wohnung/Grundstück/Stellplatz/Gewerbe),
+ *                            transcribed there verbatim, not derived
+ *                            here.
  *   field_notes              (suchauftrag's field_description — a
  *                            provider's own listing blurb — has no
  *                            equivalent on search_request; field_notes,
@@ -201,6 +202,10 @@ function suchauftrag_theme_preprocess_views_view_unformatted__search_requests(ar
     $type = $node->hasField('field_request_type') && !$node->get('field_request_type')->isEmpty()
       ? $node->get('field_request_type')->value
       : 'mieten';
+
+    $propertyType = $node->hasField('field_property_type') && !$node->get('field_property_type')->isEmpty()
+      ? $node->get('field_property_type')->value
+      : 'apartment';
 
     $get = function (string $field) use ($node) {
       return $node->hasField($field) && !$node->get($field)->isEmpty()
@@ -255,12 +260,11 @@ function suchauftrag_theme_preprocess_views_view_unformatted__search_requests(ar
       '#request_type' => $type,
       '#badge_label' => $type === 'kaufen' ? 'KAUFEN' : 'MIETEN',
       '#date' => $date_label,
-      '#icon' => _suchauftrag_theme_property_type_to_card_icon($get('field_property_type') ?: 'apartment'),
+      '#icon' => _suchauftrag_theme_property_type_to_card_icon($propertyType),
       '#title' => $node->label(),
       '#location' => $get('field_location'),
-      '#area' => $get('field_area_min'),
-      '#rooms' => $get('field_rooms_min'),
-      '#price' => $get('field_price_max'),
+      '#radius' => $get('field_radius'),
+      '#stats' => _suchauftrag_theme_property_card_stats($node, $propertyType, $type, $get),
       '#description' => $get('field_notes'),
       '#details_url' => $node->toUrl()->toString(),
       '#offer_url' => $node->toUrl()->toString() . '/angebot',
@@ -272,6 +276,126 @@ function suchauftrag_theme_preprocess_views_view_unformatted__search_requests(ar
       '#reference_number' => $get('field_reference_number'),
     ];
   }
+}
+
+/**
+ * Builds the property-card's 3 stat columns for one node, per the
+ * client's Excel KAUFEN/MIETEN x Objektart field-mapping table.
+ * Transcribed verbatim from that table — not derived/normalized —
+ * so each property type's column ORDER and which column is the price
+ * vs. the "—" placeholder matches the table exactly (e.g. for Haus/
+ * Wohnung, price is column 2 and Baujahr is column 3; for
+ * Grundstück/Stellplatz/Gewerbe, column 2 is empty and price moves to
+ * column 3 instead).
+ *
+ * Always returns exactly 3 entries. A column the table marks "—" is
+ * still a real (4th key: 'empty' => TRUE) entry, not omitted — see
+ * property-card.html.twig for why (keeps columns 1/3 aligned across
+ * every property type's card, even mixed together in the same grid).
+ *
+ * @return array{0: array, 1: array, 2: array}
+ */
+function _suchauftrag_theme_property_card_stats(\Drupal\node\NodeInterface $node, string $propertyType, string $requestType, callable $get): array {
+  // Price column LABEL per the table — transcribed directly, not
+  // derived from a "kaufen = Kaufpreis, mieten = generic Miete" rule,
+  // because Grundstück uses "Pacht" (not "Miete") for Mieten, which
+  // such a rule would get wrong.
+  $priceLabels = [
+    'kaufen' => [
+      'house' => 'Kaufpreis',
+      'apartment' => 'Kaufpreis',
+      'land' => 'Kaufpreis',
+      'garage' => 'Kaufpreis',
+      'commercial' => 'Kaufpreis',
+    ],
+    'mieten' => [
+      'house' => 'Kaltmiete',
+      'apartment' => 'Kaltmiete',
+      'land' => 'Pacht',
+      'garage' => 'Miete',
+      'commercial' => 'Miete',
+    ],
+  ];
+  $priceLabel = $priceLabels[$requestType][$propertyType] ?? $priceLabels['mieten'][$propertyType] ?? 'Preis';
+  // Per the task spec (kept from before this refactor), the price
+  // stat uses the MAX of the field_price_min/max range — arguably
+  // more useful to a provider browsing requests: "will pay up to X".
+  $price = ['icon' => 'price', 'value' => $get('field_price_max'), 'label' => $priceLabel, 'empty' => FALSE];
+  $emptySlot = ['icon' => '', 'value' => '', 'label' => '', 'empty' => TRUE];
+
+  return match ($propertyType) {
+    'house', 'apartment' => [
+      ['icon' => 'area', 'value' => $get('field_area_min'), 'label' => 'Wohnfläche', 'empty' => FALSE],
+      $price,
+      ['icon' => 'year', 'value' => _suchauftrag_theme_list_field_label($node, 'field_construction_year'), 'label' => 'Baujahr', 'empty' => FALSE],
+    ],
+    'land' => [
+      ['icon' => 'land', 'value' => $get('field_land_size_min'), 'label' => 'Grundstück', 'empty' => FALSE],
+      $emptySlot,
+      $price,
+    ],
+    'garage' => [
+      ['icon' => 'type', 'value' => _suchauftrag_theme_garage_art_label($node), 'label' => 'Art', 'empty' => FALSE],
+      $emptySlot,
+      $price,
+    ],
+    // 'commercial' and any unrecognized value.
+    default => [
+      ['icon' => 'area', 'value' => $get('field_area_min'), 'label' => 'Fläche', 'empty' => FALSE],
+      $emptySlot,
+      $price,
+    ],
+  };
+}
+
+/**
+ * Reads which of a garage/Stellplatz node's field_criteria selections
+ * belong to the "Ausführungsart" search_criteria taxonomy group (see
+ * the immofirst_search_request update hook that renamed this group
+ * from "Art"), for the card's "Art" stat column.
+ *
+ * Multiple selected terms are joined with ", " — the wizard's Step 3
+ * checkboxes for that group allow more than one (Garage, Carport,
+ * etc. are not mutually exclusive), so the card shows all of them
+ * rather than picking just one.
+ */
+function _suchauftrag_theme_garage_art_label(\Drupal\node\NodeInterface $node): string {
+  if (!$node->hasField('field_criteria') || $node->get('field_criteria')->isEmpty()) {
+    return '';
+  }
+
+  $labels = [];
+  foreach ($node->get('field_criteria')->referencedEntities() as $term) {
+    if ($term instanceof \Drupal\taxonomy\TermInterface
+      && $term->hasField('field_group')
+      && $term->get('field_group')->value === 'Ausführungsart') {
+      $labels[] = $term->label();
+    }
+  }
+
+  return implode(', ', $labels);
+}
+
+/**
+ * Resolves a list_string field's stored machine value to its
+ * configured human-readable label (e.g. field_construction_year's
+ * "2010_heute" -> whatever German label that allowed value was given
+ * in immofirst_search_request.install), without hardcoding a guessed
+ * copy of that label map here — reads it straight off the field
+ * storage's own 'allowed_values' setting, so it can never drift out
+ * of sync with the module that actually owns this field. Falls back
+ * to the raw stored value for any field with no such setting (or no
+ * matching entry), so this is always safe to call.
+ */
+function _suchauftrag_theme_list_field_label(\Drupal\node\NodeInterface $node, string $field): string {
+  if (!$node->hasField($field) || $node->get($field)->isEmpty()) {
+    return '';
+  }
+
+  $value = $node->get($field)->value;
+  $allowed = $node->getFieldDefinition($field)?->getFieldStorageDefinition()->getSetting('allowed_values') ?? [];
+
+  return $allowed[$value] ?? $value;
 }
 
 /**
@@ -639,9 +763,17 @@ function suchauftrag_theme_theme($existing, $type, $theme, $path) {
         'icon' => 'home',
         'title' => '',
         'location' => '',
-        'area' => '',
-        'rooms' => '',
-        'price' => '',
+        'radius' => '',
+        // Always exactly 3 entries — one per Step 3 stat column, in
+        // display order. Each: ['icon' => string, 'value' => string,
+        // 'label' => string, 'empty' => bool]. 'empty' TRUE means "no
+        // metric applies in this slot for this property type" (e.g.
+        // column 2 for Grundstück/Stellplatz/Gewerbe, per the
+        // KAUFEN/MIETEN mapping table) — rendered as an invisible
+        // spacer so columns 1/3 still line up, never simply omitted.
+        // See _suchauftrag_theme_property_card_stats() in the .theme
+        // file for how these are built.
+        'stats' => [],
         'description' => '',
         'details_url' => '#',
         'offer_url' => '#',

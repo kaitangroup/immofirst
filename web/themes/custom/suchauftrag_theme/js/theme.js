@@ -171,4 +171,147 @@
     }
   };
 
+  /**
+   * Sticky / collapsible search filter.
+   *
+   * Desktop & tablet (>780px, see responsive.css): the full form pins
+   * itself to the top of the viewport once scrolled past — no other
+   * visual change.
+   *
+   * Mobile (<=780px): once pinned, the full form is replaced by a
+   * compact "Filter ändern" bar; clicking it reveals the exact same
+   * form (never a copy) as a panel underneath. See the markup/CSS
+   * comments in templates/includes/search-filter.html.twig and the
+   * "STICKY SEARCH FILTER" section of components.css/responsive.css.
+   */
+  Drupal.behaviors.suchauftragStickyFilter = {
+    attach: function (context) {
+      var section = context.querySelector ? context.querySelector('[data-search-filter]') : null;
+      if (!section || section.dataset.stickyBound) { return; }
+      section.dataset.stickyBound = 'true';
+
+      var sentinel = section.querySelector('[data-search-filter-sentinel]');
+      var spacer = section.querySelector('[data-search-filter-spacer]');
+      var bar = section.querySelector('[data-search-filter-bar]');
+      var stickyBar = section.querySelector('[data-sticky-bar]');
+      var toggleBtn = section.querySelector('[data-sticky-toggle]');
+      var summaryEl = section.querySelector('[data-filter-summary]');
+      var form = document.getElementById('search-filter-form');
+
+      if (!sentinel || !bar) { return; }
+
+      var mobileQuery = window.matchMedia('(max-width: 780px)');
+
+      function headerHeight() {
+        var value = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height'));
+        return isNaN(value) ? 72 : value;
+      }
+
+      /** Keeps the spacer the exact height of whichever element is currently pinned, so page content never jumps. */
+      function syncSpacerHeight() {
+        if (!spacer || !section.classList.contains('is-stuck')) { return; }
+        var pinned = mobileQuery.matches ? stickyBar : bar;
+        if (pinned) {
+          spacer.style.height = pinned.getBoundingClientRect().height + 'px';
+        }
+      }
+
+      /** Exposes the compact bar's own height as a CSS var, so the mobile "expanded panel" can position itself directly under it regardless of content changes. */
+      function syncStickyBarHeightVar() {
+        if (stickyBar) {
+          section.style.setProperty('--search-filter-sticky-bar-height', stickyBar.getBoundingClientRect().height + 'px');
+        }
+      }
+
+      function collapse() {
+        section.classList.remove('is-expanded');
+        if (toggleBtn) { toggleBtn.setAttribute('aria-expanded', 'false'); }
+      }
+
+      function setStuck(stuck) {
+        section.classList.toggle('is-stuck', stuck);
+        if (!stuck) {
+          collapse();
+        } else {
+          syncStickyBarHeightVar();
+        }
+        syncSpacerHeight();
+      }
+
+      if ('IntersectionObserver' in window) {
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            setStuck(!entry.isIntersecting);
+          });
+        }, { rootMargin: '-' + headerHeight() + 'px 0px 0px 0px', threshold: 0 });
+        observer.observe(sentinel);
+      }
+
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', function () {
+          var expanded = section.classList.toggle('is-expanded');
+          toggleBtn.setAttribute('aria-expanded', String(expanded));
+        });
+      }
+
+      document.addEventListener('click', function (e) {
+        if (section.classList.contains('is-expanded') && !section.contains(e.target)) {
+          collapse();
+        }
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && section.classList.contains('is-expanded')) {
+          collapse();
+          if (toggleBtn) { toggleBtn.focus(); }
+        }
+      });
+
+      /** Builds the "Mieten · Wohnung · München · 25 km"-style summary from the form's own current values — never a separate source of truth. */
+      function updateSummary() {
+        if (!summaryEl || !form) { return; }
+
+        var parts = [];
+
+        var checkedArt = form.querySelector('input[name="art"]:checked');
+        if (checkedArt) {
+          var artLabel = form.querySelector('label[for="' + checkedArt.id + '"]');
+          if (artLabel) { parts.push(artLabel.textContent.trim()); }
+        }
+
+        form.querySelectorAll('[data-select]').forEach(function (select) {
+          var valueEl = select.querySelector('[data-select-value]');
+          var input = select.querySelector('[data-select-input]');
+          if (valueEl && input && input.value) {
+            parts.push(valueEl.textContent.trim());
+          }
+        });
+
+        var ortInput = form.querySelector('input[name="ort"]');
+        if (ortInput && ortInput.value.trim()) {
+          parts.push(ortInput.value.trim());
+        }
+
+        summaryEl.textContent = parts.join(' · ');
+      }
+
+      if (form) {
+        form.addEventListener('change', updateSummary);
+        form.addEventListener('input', function (e) {
+          if (e.target && e.target.name === 'ort') { updateSummary(); }
+        });
+        form.addEventListener('submit', collapse);
+        updateSummary();
+      }
+
+      var resizeTimer = null;
+      window.addEventListener('resize', function () {
+        window.clearTimeout(resizeTimer);
+        resizeTimer = window.setTimeout(function () {
+          syncStickyBarHeightVar();
+          syncSpacerHeight();
+        }, 150);
+      });
+    }
+  };
+
 })(Drupal);

@@ -1,16 +1,77 @@
 {#
 /**
  * @file
- * Search filter section wrapper. The actual form markup lives in the
- * reusable components/search-form.html.twig — a real GET <form> wired
- * to the search_requests View's exposed filters via matching field
- * names/identifiers (art, immobilienart, ort). See that file's header
- * comment for the full identifier map, and views.view.search_requests.yml
- * for the filter definitions themselves.
+ * Search filter section wrapper. The actual form markup is unchanged
+ * and still lives in the reusable components/search-form.html.twig —
+ * see that file's header comment for the full field <-> View filter
+ * identifier map. Nothing about the form itself (names, ids, submit
+ * behavior) is touched here.
+ *
+ * ADDED for the sticky/collapsible filter behavior (theme.js,
+ * "suchauftragStickyFilter" behavior):
+ *
+ *   - [data-search-filter-sentinel]: a static, zero-height marker that
+ *     never moves. theme.js observes it with an IntersectionObserver;
+ *     when it scrolls out of view below the header, the section gets
+ *     `.is-stuck`. It exists purely so the observer has something
+ *     fixed to watch — observing the form itself would break once the
+ *     form starts being repositioned.
+ *
+ *   - [data-search-filter-spacer]: hidden by default. Once `.is-stuck`
+ *     is active, theme.js gives this the exact height of whichever
+ *     element just became `position:fixed` (the full form on desktop/
+ *     tablet, or the compact bar on mobile) so the page content below
+ *     never jumps.
+ *
+ *   - [data-search-filter-bar]: wraps the existing search-form include
+ *     only so it can be pinned as a single full-width strip the same
+ *     way `.header` already pins itself (see components.css) — this
+ *     wrapper carries no visual styling of its own outside `.is-stuck`.
+ *
+ *   - [data-sticky-bar]: NEW compact "Filter ändern" bar, hidden by
+ *     default and only ever shown on mobile once `.is-stuck` is
+ *     active (see the ≤780px rules in responsive.css). Clicking it
+ *     toggles `.is-expanded` on the section, which reveals the exact
+ *     same form (never a duplicate) as a panel underneath it.
+ *
+ * Desktop/tablet (>780px) ignore `.is-expanded` entirely and always
+ * show the full form once stuck — see the "Sticky search filter"
+ * rules in components.css. Nothing about the non-stuck, non-mobile
+ * appearance changes.
  */
 #}
-<section class="search-filter" aria-label="Suchaufträge filtern">
-  <div class="container">
-    {% include '@suchauftrag_theme/templates/components/search-form.html.twig' %}
+<section class="search-filter" data-search-filter aria-label="Suchaufträge filtern">
+  <div class="search-filter__sentinel" data-search-filter-sentinel aria-hidden="true"></div>
+  <div class="search-filter__spacer" data-search-filter-spacer aria-hidden="true"></div>
+
+  <div class="search-filter__bar" data-search-filter-bar>
+    <div class="container">
+      {% include '@suchauftrag_theme/templates/components/search-form.html.twig' %}
+    </div>
+  </div>
+
+  {# Compact bar — mobile only, see responsive.css. Summary text is
+     filled in and kept in sync by theme.js from the (single) form's
+     current values; it is intentionally empty here since there is no
+     good static default without duplicating the field labels. #}
+  <div class="search-filter__sticky-bar" data-sticky-bar>
+    <div class="container search-filter__sticky-bar-inner">
+      <button type="button"
+              class="search-filter__sticky-toggle"
+              data-sticky-toggle
+              aria-expanded="false"
+              aria-controls="search-filter-form">
+        <span class="search-filter__sticky-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="search-filter__sticky-label">Filter ändern</span>
+        <span class="search-filter__sticky-summary" data-filter-summary></span>
+        <svg class="search-filter__sticky-chevron" data-sticky-chevron width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
   </div>
 </section>

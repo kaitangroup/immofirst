@@ -4,7 +4,8 @@
  * Mobile behaviour per spec:
  *  - Hero stacks vertically
  *  - Search filter becomes single column
- *  - Cards become list (1 per row)
+ *  - Cards become horizontal compact cards (icon left / content
+ *    center / bookmark+arrow right), one per row
  *  - CTA stacks
  *  - Footer stacks
  *  - No horizontal scrolling anywhere
@@ -58,6 +59,32 @@
   }
   .cta-banner__button{ width:100%; justify-content:center; }
   .cta-banner__illustration{ display:none; }
+
+  /* ===== Sticky search filter — mobile collapse (added) =====
+     Once .search-filter.is-stuck (set by theme.js), the full form is
+     replaced by the compact "Filter ändern" bar. Clicking that bar
+     adds .is-expanded, which brings the SAME form back as a floating
+     panel underneath it — never a duplicate form, never a full page
+     navigation. */
+  .search-filter.is-stuck .search-filter__bar{
+    display:none;
+  }
+  .search-filter.is-stuck.is-expanded .search-filter__bar{
+    display:block;
+    position:fixed;
+    top:calc(var(--header-height) + var(--search-filter-sticky-bar-height, 56px));
+    left:0;
+    right:0;
+    z-index:89;
+    max-height:calc(100vh - var(--header-height) - var(--search-filter-sticky-bar-height, 56px));
+    overflow-y:auto;
+    background:var(--bg);
+    box-shadow:var(--shadow-lg);
+    padding:16px;
+  }
+  .search-filter.is-stuck .search-filter__sticky-bar{
+    display:block;
+  }
 }
 
 /* ===== Mobile: ≤640px ===== */
@@ -106,15 +133,96 @@
   .property-grid__rows{
     grid-template-columns:1fr;
   }
+
+  /* ==========================================================
+     PROPERTY CARD — horizontal compact layout (per client's
+     mobile design): icon left / content center / bookmark+arrow
+     right, metrics in one wrapping row, single "Details" action.
+     Desktop's own icon (inside .property-card__middle), the
+     description, and the details/actions row are all hidden here —
+     superseded by .property-card__leading and .property-card__trailing
+     (see property-card.html.twig's header comment for why those are
+     duplicate DOM rather than CSS-repositioned originals).
+     ========================================================== */
+  .property-card{
+    flex-direction:row;
+    align-items:center;
+    gap:12px;
+    padding:14px;
+  }
+  .property-card__leading{
+    display:flex;
+    flex-shrink:0;
+  }
+  .property-card__leading .property-card__icon{
+    margin-bottom:0;
+  }
+  .property-card__content{
+    flex:1 1 auto;
+    /* Without this a flex child won't shrink below its content's
+       natural width, which is exactly what causes text (a long title
+       or location) to overflow the card instead of truncating. */
+    min-width:0;
+  }
+  .property-card__middle .property-card__icon{
+    display:none;
+  }
+  .property-card__top{
+    margin-bottom:6px;
+  }
+  .property-card__title{
+    font-size:14.5px;
+    margin-bottom:3px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .property-card__location{
+    font-size:12.5px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .property-card__stats{
+    display:flex;
+    flex-wrap:wrap;
+    row-gap:6px;
+    column-gap:16px;
+    margin:10px 0 0;
+    padding:10px 0 0;
+    border-bottom:none;
+  }
+  /* In a wrapping flex row (unlike the fixed 3-column desktop grid)
+     there's no shared column position left to protect — an empty
+     slot can just be dropped instead of reserved as invisible space. */
+  .stat-item--empty{
+    display:none;
+  }
+  .property-card__description,
   .property-card__bottom{
+    display:none;
+  }
+  .property-card__trailing{
+    display:flex;
     flex-direction:column;
-    align-items:stretch;
-    gap:14px;
+    align-items:center;
+    gap:10px;
+    flex-shrink:0;
   }
-  .property-card__actions{
-    justify-content:space-between;
+  .property-card__trailing .property-card__bookmark{
+    width:32px;
+    height:32px;
   }
-  .property-card__actions .btn{ flex:1; }
+  .property-card__arrow{
+    width:32px;
+    height:32px;
+    border-radius:var(--radius-sm);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--primary);
+    flex-shrink:0;
+  }
 
   .cta-banner{ padding:0 16px 40px; }
   .cta-banner__title{ font-size:19px; }
