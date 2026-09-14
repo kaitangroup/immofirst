@@ -260,6 +260,7 @@
     box-shadow:var(--shadow-lg);
     border-radius:24px;
     padding:30px;
+    transition:padding var(--ease), min-height var(--ease), max-height var(--ease), border-radius var(--ease), box-shadow var(--ease);
   }
   .search-card__grid{
     display:grid;
@@ -454,6 +455,7 @@
   
   .search-filter__bar{
     position:relative;
+    transition:padding var(--ease);
   }
   .search-filter.is-stuck .search-filter__bar{
     position:fixed;

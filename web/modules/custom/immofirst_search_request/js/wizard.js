@@ -199,12 +199,22 @@
          Step 1: "Bitte wählen Sie eine Objektart aus."
          clears the instant a property-type card is
          picked, without waiting for another "Weiter"
-         click. Presentation only — attachSiblingFieldError()
-         in SearchRequestWizardForm.php (server-side
-         '#required' validation) is what actually enforces
-         the rule; this just removes the already-satisfied
-         warning's markup from the DOM. Does not touch the
-         location field's own validation/error handling.
+         click. Presentation only — the '#required'
+         validation in SearchRequestWizardForm.php's
+         buildStep1() is what actually enforces the rule;
+         this just removes the already-satisfied warning's
+         markup from the DOM. Does not touch the location
+         field's own validation/error handling.
+
+         The error itself is Drupal's own native fieldset
+         message now (buildStep1() no longer suppresses or
+         duplicates it — see that file's comments), so unlike
+         a hardcoded id this looks it up the same structural
+         way wizard.css does: '.fieldset-wrapper's one child
+         that isn't the options grid (identified by NOT
+         containing '.js-form-item', the same as every
+         property card does). Matches nothing, harmlessly, if
+         there's no error to clear.
          ============================================ */
       once('immofirst-clear-property-type-error', '.wizard-cards--objektart', context).forEach(function (fieldset) {
         fieldset.addEventListener('change', function (event) {
@@ -216,7 +226,7 @@
           fieldset.classList.remove('error');
           fieldset.removeAttribute('aria-invalid');
 
-          var errorEl = document.getElementById('property-type-error');
+          var errorEl = fieldset.querySelector('.fieldset-wrapper > div:not(:has(.js-form-item))');
           if (errorEl) {
             errorEl.remove();
           }

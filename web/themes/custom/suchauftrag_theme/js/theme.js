@@ -230,6 +230,14 @@
 
       function setStuck(stuck) {
         section.classList.toggle('is-stuck', stuck);
+        // Compact bar (added): desktop/tablet only — mobile keeps its
+        // existing separate "Filter ändern" toggle-bar behavior
+        // entirely untouched (see the ≤780px rules in responsive.css,
+        // which hide .search-filter__bar outright while stuck, so
+        // .is-compact has nothing to affect there regardless; this
+        // check just keeps the class itself from ever appearing on
+        // mobile, for clarity).
+        section.classList.toggle('is-compact', stuck && !mobileQuery.matches);
         if (!stuck) {
           collapse();
         } else {

@@ -233,8 +233,28 @@ textarea.form-textarea:focus{
   color:var(--if-muted);
   margin-top:4px;
 }
+/* The 3 rules below (color/layout, icon, spacing) are the canonical
+   inline-field-error look, originally written for attachSiblingFieldError()'s
+   own '.form-item--error-message' sibling markup (location, Step 4
+   fields). property_type ("Was suchen Sie?") is added to all three
+   selector lists below as its OWN, separate case: unlike those fields,
+   its error is Drupal's native fieldset.html.twig '#errors' output,
+   which this form no longer suppresses (see buildStep1() in
+   SearchRequestWizardForm.php) — unstyled and positioned before the
+   cards by default. It's targeted here purely structurally —
+   '.fieldset-wrapper's one child that ISN'T the options grid (which
+   always contains '.js-form-item') — rather than by a specific class,
+   since fieldset.html.twig's own error markup isn't something this
+   module's PHP controls or has fully pinned down for certain (current
+   Drupal core uses '.form-item--error-message' there too, in which
+   case these rules would apply twice, harmlessly and identically; if
+   a future core/theme change ever uses something else instead, this
+   still keeps working because it never depended on that class name).
+   See '.wizard-cards--objektart .fieldset-wrapper' further below for
+   the matching position fix (order:-1 on the options grid only). */
 .form-item--error-message,
-.wizard__step-content .form-item--error-message{
+.wizard__step-content .form-item--error-message,
+.wizard-cards--objektart .fieldset-wrapper > div:not(:has(.js-form-item)){
   display:flex;
   align-items:flex-start;
   gap:6px;
@@ -247,7 +267,8 @@ textarea.form-textarea:focus{
    entirely in CSS (no markup/twig change needed) since Drupal core
    generates this message text itself. */
 .form-item--error-message::before,
-.wizard__step-content .form-item--error-message::before{
+.wizard__step-content .form-item--error-message::before,
+.wizard-cards--objektart .fieldset-wrapper > div:not(:has(.js-form-item))::before{
   content:"!";
   flex-shrink:0;
   display:inline-flex;
@@ -262,6 +283,14 @@ textarea.form-textarea:focus{
   font-size:10px;
   font-weight:700;
   line-height:1;
+}
+/* fieldset.html.twig wraps '#errors' in a <strong> — normalized back
+   to the same weight as every other inline error's text (already
+   font-weight:600 from the rule above; a bare <strong> would render
+   at the browser default 700 otherwise, the one visible mismatch
+   pixel-perfect consistency would otherwise miss). */
+.wizard-cards--objektart .fieldset-wrapper > div:not(:has(.js-form-item)) strong{
+  font-weight:inherit;
 }
 .wizard__step-content input.error:not([type="checkbox"]),
 .wizard__step-content select.error,
@@ -285,7 +314,8 @@ textarea.form-textarea:focus{
 .wizard__step-content .form-item--has-inline-error{
   margin-bottom:6px;
 }
-.wizard__step-content .form-item--error-message{
+.wizard__step-content .form-item--error-message,
+.wizard-cards--objektart .fieldset-wrapper > div:not(:has(.js-form-item)){
   margin-bottom:22px;
 }
 
@@ -372,6 +402,22 @@ textarea.form-textarea:focus{
 .wizard-cards .fieldset-wrapper{
   display:block;
 }
+/* Objektart only (not gesuchsart, which never has a validation error
+   to make room for — request_type is never required, see buildStep1()):
+   fieldset.html.twig renders '#errors' as '.fieldset-wrapper's FIRST
+   child, before {{ children }} (the options grid) — see the '.form-
+   item--error-message' comment above for why this is no longer
+   suppressed. display:flex + order here moves it after the grid
+   visually without touching that native DOM order (this form doesn't
+   control fieldset.html.twig's own markup, only styling/positioning
+   it) — order:-1 goes on the options grid specifically (identified by
+   containing '.js-form-item', the same way the error message itself
+   is identified by NOT containing it, above), so it always renders
+   first regardless of which child Drupal put first in the DOM. */
+.wizard-cards--objektart .fieldset-wrapper{
+  display:flex;
+  flex-direction:column;
+}
 .wizard-cards .fieldset-wrapper > div{
   display:grid;
   gap:20px;
@@ -380,8 +426,9 @@ textarea.form-textarea:focus{
   grid-template-columns:repeat(2, 1fr);
   max-width:520px;
 }
-.wizard-cards--objektart .fieldset-wrapper > div{
+.wizard-cards--objektart .fieldset-wrapper > div:has(.js-form-item){
   grid-template-columns:1fr;
+  order:-1;
 }
 .wizard-cards .js-form-item,
 .wizard-cards .form-item{
@@ -1029,7 +1076,7 @@ textarea.form-textarea:focus{
  * collapses to one column on true mobile, matching the client's
  * mobile mockup exactly. */
 @media (min-width:768px){
-  .wizard-cards--objektart .fieldset-wrapper > div{
+  .wizard-cards--objektart .fieldset-wrapper > div:has(.js-form-item){
     grid-template-columns:repeat(2, 1fr);
   }
 }

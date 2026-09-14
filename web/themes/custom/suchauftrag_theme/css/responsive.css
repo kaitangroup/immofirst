@@ -87,6 +87,85 @@
   }
 }
 
+/* ===== Compact sticky search filter — desktop/tablet: ≥781px (added) =====
+   Symmetric counterpart to the ≤780px mobile block above, which is
+   left entirely untouched. Once `.search-filter.is-stuck.is-compact`
+   (theme.js toggles `.is-compact` alongside `.is-stuck`, gated off on
+   mobile), the SAME `.search-card` form used everywhere else on the
+   page — no duplicate markup, no second form — is restyled from its
+   normal ~150px tall card down to a single-row bar, 60px tall
+   (64px max, via min-height/max-height so slightly differing font
+   rendering across browsers can't push it over). Labels are hidden
+   since there is no room for a two-line label+input layout at this
+   height; the fields themselves stay fully functional and keep their
+   real name/id/value, so submitting the form (or search-ajax.js
+   intercepting it) is completely unaffected. `.search-filter__bar`'s
+   own `.container` wrapper (unchanged) is what keeps this the same
+   max-width as the rest of the page's content. The padding/min-height/
+   max-height/border-radius/box-shadow transitions themselves are
+   declared once on the base `.search-filter__bar`/`.search-card` rules
+   in components.css, at the shared `--ease` (250ms) used everywhere
+   else in this theme. */
+@media (min-width: 781px){
+  .search-filter.is-stuck.is-compact .search-filter__bar{
+    padding:0;
+  }
+  .search-filter.is-stuck.is-compact .search-card{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:8px 24px;
+    min-height:60px;
+    max-height:64px;
+    border-radius:0;
+    box-shadow:var(--shadow-md);
+  }
+  .search-filter.is-stuck.is-compact .search-card__grid{
+    display:flex;
+    align-items:center;
+    flex:1 1 auto;
+    min-width:0;
+    gap:16px;
+  }
+  .search-filter.is-stuck.is-compact .search-card__label{
+    display:none;
+  }
+  .search-filter.is-stuck.is-compact .search-card__field{
+    flex:0 0 auto;
+  }
+  .search-filter.is-stuck.is-compact .search-card__field:nth-child(3){
+    /* "Ort oder PLZ" — the one field worth letting flex/shrink,
+       everything else keeps its natural compact width. */
+    flex:1 1 180px;
+    min-width:0;
+  }
+  .search-filter.is-stuck.is-compact .tabs{
+    padding:2px;
+  }
+  .search-filter.is-stuck.is-compact .tabs__btn{
+    padding:6px 10px;
+    font-size:13px;
+  }
+  .search-filter.is-stuck.is-compact .input,
+  .search-filter.is-stuck.is-compact .select__trigger{
+    padding:7px 12px;
+    font-size:13px;
+  }
+  .search-filter.is-stuck.is-compact .search-card__actions{
+    flex:0 0 auto;
+    margin-top:0;
+    gap:14px;
+  }
+  .search-filter.is-stuck.is-compact .search-card__actions .btn{
+    padding:8px 16px;
+    font-size:13px;
+    white-space:nowrap;
+  }
+  .search-filter.is-stuck.is-compact .search-card__reset{
+    display:none;
+  }
+}
+
 /* ===== Mobile: ≤640px ===== */
 @media (max-width: 640px){
   :root{

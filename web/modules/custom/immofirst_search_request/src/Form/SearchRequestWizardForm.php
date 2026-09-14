@@ -937,7 +937,7 @@ SVG,
 
     // Nested one level under 'property_type_wrapper' (immediately
     // above) specifically so this field's own error can be fully
-    // separated from Drupal's native one — see the property-type-error
+    // separated from Drupal's native one — see the error-handling
     // block below. #tree => TRUE (set once, near the top of
     // buildForm()) means this nesting changes the field's #parents,
     // and therefore both its error key and its submitted-value path:
@@ -981,53 +981,43 @@ SVG,
     }
 
     if (isset($errors[$propertyTypeErrorKey])) {
-      // Drupal's native fieldset error: a titled '#type' => 'radios'
-      // element is themed via fieldset.html.twig, whose own
-      // preprocessing renders '#errors' INSIDE '.fieldset-wrapper',
-      // BEFORE {{ children }} — i.e. before the actual property
-      // cards — in its own unstyled markup. That is a completely
-      // separate render path from this class's own sibling-error
-      // mechanism (attachSiblingFieldError(), still used below for
-      // location, and for every Step 4 field), and would render in
-      // addition to, not instead of, that sibling if left alone.
+      // Previous approach here tried to suppress Drupal's own native
+      // fieldset error (a '#type' => 'radios' element is themed via
+      // fieldset.html.twig, which renders '#errors' itself, inside
+      // '.fieldset-wrapper', before {{ children }} — i.e. before the
+      // property cards) via '#errors' => NULL plus a '#pre_render'
+      // callback (stripNativeInlineError()), then inserted a second,
+      // custom sibling message (property_type_error) positioned after
+      // the cards instead. That suppression proved unreliable in
+      // production, so this no longer attempts it — confirming or
+      // fixing exactly why stripNativeInlineError() didn't reliably
+      // strip '#errors' here is no longer this method's problem to
+      // solve.
       //
-      // Two suppression mechanisms, deliberately layered, since it is
-      // not yet confirmed which one actually wins against wherever
-      // Drupal's own FormErrorHandler sets '#errors' on this element:
-      // a direct '#errors' => NULL assignment, AND
-      // stripNativeInlineError() (defined further down this class,
-      // originally written for this exact purpose) re-attached as a
-      // '#pre_render' callback. Neither was ever confirmed working
-      // against a real request before now — this whole `if` block
-      // was never actually reached in production, due to the
-      // key-matching bug fixed above (isset() was always false, for
-      // the wrong reason). If the native fieldset message still
-      // appears after this fix, that narrows the problem specifically
-      // to these two suppression mechanisms rather than the lookup
-      // above.
-      $form['step_content']['property_type_wrapper']['property_type']['#errors'] = NULL;
-      $form['step_content']['property_type_wrapper']['property_type']['#pre_render'][] = [static::class, 'stripNativeInlineError'];
-
-      // The red border / aria-* wiring attachSiblingFieldError() would
-      // normally add — done directly here since this field no longer
-      // goes through that helper (its whole point, #field_suffix, was
-      // never applicable to a fieldset-themed element in the first
-      // place; only the sibling-insertion half was ever relevant to
-      // it).
+      // The native message is now left alone entirely and shown as
+      // Drupal renders it. wizard.css repositions it to sit after the
+      // card grid instead of before it, and gives it the same red
+      // icon/text/spacing as every other inline field error in the
+      // wizard — see the '.wizard-cards--objektart .fieldset-wrapper'
+      // rules there for the full reasoning. It's targeted purely
+      // structurally (as '.fieldset-wrapper's one child that isn't the
+      // options grid), not by a specific class, since this method has
+      // no reliable way to know or control which class fieldset.html
+      // .twig gives that element.
+      //
+      // wizard.js's clear-on-select handler was updated the same way:
+      // it used to look this error up by the id of the now-removed
+      // custom element ('property-type-error'); it now finds whatever
+      // Drupal's native error element actually is, the same
+      // structural way.
+      //
+      // stripNativeInlineError(), attachSiblingFieldError() and
+      // inlineFieldErrorMarkup() are untouched and still work exactly
+      // as before for every other field in this form (location, and
+      // every Step 4 field) — only property_type's own handling
+      // changes here.
       $form['step_content']['property_type_wrapper']['property_type']['#attributes']['class'][] = 'error';
       $form['step_content']['property_type_wrapper']['property_type']['#attributes']['aria-invalid'] = 'true';
-      $form['step_content']['property_type_wrapper']['property_type']['#attributes']['aria-describedby'] = 'property-type-error';
-
-      // Positioned after the whole property_type element (i.e. after
-      // the property card grid) since it is property_type_wrapper's
-      // second and last child. Reuses inlineFieldErrorMarkup() —
-      // exactly the same '.form-item--error-message' markup/class
-      // 'Ort oder PLZ' (location) already renders below itself — so
-      // this is visually and structurally identical to every other
-      // inline field error in the wizard, not a one-off.
-      $form['step_content']['property_type_wrapper']['property_type_error'] = [
-        '#markup' => Markup::create($this->inlineFieldErrorMarkup('property-type-error', (string) $errors[$propertyTypeErrorKey])),
-      ];
     }
 
     $form['step_content']['location_section'] = [
