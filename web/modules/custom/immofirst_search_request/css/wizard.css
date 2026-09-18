@@ -798,6 +798,31 @@ textarea.form-textarea:focus{
     margin-left:auto;
     margin-right:auto;
   }
+
+  /* Step 3 dynamic two-column grid: criteria_groups carries no
+     '#type' in SearchRequestWizardForm.php (buildStep3()), so Drupal
+     renders it with no wrapping element at all — each
+     .wizard-criteria-card fieldset lands as a direct child of
+     .wizard__step-content, exactly like 'notes' below it. No Twig
+     change needed to "unwrap" anything; the DOM is already flat.
+     Auto-placement (2 columns, row-major, no nth-child rules) is what
+     produces the left/right alternation — same mechanism as Steps 2
+     and 4 below. Existing per-card/per-field bottom margins
+     (.wizard-criteria-card, .form-item) already supply the vertical
+     rhythm, so row-gap stays 0 to avoid doubling it. */
+  .wizard__step-content[data-wizard-step="3"]{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    column-gap:32px;
+    row-gap:0;
+    align-items:start;
+  }
+
+  /* The step subtitle is always the first child — it must span both
+     columns, not take a column slot. */
+  .wizard__step-content[data-wizard-step="3"] > .wizard__step-subtitle{
+    grid-column:1 / -1;
+  }
 }
 
 /* ===== Step 4: WhatsApp-Nummer (country + number) group ===== */
@@ -1897,5 +1922,89 @@ textarea.form-textarea:focus{
       min-width:180px;
       padding-left:32px;
       padding-right:32px;
+  }
+}
+
+/* ==========================================================
+   DESKTOP WIZARD — STEPS 2 & 4 (DYNAMIC TWO-COLUMN LAYOUT)
+   MOBILE LOCKED. Step 1 is untouched (its own desktop layout
+   is defined above, further up this file). Step 3's version
+   of this same grid lives with its existing 880px-cap rule,
+   also further up this file.
+
+   Why this works for ANY dynamic field set (see
+   SearchRequestWizardForm.php buildStep2()/buildStep4()):
+   every top-level field/group Drupal renders for these two
+   steps is a single direct child of .wizard__step-content —
+   a '.wizard-minmax' container for min/max pairs (buildMinMaxPair()),
+   a plain '.form-item'/'.js-form-item' for selects and plain
+   textfields, '.wizard-phone-group' for the WhatsApp field, and
+   '.form-item-consent' for the consent checkbox. None of those
+   are targeted by field name here — only by that shared,
+   generic shape — so this keeps working unchanged no matter how
+   many fields a given Gesuchsart/Objektart combination renders,
+   or in what order.
+
+   CSS Grid's own default auto-placement (2 columns, row-major,
+   sparse, no 'grid-auto-flow: dense', no nth-child rules) is
+   ALL that produces the left/right pairing: field 1 -> col 1,
+   field 2 -> col 2, field 3 -> col 1, field 4 -> col 2, etc.
+   This matches both the client's Step 2 SVG (Wohnfläche/
+   Kaufpreis left, Anzahl der Zimmer/Baujahr right) and the
+   spec's own dynamic-field test matrix. Using plain grid
+   placement instead of manual column assignment is also what
+   keeps visual order and DOM/tab order identical — important
+   for keyboard/screen-reader users moving through the form.
+========================================================== */
+
+@media (min-width:1024px){
+
+  .wizard__step-content[data-wizard-step="2"],
+  .wizard__step-content[data-wizard-step="4"]{
+    max-width:880px;
+    margin-left:auto;
+    margin-right:auto;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    column-gap:32px;
+    /* Each item already carries its own bottom margin globally
+       (.wizard-minmax, .wizard__step-content .form-item,
+       .wizard-phone-group — see the rules earlier in this file,
+       all unscoped to any breakpoint), which is what supplies the
+       vertical rhythm between rows here. row-gap stays 0 so that
+       spacing isn't doubled. */
+    row-gap:0;
+    align-items:start;
+  }
+
+  .wizard__step-title:has(+ [data-wizard-step="2"]),
+  [data-wizard-step="2"] ~ .wizard__actions,
+  .wizard__step-title:has(+ [data-wizard-step="4"]),
+  [data-wizard-step="4"] ~ .wizard__actions{
+    max-width:880px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+
+  /* Elements that must span BOTH columns instead of taking a column
+     slot:
+     - the step subtitle (always the first child)
+     - inline validation error messages: attachSiblingFieldError()
+       in SearchRequestWizardForm.php inserts these as bare '#markup'
+       siblings of the field they belong to (e.g. step_content
+       ['firstname_error'] right after step_content['firstname']) —
+       a '#markup' item has no wrapper of its own, so
+       '.form-item--error-message' IS the direct grid-item element.
+       Spanning it full-width keeps it from stealing a column slot
+       and correctly pushes whatever comes after it onto a fresh row.
+     - the consent checkbox (Step 4), matching its existing full-
+       bleed background treatment. */
+  .wizard__step-content[data-wizard-step="2"] > .wizard__step-subtitle,
+  .wizard__step-content[data-wizard-step="4"] > .wizard__step-subtitle,
+  .wizard__step-content[data-wizard-step="2"] > .form-item--error-message,
+  .wizard__step-content[data-wizard-step="4"] > .form-item--error-message,
+  .wizard__step-content[data-wizard-step="4"] > .js-form-item-consent,
+  .wizard__step-content[data-wizard-step="4"] > .form-item-consent{
+    grid-column:1 / -1;
   }
 }
