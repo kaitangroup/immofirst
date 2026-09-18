@@ -1,0 +1,347 @@
+/**
+ * offer-webform.css
+ * Styles for webform--offer-to-search-request.html.twig.
+ *
+ * Loaded via the `suchauftrag_theme/offer-webform` library, which
+ * depends on `suchauftrag_theme/search-request-detail` (which in turn
+ * depends on `suchauftrag_theme/global`) — this guarantees the rules
+ * below always load LAST on this page, so the few property-only
+ * overrides here (card radius) reliably win without needing
+ * `!important` or selector hacks.
+ *
+ * Nothing in components.css / search-request-detail.css is edited —
+ * everything here is additive and scoped to `.offer-webform`.
+ *
+ * Breakpoint: reuses the theme's existing 780px "mobile" cutoff
+ * (see css/responsive.css) so this component switches at the exact
+ * same width as the rest of the site's mobile layout.
+ */
+
+/* ==========================================================
+   Desktop card polish
+   ========================================================== */
+
+/* Design calls for a 16px card radius specifically. Only the
+   `border-radius` property is overridden here — background, border,
+   padding, box-shadow, sticky positioning etc. all stay exactly as
+   already defined in search-request-detail.css / components.css. */
+.request-detail__sidebar .request-sidebar__card {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.offer-webform {
+  display: block;
+}
+
+/* Field spacing per reference: label -> input gap already handled by
+   the existing `.request-sidebar__card label { margin-bottom }` rule;
+   this just tightens the vertical rhythm between form items to match
+   the design exactly. */
+.offer-webform .webform-submission-offer-to-search-request-form,
+.offer-webform .webform-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ==========================================================
+   Focus states (visual only — no validation logic here)
+   ========================================================== */
+.offer-webform .form-item input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
+.offer-webform .form-item select,
+.offer-webform .form-item textarea {
+  transition: border-color var(--ease), box-shadow var(--ease);
+}
+
+.offer-webform .form-item input:not([type="file"]):not([type="checkbox"]):not([type="radio"]):focus,
+.offer-webform .form-item select:focus,
+.offer-webform .form-item textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--shadow-focus);
+}
+
+/* ==========================================================
+   Error states (visual only — Drupal's own #error_no_message /
+   .error / [aria-invalid] markers drive these; validation itself is
+   untouched)
+   ========================================================== */
+.offer-webform .form-item input.error,
+.offer-webform .form-item select.error,
+.offer-webform .form-item textarea.error,
+.offer-webform .form-item input[aria-invalid="true"],
+.offer-webform .form-item select[aria-invalid="true"],
+.offer-webform .form-item textarea[aria-invalid="true"] {
+  border-color: #DC2626;
+}
+
+.offer-webform .form-item input.error:focus,
+.offer-webform .form-item select.error:focus,
+.offer-webform .form-item textarea.error:focus,
+.offer-webform .form-item input[aria-invalid="true"]:focus,
+.offer-webform .form-item select[aria-invalid="true"]:focus,
+.offer-webform .form-item textarea[aria-invalid="true"]:focus {
+  border-color: #DC2626;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, .15);
+}
+
+.offer-webform .form-item__error-message,
+.offer-webform .form-item .error-message,
+.offer-webform .form-item description.error {
+  display: block;
+  color: #DC2626;
+  font-size: 12.5px;
+  line-height: 1.4;
+  margin-top: 6px;
+}
+
+/* ==========================================================
+   Upload dropzone
+   Base dashed-box look applies everywhere (desktop + mobile); the
+   `.offer-webform__dropzone-*` elements are injected by
+   js/offer-webform.js as progressive enhancement — if JS fails to
+   load, the native file input inside `.form-managed-file` still works
+   using the (slightly plainer) box styling below.
+   ========================================================== */
+.offer-webform .form-managed-file,
+.offer-webform .js-form-managed-file {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  padding: 26px 20px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: #FAFBFF;
+  overflow: hidden;
+  transition: border-color var(--ease), background var(--ease);
+}
+
+.offer-webform .form-managed-file:hover,
+.offer-webform .form-managed-file:focus-within,
+.offer-webform .form-managed-file.is-dragover {
+  border-color: var(--primary);
+  background: #F3F4FF;
+}
+
+.offer-webform__dropzone-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.offer-webform__dropzone-icon {
+  color: var(--primary);
+}
+
+.offer-webform__dropzone-action {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.offer-webform__dropzone-help {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0;
+  pointer-events: none;
+}
+
+/* The real, fully-functional <input type="file"> stretches over the
+   entire dropzone (opacity 0) so the whole area is clickable and
+   native drag/drop targeting still works even before JS runs. */
+.offer-webform .form-managed-file input[type="file"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+/* ==========================================================
+   Checkbox row polish
+   ========================================================== */
+.offer-webform .form-type-checkbox,
+.offer-webform .js-form-type-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.offer-webform .form-type-checkbox input[type="checkbox"],
+.offer-webform .js-form-type-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  accent-color: var(--primary);
+}
+
+/* ==========================================================
+   Privacy note (design item 9)
+   ========================================================== */
+.offer-webform .webform-privacy-note {
+  align-items: flex-start;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.offer-webform .webform-privacy-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--muted);
+}
+
+
+/* ==========================================================
+   Mobile bottom sheet
+   Hidden/no-op building blocks by default (desktop) — everything
+   below is only activated inside the <=780px media query.
+   ========================================================== */
+.offer-webform__mobile-cta { display: none; }
+.offer-webform__backdrop { display: none; }
+.offer-webform__handle { display: none; }
+.offer-webform__panel-header { display: none; }
+
+@media (max-width: 780px) {
+
+  .offer-webform__mobile-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 14px 20px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--gradient);
+    color: #FFFFFF;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform var(--ease), box-shadow var(--ease);
+  }
+  .offer-webform__mobile-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .offer-webform__backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, .5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .25s ease, visibility 0s linear .25s;
+    z-index: 1000;
+  }
+  .offer-webform__backdrop.is-open {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity .25s ease;
+  }
+
+  .offer-webform__panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: 90vh;
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(100%);
+    transition: transform .32s cubic-bezier(.32, .72, 0, 1);
+  }
+  .offer-webform__panel.is-open {
+    transform: translateY(0);
+  }
+  /* Set by JS while the handle is actively being dragged, so the
+     sheet tracks the finger 1:1 instead of animating. */
+  .offer-webform__panel.is-dragging {
+    transition: none;
+  }
+
+  .offer-webform__handle {
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 10px 0 6px;
+    cursor: grab;
+    touch-action: none;
+  }
+  .offer-webform__handle::before {
+    content: "";
+    width: 40px;
+    height: 4px;
+    border-radius: 4px;
+    background: var(--border);
+  }
+
+  .offer-webform__panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    padding: 2px 20px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .offer-webform__heading {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .offer-webform__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--muted);
+    transition: color var(--ease), border-color var(--ease);
+  }
+  .offer-webform__close:hover {
+    color: var(--text);
+    border-color: var(--muted);
+  }
+
+  .offer-webform__scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Body scroll lock — toggled on <html> by js/offer-webform.js while
+   the sheet is open. Kept out of the 780px media query on purpose:
+   if the viewport is resized past desktop width while the sheet
+   happens to be open, the JS drops this class (see the matchMedia
+   listener), so it's never left stuck on. */
+html.offer-webform-scroll-lock,
+html.offer-webform-scroll-lock body {
+  overflow: hidden;
+  height: 100%;
+}

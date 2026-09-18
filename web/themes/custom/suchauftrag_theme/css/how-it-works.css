@@ -1,0 +1,87 @@
+/**
+ * how-it-works.css
+ * Styles for templates/includes/how-it-works.html.twig.
+ *
+ * Fully self-contained under the `.how-it-works` BEM block (card
+ * background/border/radius live here, not on an ancestor), so the
+ * component looks correct wherever it's included. Uses only CSS
+ * custom properties already defined in css/style.css — no new
+ * variables introduced.
+ */
+
+.how-it-works {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+}
+
+.how-it-works__title {
+  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.how-it-works__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.how-it-works__step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.how-it-works__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--hero-bg);
+  color: var(--primary);
+}
+
+.how-it-works__content {
+  min-width: 0;
+}
+
+.how-it-works__step-title {
+  margin: 0 0 4px;
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+.how-it-works__step-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* Mobile: still full width / stacked (already the default flex-column
+   flow above — no structural change, so no layout shift), just a
+   touch tighter to match the reference at small widths. */
+@media (max-width: 640px) {
+  .how-it-works {
+    padding: 20px;
+  }
+  .how-it-works__steps {
+    gap: 18px;
+  }
+}
+
+.webform-element-description , .js-form-item-datenschutz-hinweis{
+  display: none;
+}

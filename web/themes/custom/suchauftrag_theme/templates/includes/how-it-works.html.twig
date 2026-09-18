@@ -1,0 +1,64 @@
+{#
+/**
+ * @file
+ * "So funktioniert es" — static, non-dynamic 3-step explainer card.
+ *
+ * Pure static include, no variables required. Use from any template
+ * with:
+ *
+ *   {% include '@suchauftrag_theme/templates/includes/how-it-works.html.twig' %}
+ *
+ * (Currently the equivalent markup is hardcoded inline in
+ * node--search-request.html.twig's sidebar — that file is outside
+ * this task's allowed-files list, so swapping its inline block for
+ * the {% include %} above is a one-line follow-up change to make
+ * there, not included here.)
+ */
+#}
+<div class="how-it-works">
+  <h2 class="how-it-works__title">So funktioniert es</h2>
+
+  <ol class="how-it-works__steps">
+
+    <li class="how-it-works__step">
+      <span class="how-it-works__icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M21 3L3 10.5l7 2.5M21 3l-7.5 18-3.5-8M21 3L10 13.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <div class="how-it-works__content">
+        <h3 class="how-it-works__step-title">Angebot senden</h3>
+        <p class="how-it-works__step-text">Senden Sie dem Suchenden ein passendes Angebot für seine Suche.</p>
+      </div>
+    </li>
+
+    <li class="how-it-works__step">
+      <span class="how-it-works__icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <rect x="5" y="3.5" width="14" height="17" rx="2" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+          <path d="M9 11.5l2.2 2.2L15.5 9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <div class="how-it-works__content">
+        <h3 class="how-it-works__step-title">Interessent entscheidet</h3>
+        <p class="how-it-works__step-text">Der Suchende prüft Ihr Angebot und entscheidet, ob er Interesse hat.</p>
+      </div>
+    </li>
+
+    <li class="how-it-works__step">
+      <span class="how-it-works__icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <circle cx="7" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/>
+          <circle cx="17" cy="6" r="3" stroke="currentColor" stroke-width="1.7"/>
+          <circle cx="17" cy="18" r="3" stroke="currentColor" stroke-width="1.7"/>
+          <path d="M9.7 10.7l4.6-3.4M9.7 13.3l4.6 3.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <div class="how-it-works__content">
+        <h3 class="how-it-works__step-title">Kontaktdaten werden geteilt</h3>
+        <p class="how-it-works__step-text">Bei Interesse werden Ihre Kontaktdaten freigegeben und Sie können sich austauschen.</p>
+      </div>
+    </li>
+
+  </ol>
+</div>

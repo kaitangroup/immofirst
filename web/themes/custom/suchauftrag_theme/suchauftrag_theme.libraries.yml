@@ -67,5 +67,23 @@ search-request-detail:
   css:
     theme:
       css/search-request-detail.css: {}
+      css/how-it-works.css: {}
   dependencies:
     - suchauftrag_theme/global
+
+# NEW library — used only by templates/webform--offer-to-search-request.html.twig
+# via {{ attach_library('suchauftrag_theme/offer-webform') }}, called from
+# inside that template itself (not from node--search-request.html.twig,
+# which stays untouched). Depends explicitly on "search-request-detail"
+# (not just "global") so its CSS is guaranteed to load LAST on this page,
+# letting the few property-only overrides in offer-webform.css (card
+# radius) win on normal specificity, with no !important needed.
+offer-webform:
+  css:
+    theme:
+      css/offer-webform.css: {}
+  js:
+    js/offer-webform.js: {}
+  dependencies:
+    - suchauftrag_theme/search-request-detail
+    - core/drupal

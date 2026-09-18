@@ -234,23 +234,9 @@
       <div class="request-sidebar__card">
         {{ drupal_entity('webform', 'offer_to_search_request') }}
       </div>
-      <div class="request-sidebar__card request-sidebar__how-it-works">
-        <h2 class="request-sidebar__title">So funktioniert es</h2>
-        <ul class="request-sidebar__steps">
-          <li>
-            <span class="request-sidebar__step-icon" aria-hidden="true">✓</span>
-            <span>Angebot senden</span>
-          </li>
-          <li>
-            <span class="request-sidebar__step-icon" aria-hidden="true">✓</span>
-            <span>Interessen entscheidet</span>
-          </li>
-          <li>
-            <span class="request-sidebar__step-icon" aria-hidden="true">✓</span>
-            <span>Kontaktdaten werden geteilt</span>
-          </li>
-        </ul>
-      </div>
+      
+         {% include '@suchauftrag_theme/templates/includes/how-it-works.html.twig' %}
+   
     </aside>
 
   </div>

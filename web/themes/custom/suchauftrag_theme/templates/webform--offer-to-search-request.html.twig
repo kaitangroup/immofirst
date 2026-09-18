@@ -1,0 +1,91 @@
+{#
+/**
+ * @file
+ * Theme override for the "offer_to_search_request" webform entity
+ * (theme hook: webform; suggestion: webform--offer-to-search-request,
+ * from the webform's machine name).
+ *
+ * IMPORTANT: {{ children }} below is the untouched, unmodified render
+ * of the actual <form> — every field, its #type, its validation
+ * (native HTML5 + Drupal server-side) and Drupal/Webform's own AJAX
+ * file-upload behaviors all come from that single render exactly as
+ * Webform + the site's YAML configuration produce it. Nothing here
+ * duplicates, clones, or rebuilds a single form field. This template
+ * only adds the *wrapper* chrome around that one, single copy of the
+ * form:
+ *
+ *  - Desktop (>780px): the wrapper is inert — the existing sidebar
+ *    card (.request-sidebar__card, styled in search-request-detail.css
+ *    / components.css) already renders it as the plain white card
+ *    from the reference design.
+ *
+ *  - Mobile (<=780px): CSS hides the form's normal flow position and
+ *    turns the SAME panel into a fixed bottom sheet; a compact
+ *    "Angebot senden" button is shown in its place and reveals the
+ *    sheet on tap (see js/offer-webform.js). The form's DOM node is
+ *    never moved or cloned — only CSS position/transform/visibility
+ *    changes — so field IDs, name attributes, aria-describedby wiring
+ *    and Drupal's AJAX behaviors are completely unaffected.
+ *
+ * The small "Ihre Daten werden vertraulich behandelt…" trust note
+ * (design item 9) is static UI chrome, not a form field, so it's
+ * added here rather than in the webform's YAML. It reuses the
+ * `.webform-privacy-note` class already defined in components.css.
+ */
+#}
+{{ attach_library('suchauftrag_theme/offer-webform') }}
+
+<div class="offer-webform" data-offer-webform>
+
+  {# Mobile-only compact CTA. Hidden entirely on desktop (CSS) — see
+     .offer-webform__mobile-cta. Opens the bottom sheet on tap. #}
+  <button type="button" class="offer-webform__mobile-cta" data-offer-webform-open aria-haspopup="dialog" aria-controls="offer-webform-panel">
+    Angebot senden
+  </button>
+
+  {# Mobile-only backdrop. Inert/hidden on desktop. #}
+  <div class="offer-webform__backdrop" data-offer-webform-backdrop hidden></div>
+
+  {# The one and only copy of the card/panel. Plain static card on
+     desktop; fixed bottom sheet on mobile (starts translated off
+     screen, see CSS). #}
+  <div
+    class="offer-webform__panel"
+    id="offer-webform-panel"
+    data-offer-webform-panel
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="offer-webform-heading"
+    tabindex="-1"
+  >
+
+    {# Drag handle — mobile only, decorative + drag-to-dismiss hook. #}
+    <div class="offer-webform__handle" data-offer-webform-handle aria-hidden="true"></div>
+
+    {# Sheet header (title + close) — mobile only. #}
+    <div class="offer-webform__panel-header">
+      <h2 id="offer-webform-heading" class="offer-webform__heading">Angebot senden</h2>
+      <button type="button" class="offer-webform__close" data-offer-webform-close aria-label="Schließen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    {# Internal scroll area. On mobile this is the only part that
+       scrolls (max-height:90vh on the panel); on desktop it's a
+       plain, non-scrolling wrapper around the exact same content. #}
+    <div class="offer-webform__scroll" data-offer-webform-scroll>
+
+      {{ children }}
+
+      <p class="webform-privacy-note">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="4.5" y="10.5" width="15" height="10" rx="1.8" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M8 10.5V7.5a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <span>Ihre Daten werden vertraulich behandelt und nur bei Interesse weitergegeben.</span>
+      </p>
+    </div>
+  </div>
+</div>

@@ -626,7 +626,7 @@
       var sortSelectInput = sortSelectEl ? sortSelectEl.querySelector('[data-select-input]') : null;
       if (sortSelectInput) {
         sortSelectInput.addEventListener('change', function () {
-          var values = Object.assign({}, readFormValues(), { sort: sortSelectInput.value === 'oldest' ? 'oldest' : DEFAULT_SORT });
+          var values = Object.assign({}, currentFilters, { sort: sortSelectInput.value === 'oldest' ? 'oldest' : DEFAULT_SORT });
           performSearch(values, { pushHistory: true });
         });
       }
