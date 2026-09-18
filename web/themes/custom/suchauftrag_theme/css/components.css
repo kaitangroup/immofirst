@@ -586,6 +586,30 @@
   .search-requests__sort{ display:flex; align-items:center; gap:10px; }
   .sort__label{ font-size:13px; color:var(--muted); white-space:nowrap; }
   .search-requests__sort .select{ min-width:180px; }
+
+  /* "Nur gemerkte anzeigen" — client design spec gives an exact hex
+     (#4F5DFF) for this button's outline, which is intentionally close
+     to but NOT identical to --primary (#5664FF); used literally here
+     rather than swapped for the token, to match the spec exactly.
+     Height matches the sort .select__trigger's own padding/font-size
+     (11px/14px) so the two sit flush at the same height. */
+  .saved-filter-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:11px 16px;
+    background:var(--surface);
+    border:1.5px solid #4F5DFF;
+    border-radius:12px;
+    color:#4F5DFF;
+    font-size:14px;
+    font-weight:600;
+    white-space:nowrap;
+    transition:background var(--ease), color var(--ease);
+  }
+  .saved-filter-btn svg{ flex-shrink:0; }
+  .saved-filter-btn:hover{ background:#F3F4FF; }
+  .saved-filter-btn.is-active{ background:#4F5DFF; color:#FFFFFF; }
   
   .property-grid 
   .property-grid__rows{
@@ -608,6 +632,18 @@
   }
   .property-grid__empty-state p{ font-size:15px; margin-bottom:6px; }
   .property-grid__empty-state p:last-child{ margin-bottom:0; font-size:13.5px; }
+
+  /* search-ajax.js reads the real "next page" / true-total signals
+     from these (the view's own full pager + Result-summary footer),
+     but the design shows only the "Weitere Suchaufträge laden"
+     button — so keep them in the DOM, just not visible. Scoped to
+     .search-requests so similar-search-requests (same class names,
+     templates/views/views-view--similar-search-requests.html.twig)
+     is unaffected. */
+  .search-requests .property-grid__pager,
+  .search-requests .property-grid__footer{
+    display:none;
+  }
   
   /* search-ajax.js: transient state while a fetch to /views/ajax is in
      flight. No layout/design change — same tokens as the states above. */
@@ -675,6 +711,12 @@
     justify-content:center;
     margin-bottom:12px;
   }
+  /* Icon-circle color follows field_request_type (client spec), not
+     property type — the glyph itself is drawn with currentColor and
+     stays white on both variants since the circle background is now a
+     solid brand color rather than the light tint above. */
+  .property-card__icon--rent{ background:#E58A2B; color:#FFFFFF; }
+  .property-card__icon--buy{ background:#46B96A; color:#FFFFFF; }
   .property-card__title{ font-size:17px; margin-bottom:6px; }
   .property-card__location{
     display:flex;
@@ -892,3 +934,350 @@
     text-align:center;
   }
   .footer__bottom p{ font-size:13px; color:#64748B; margin:0; }
+
+
+  /* ==========================================================
+   DETAIL PAGE & SIDEBAR ALIGNMENT (Pixel-Perfect Polish)
+   ========================================================== */
+
+/* Header Top Right: Bookmark Button Styling to Match Design */
+.request-detail__header-right .bookmark-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: all var(--ease);
+}
+
+.request-detail__header-right .bookmark-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: #F3F4FF;
+}
+
+.request-detail__header-right .bookmark-btn.is-active {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: #EEF0FF;
+}
+
+.request-detail__header-right .bookmark-btn.is-active svg {
+  fill: var(--primary);
+}
+
+/* Sidebar Card Container Spacing */
+.request-detail__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.request-sidebar__card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Webform Element Tweaks inside Sidebar */
+.request-sidebar__card .webform-submission-offer-to-search-request-form,
+.request-sidebar__card .webform-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.request-sidebar__card .form-item {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.request-sidebar__card label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* Make inputs look clean and unified */
+.request-sidebar__card .input,
+.request-sidebar__card select,
+.request-sidebar__card textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.request-sidebar__card textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* File Upload Area Dropzone Styling */
+.request-sidebar__card .js-form-managed-file,
+.request-sidebar__card .form-managed-file {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  text-align: center;
+  background: #FAFAFC;
+  transition: border-color var(--ease);
+}
+
+.request-sidebar__card .js-form-managed-file:hover {
+  border-color: var(--primary);
+}
+
+.request-sidebar__card .form-managed-file input[type="file"] {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Checkbox & Privacy text layout */
+.request-sidebar__card .form-type-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.request-sidebar__card .form-type-checkbox input[type="checkbox"] {
+  margin-top: 3px;
+  accent-color: var(--primary);
+}
+
+.request-sidebar__card .form-type-checkbox label {
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.4;
+  margin-bottom: 0;
+}
+
+.webform-privacy-note {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+  gap: 6px;
+}
+
+/* Submit Button Override */
+.request-sidebar__card .form-actions {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.request-sidebar__card .web-form-submit,
+.request-sidebar__card input[type="submit"] {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 500;
+  background: var(--gradient);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+}
+
+.request-sidebar__card input[type="submit"]:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  background: linear-gradient(90deg, #4A56E0, #4A42D6);
+}
+
+/* "So funktioniert es" list items formatting */
+.request-sidebar__how-it-works .request-sidebar__steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+
+.request-sidebar__how-it-works .request-sidebar__steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--text);
+}
+
+.request-sidebar__step-icon {
+  color: var(--success);
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+/* ==========================================================
+   SIMILAR SEARCH REQUESTS — "Ähnliche Suchaufträge"
+   New, additive block. Scoped entirely to `.similar-requests` /
+   `.similar-cards` / `.similar-card` so none of it touches or is
+   touched by the `.property-grid` / `.property-card` rules above,
+   which stay exactly as they are for the main search_requests view.
+   Mobile (≤640px) carousel + tablet (≤1024px) 2-col overrides live in
+   responsive.css, right next to the existing .property-grid
+   breakpoints they sit alongside.
+   ========================================================== */
+.similar-requests{ width:100%; }
+
+.similar-cards{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:24px;
+  width:100%;
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+
+.similar-cards__item{ min-width:0; }
+
+/* Card */
+.similar-card{
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:20px;
+  box-shadow:var(--shadow-sm);
+}
+
+.similar-card .badge{
+  align-self:flex-start;
+  margin-bottom:12px;
+}
+
+.similar-card__title{
+  font-size:16px;
+  font-weight:700;
+  line-height:1.35;
+  color:var(--text);
+  margin:0 0 8px;
+  /* 2-line clamp */
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  min-height:2.7em;
+}
+
+.similar-card__location{
+  display:flex;
+  align-items:flex-start;
+  gap:6px;
+  font-size:13px;
+  line-height:1.4;
+  color:var(--muted);
+  margin:0 0 16px;
+}
+.similar-card__location-icon{
+  flex-shrink:0;
+  margin-top:1px;
+  color:var(--muted);
+}
+
+.similar-card__divider{
+  border:none;
+  border-top:1px solid var(--border);
+  margin:0 0 14px;
+}
+
+.similar-card__meta{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px 18px;
+  margin:0 0 10px;
+}
+.similar-card__meta-item{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:13px;
+  font-weight:600;
+  color:var(--text);
+}
+.similar-card__meta-icon{
+  display:flex;
+  color:var(--muted);
+  flex-shrink:0;
+}
+
+.similar-card__date{
+  font-size:12.5px;
+  color:var(--muted);
+  margin:0 0 16px;
+}
+
+.similar-card__actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:auto;
+  padding-top:4px;
+}
+
+.similar-card__details-btn{
+  flex:1;
+  text-align:center;
+  padding:10px 14px;
+  border:1.5px solid var(--primary);
+  border-radius:var(--radius-sm);
+  background:var(--surface);
+  color:var(--primary);
+  font-size:13.5px;
+  font-weight:600;
+  white-space:nowrap;
+  transition:background var(--ease), color var(--ease);
+}
+.similar-card__details-btn:hover{
+  background:var(--primary);
+  color:#FFFFFF;
+}
+
+.similar-card__bookmark{
+  flex-shrink:0;
+  width:40px;
+  height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--surface);
+  color:var(--muted);
+  transition:transform var(--ease), color var(--ease), border-color var(--ease);
+}
+.similar-card__bookmark:hover{
+  transform:scale(1.08);
+  color:var(--primary);
+  border-color:var(--primary);
+}
+.similar-card__bookmark.is-active{ color:var(--primary); border-color:var(--primary); }
+.similar-card__bookmark.is-active svg{ fill:var(--primary); }

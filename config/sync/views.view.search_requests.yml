@@ -26,10 +26,27 @@ display:
       title: Suchaufträge
       fields: {  }
       pager:
-        type: some
+        type: full
         options:
           offset: 0
+          pagination_heading_level: h4
           items_per_page: 12
+          total_pages: null
+          id: 0
+          tags:
+            next: 'Nächste ›'
+            previous: '‹ Vorherige'
+            first: '« Erste'
+            last: 'Letzte »'
+          expose:
+            items_per_page: false
+            items_per_page_label: 'Elemente pro Seite'
+            items_per_page_options: '5, 10, 25, 50'
+            items_per_page_options_all: false
+            items_per_page_options_all_label: '- Alle -'
+            offset: false
+            offset_label: Offset
+          quantity: 9
       exposed_form:
         type: basic
         options:
@@ -61,6 +78,10 @@ display:
           entity_field: created
           plugin_id: date
           order: DESC
+          expose:
+            label: Sortierung
+            field_identifier: created
+          exposed: true
       arguments: {  }
       filters:
         status:
@@ -253,7 +274,17 @@ display:
       relationships: {  }
       use_ajax: true
       header: {  }
-      footer: {  }
+      footer:
+        result:
+          id: result
+          table: views
+          field: result
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: result
+          empty: false
+          content: '@total'
       display_extenders: {  }
     cache_metadata:
       max-age: -1

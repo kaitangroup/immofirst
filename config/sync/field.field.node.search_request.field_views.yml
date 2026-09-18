@@ -1,0 +1,25 @@
+uuid: e23320d7-0fea-4532-8753-c489b231d054
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_views
+    - node.type.search_request
+id: node.search_request.field_views
+field_name: field_views
+entity_type: node
+bundle: search_request
+label: Aufrufe
+description: 'Page view counter'
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

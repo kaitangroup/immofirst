@@ -4,6 +4,11 @@
  * Reusable search-request / property card.
  *
  * Variables (see suchauftrag_theme_theme() in the .theme file):
+ *   node_id        the node's own id, as a string — used only by
+ *                  js/saved-searches.js (the "Nur gemerkte anzeigen"
+ *                  localStorage bookmark feature) to identify which
+ *                  card a bookmark click/filter refers to. Not shown
+ *                  anywhere visually.
  *   request_type   'kaufen' | 'mieten'
  *   badge_label     e.g. 'KAUFEN' / 'MIETEN'
  *   date            e.g. 'Heute', '11.05.2024'
@@ -62,8 +67,15 @@
  * trailing) — see css/responsive.css for the full breakpoint.
  */
 #}
+{#
+  Icon-circle color follows the request type (client spec: MIETEN =
+  orange circle, KAUFEN = green circle; the icon glyph itself stays
+  white either way, unchanged from before) — NOT the property type.
+  See css/components.css for the actual colors.
+#}
+{% set icon_color_class = request_type == 'kaufen' ? 'property-card__icon--buy' : 'property-card__icon--rent' %}
 {% set icon_markup %}
-  <span class="property-card__icon" aria-hidden="true">
+  <span class="property-card__icon {{ icon_color_class }}" aria-hidden="true">
     {% if icon == 'apartment' %}
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4.5" y="3" width="15" height="18" rx="1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.2 7.2h1.8M14 7.2h1.8M8.2 11h1.8M14 11h1.8M8.2 14.8h1.8M14 14.8h1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     {% elseif icon == 'plot' %}
@@ -82,7 +94,7 @@
   </button>
 {% endset %}
 
-<article class="property-card" data-hover-lift>
+<article class="property-card" data-hover-lift data-node-id="{{ node_id }}">
 
   {# Mobile-only leading icon — hidden on desktop, see css/responsive.css #}
   <div class="property-card__leading">

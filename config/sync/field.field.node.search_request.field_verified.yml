@@ -1,0 +1,23 @@
+uuid: 5b290c1c-6239-49f8-9c78-5e367ff770d6
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_verified
+    - node.type.search_request
+id: node.search_request.field_verified
+field_name: field_verified
+entity_type: node
+bundle: search_request
+label: Verifiziert
+description: ''
+required: false
+translatable: true
+default_value:
+  -
+    value: 1
+default_value_callback: ''
+settings:
+  on_label: Ja
+  off_label: Nein
+field_type: boolean

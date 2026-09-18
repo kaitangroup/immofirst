@@ -130,16 +130,70 @@
 
       /* ============================================
          Bookmark toggle (property card)
+
+         Persisted via localStorage only (Drupal.suchauftragSavedSearches,
+         defined in js/saved-searches.js, which loads first — see
+         suchauftrag_theme.libraries.yml, "saved-searches" depends on
+         "global" so this file is always available first when both are
+         attached). No Drupal field or DB table is involved: only the
+         node id (read from the enclosing .property-card's
+         data-node-id, set in property-card.html.twig) is ever stored.
+
+         Falls back to a plain, non-persisted visual toggle if that
+         helper isn't present (e.g. a page that includes property
+         cards but never attaches the saved-searches library) — same
+         behavior as before this feature existed, so nothing regresses
+         on such a page.
+
+         Each property-card can render the bookmark button TWICE (a
+         desktop copy and a mobile copy — see property-card.html.twig's
+         header comment); both are updated together here via
+         data-node-id so persisted state never looks out of sync
+         between the two, even though only one is ever visible at a
+         given viewport width.
          ============================================ */
+      var savedSearches = window.Drupal && Drupal.suchauftragSavedSearches;
+
+      function setBookmarkVisualState(btn, active) {
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-pressed', String(active));
+        btn.setAttribute('aria-label', active ? 'Von Favoriten entfernen' : 'Zu Favoriten hinzufügen');
+      }
+
       var bookmarks = context.querySelectorAll ? context.querySelectorAll('[data-bookmark]') : [];
       bookmarks.forEach(function (btn) {
         if (btn.dataset.bound) { return; }
         btn.dataset.bound = 'true';
 
+        var card = btn.closest('.property-card');
+        var nodeId = card ? card.getAttribute('data-node-id') : null;
+
+        // Reflect already-saved state on initial paint/AJAX insert,
+        // not just after a click — otherwise a bookmarked card would
+        // always render un-bookmarked until clicked again.
+        if (savedSearches && nodeId) {
+          setBookmarkVisualState(btn, savedSearches.isSaved(nodeId));
+        }
+
         btn.addEventListener('click', function () {
-          var active = btn.classList.toggle('is-active');
-          btn.setAttribute('aria-pressed', String(active));
-          btn.setAttribute('aria-label', active ? 'Von Favoriten entfernen' : 'Zu Favoriten hinzufügen');
+          var active;
+          if (savedSearches && nodeId) {
+            active = savedSearches.toggle(nodeId);
+            // Keep the OTHER copy of this same card's bookmark button
+            // (desktop/mobile duplicate) in sync too.
+            if (card) {
+              card.querySelectorAll('[data-bookmark]').forEach(function (copy) {
+                setBookmarkVisualState(copy, active);
+              });
+            }
+          }
+          else {
+            // No persistence available — same as this always behaved
+            // before the saved-searches feature existed.
+            active = btn.classList.toggle('is-active');
+            btn.setAttribute('aria-pressed', String(active));
+            btn.setAttribute('aria-label', active ? 'Von Favoriten entfernen' : 'Zu Favoriten hinzufügen');
+          }
         });
       });
 

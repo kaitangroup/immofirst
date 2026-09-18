@@ -1,0 +1,34 @@
+{#
+/**
+ * @file
+ * Theme override for the similar_search_requests view.
+ *
+ * Wraps the unformatted row output. Note: the "Ähnliche Suchaufträge"
+ * heading and the "Alle anzeigen" link (section title left / link
+ * right) live in node--search-request.html.twig, outside of this
+ * view's own render array — this template only wraps the view's row /
+ * empty / pager / footer output, renamed to a dedicated
+ * `similar-requests` BEM block so it can't share (or be affected by)
+ * the unrelated `.property-grid` styling used by the main
+ * search_requests view.
+ */
+#}
+<div{{ attributes.addClass('similar-requests') }}>
+  {% if header %}
+    <div class="similar-requests__header">{{ header }}</div>
+  {% endif %}
+
+  {% if rows %}
+    {{ rows }}
+  {% elseif empty %}
+    <div class="similar-requests__empty">{{ empty }}</div>
+  {% endif %}
+
+  {% if pager %}
+    <div class="similar-requests__pager">{{ pager }}</div>
+  {% endif %}
+
+  {% if footer %}
+    <div class="similar-requests__footer">{{ footer }}</div>
+  {% endif %}
+</div>

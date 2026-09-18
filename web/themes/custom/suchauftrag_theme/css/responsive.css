@@ -39,6 +39,14 @@
     grid-template-columns:repeat(2, 1fr);
   }
 
+  /* Similar Search Requests ("Ähnliche Suchaufträge") — tablet: 2
+     columns. Own block, not .property-grid, so it can't drift out of
+     sync with (or be broken by) future changes to the main search
+     results grid above. */
+  .similar-cards{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+  }
+
   .footer__grid{
     grid-template-columns:1fr 1fr;
     row-gap:32px;
@@ -207,10 +215,49 @@
   }
   .search-requests__sort{ width:100%; }
   .search-requests__sort .select{ flex:1; min-width:0; }
+  /* Client spec: mobile keeps only the "Sortieren" control in this
+     row — the saved-search filter button is hidden here rather than
+     squeezed in beside it, to avoid disturbing the existing mobile
+     layout (spec explicitly allows omitting it or moving it elsewhere
+     later; no second mobile-only copy is added here since there's no
+     approved design for where exactly it'd sit in the filter panel). */
+  .saved-filter-btn{ display:none; }
 
   .property-grid,
   .property-grid__rows{
     grid-template-columns:1fr;
+  }
+
+  /* ==========================================================
+     SIMILAR SEARCH REQUESTS — "Ähnliche Suchaufträge" mobile:
+     horizontal swipe carousel, one card visible, CSS-only scroll-snap,
+     no JS slider library. Own block (not .property-grid), so this
+     doesn't affect — and isn't affected by — the main search results
+     grid's mobile layout directly below.
+     ========================================================== */
+  .similar-cards{
+    display:flex;
+    flex-wrap:nowrap;
+    grid-template-columns:none;
+    gap:16px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+    padding:2px var(--container-padding) 8px;
+    margin:0 calc(-1 * var(--container-padding));
+    /* hide scrollbar */
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+  }
+  .similar-cards::-webkit-scrollbar{ display:none; }
+
+  .similar-cards__item{
+    flex:0 0 auto;
+    width:85vw;
+    max-width:300px;
+    min-width:280px;
+    scroll-snap-align:start;
   }
 
   /* ==========================================================

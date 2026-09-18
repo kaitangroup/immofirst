@@ -8,6 +8,7 @@
  */
 #}
 {{ attach_library('suchauftrag_theme/search-ajax') }}
+{{ attach_library('suchauftrag_theme/saved-searches') }}
 {% include '@suchauftrag_theme/templates/includes/header.html.twig' %}
 
 <main id="main-content" class="main-content" role="main">
@@ -42,23 +43,26 @@
         </div>
         <div class="search-requests__sort">
           <label for="sort-select" class="sort__label">Sortieren nach</label>
-          {# NOTE: only "Neueste zuerst" is a real, wired sort right now
-             (matches the View's created DESC sort). Preis/Fläche sorting
-             needs those fields converted to numeric fields first, since
-             they're currently free-text strings like "bis 1.600 €" —
-             sorting those alphabetically wouldn't be numerically correct.
-             Left as visual placeholders until that field change happens. #}
           {% include '@suchauftrag_theme/templates/components/filter-select.html.twig' with {
             id: 'sort-select',
             name: 'sort',
-            selected: 'newest',
+            selected: search_query.sort,
             options: [
               {value: 'newest', label: 'Neueste zuerst'},
-              {value: 'price_asc', label: 'Preis aufsteigend'},
-              {value: 'price_desc', label: 'Preis absteigend'},
-              {value: 'area', label: 'Fläche'}
+              {value: 'oldest', label: 'Älteste zuerst'}
             ]
           } %}
+          {#
+            "Nur gemerkte anzeigen" — browser-only saved search filter
+            (see js/saved-searches.js). Bookmarked node IDs live in
+            this visitor's own localStorage; nothing here is a Drupal
+            field, View filter, or database table. Hidden on mobile
+            per the client spec — see css/responsive.css.
+          #}
+          <button type="button" class="saved-filter-btn" data-saved-filter-toggle aria-pressed="false">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6.5 4h11a1 1 0 011 1v16l-6.5-4.3L5.5 21V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Nur gemerkte anzeigen
+          </button>
         </div>
       </div>
 

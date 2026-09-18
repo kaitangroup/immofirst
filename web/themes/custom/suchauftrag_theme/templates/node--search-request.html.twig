@@ -42,10 +42,9 @@
  *   reference_number       field_reference_number, or NULL
  *   created_date           formatted from the base `created` field
  *   status_label           mapped from field_status, or NULL
- *
- * Sidebar ("Angebot senden") is presentational only, per the task
- * spec — no messaging/offer/matching logic is implemented or implied
- * here; the button has no submit handler.
+ *   requester_type_label   New preprocess variable
+ *   verified               New preprocess variable
+ *   view_count             New preprocess variable
  */
 #}
 {{ attach_library('suchauftrag_theme/search-request-detail') }}
@@ -115,13 +114,21 @@
 
       <header class="request-detail__header">
         <div class="request-detail__header-top">
-          {% include '@suchauftrag_theme/templates/components/badge.html.twig' with {
-            label: request_type_label|upper,
-            variant: request_type == 'kaufen' ? 'buy' : 'rent'
-          } %}
-          {% if days_ago_label %}
-            <span class="request-detail__days-ago">{{ days_ago_label }}</span>
-          {% endif %}
+          <div class="request-detail__header-left">
+            {% include '@suchauftrag_theme/templates/components/badge.html.twig' with {
+              label: request_type_label|upper,
+              variant: request_type == 'kaufen' ? 'buy' : 'rent'
+            } %}
+            {% if days_ago_label %}
+              <span class="request-detail__days-ago">{{ days_ago_label }}</span>
+            {% endif %}
+          </div>
+          <div class="request-detail__header-right">
+            <button type="button" class="bookmark-btn" data-nid="{{ node.id }}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Merken
+            </button>
+          </div>
         </div>
 
         <h1 class="request-detail__title">{{ node.label }}</h1>
@@ -174,8 +181,19 @@
         </section>
       {% endif %}
 
-      {% if reference_number or created_date or status_label %}
+      {% if requester_type_label or reference_number or created_date or status_label %}
         <section class="request-detail__section request-detail__meta">
+          {% if requester_type_label %}
+            <div>
+              <span class="request-detail__meta-label">Gesucht von</span>
+              <span class="request-detail__meta-value">
+                {{ requester_type_label }}
+                {% if verified %}
+                  <span class="request-detail__verified">✓ Verifiziert</span>
+                {% endif %}
+              </span>
+            </div>
+          {% endif %}
           {% if reference_number %}
             <div>
               <span class="request-detail__meta-label">Such-ID</span>
@@ -197,36 +215,41 @@
         </section>
       {% endif %}
 
+      <div class="privacy-location-note">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Der genaue Standort wird aus Datenschutzgründen nicht angezeigt.</span>
+      </div>
+
       <section class="request-detail__section">
         <div class="request-detail__similar-head">
           <h2 class="request-detail__section-title">Ähnliche Suchaufträge</h2>
+          <a href="/suchauftraege" class="request-detail__similar-link">Alle anzeigen</a>
         </div>
-        {#
-          Presentation placeholder only — per the task spec, no
-          matching/query logic is implemented here. There is no
-          existing "similar requests" region or block anywhere in the
-          codebase to preserve (only the unrelated front-page
-          "search_requests" View), so this stays a static placeholder
-          until that feature is actually built.
-        #}
-        <p class="request-detail__similar-placeholder">Passende Suchaufträge werden hier bald angezeigt.</p>
+        {{ drupal_view('similar_search_requests', 'block_1', node.id) }}
       </section>
 
     </main>
 
     <aside class="request-detail__sidebar">
       <div class="request-sidebar__card">
-        <h2 class="request-sidebar__title">Angebot senden</h2>
-        <p class="request-sidebar__text">
-          Machen Sie dem Suchenden ein passendes Angebot für diesen Suchauftrag.
-        </p>
-        {#
-          UI only, per the task spec — no messaging/offer/notification
-          logic, no submit handler. Left visually identical to a real
-          primary button (not a disabled/greyed-out one) so it reads
-          as a legitimate, upcoming action rather than a broken control.
-        #}
-        <button type="button" class="btn btn--primary btn--block">Angebot senden</button>
+        {{ drupal_entity('webform', 'offer_to_search_request') }}
+      </div>
+      <div class="request-sidebar__card request-sidebar__how-it-works">
+        <h2 class="request-sidebar__title">So funktioniert es</h2>
+        <ul class="request-sidebar__steps">
+          <li>
+            <span class="request-sidebar__step-icon" aria-hidden="true">✓</span>
+            <span>Angebot senden</span>
+          </li>
+          <li>
+            <span class="request-sidebar__step-icon" aria-hidden="true">✓</span>
+            <span>Interessen entscheidet</span>
+          </li>
+          <li>
+            <span class="request-sidebar__step-icon" aria-hidden="true">✓</span>
+            <span>Kontaktdaten werden geteilt</span>
+          </li>
+        </ul>
       </div>
     </aside>
 

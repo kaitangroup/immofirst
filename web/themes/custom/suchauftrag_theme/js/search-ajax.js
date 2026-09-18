@@ -57,29 +57,46 @@
  * navigation with the same filters, never a page that just sits
  * there unfiltered.
  *
- * PROJECT NOTE — pager.type: "some" (please read before testing):
- *   views.view.search_requests.yml's pager is type "some" ("Display a
- *   specified number of items"). Drupal\views\Plugin\views\pager\
- *   Some::query() sets LIMIT/OFFSET straight from the display's
- *   *config* (offset is always 0) and never reads a page number from
- *   the request; useCountQuery() is also false, so no true result
- *   total exists server-side either. That means:
- *     - "Load more" sends a page number to /views/ajax (so it starts
- *       working immediately if the pager plugin is ever changed to
- *       "mini" or "full" — no JS change needed then), but with the
- *       CURRENT pager every request returns the same first batch.
- *       This file defends against that by de-duplicating returned
- *       cards against what's already on screen (matched by each
- *       card's "Details ansehen" link, unique per node) — so
- *       clicking "load more" today correctly detects nothing new and
- *       disables itself, instead of appending duplicate cards.
- *     - The result count is updated from the number of cards actually
- *       returned/shown (still "the rendered View output", never
- *       calculated independently) rather than a true database total,
- *       since no true total is available while useCountQuery() is
- *       false. Both resolve together the moment the pager plugin
- *       changes — a Views config change, intentionally left out of
- *       this JS/theme-only file.
+ * ROOT CAUSE (fixed) — pager.type was "some":
+ *   views.view.search_requests.yml's pager used to be type "some"
+ *   ("Display a specified number of items"). Drupal\views\Plugin\
+ *   views\pager\Some::query() sets LIMIT/OFFSET straight from the
+ *   display's *config* (offset always 0) and never reads a page
+ *   number from the request at all; useCountQuery() is also false,
+ *   so no true result total ever existed server-side either. That
+ *   meant every "load more" request — regardless of what page number
+ *   this file sent — returned exactly the same first 12 rows, and
+ *   the count badge had no real total to report.
+ *
+ *   Fixed in views.view.search_requests.yml by switching the pager to
+ *   type "full" (a real SQL LIMIT/OFFSET pager that reads the current
+ *   page from the request and runs a count query), and by adding a
+ *   footer "Result summary" area (content: "@total") so the view's
+ *   true total is present as plain text in every /views/ajax response
+ *   — not just the initial page load. No JS change was required for
+ *   the pager to start working: this file was already sending a page
+ *   number on every "load more" request, exactly as noted below.
+ *
+ *   Two remaining bugs, fixed in this file:
+ *     - "load more" seeded its filter state from the search FORM's
+ *       current (default-checked) values instead of the filters that
+ *       actually produced the page currently on screen. "Mieten" is
+ *       checked in the UI by default even when nothing has been
+ *       submitted, so clicking "load more" before ever searching sent
+ *       an unintended art=mieten filter to a view that had rendered
+ *       unfiltered — see readAppliedFiltersFromLocation() below, which
+ *       now seeds from the URL exactly the way the server-side
+ *       exposed-input logic does.
+ *     - "has more results" was guessed from how many cards came back
+ *       (and whether any were new after de-duplication) instead of
+ *       asked from Drupal directly. With a real pager now in place,
+ *       the rendered pager markup itself says whether there's a next
+ *       page (a rel="next" link) — see pagerHasNext() below — which is
+ *       what both the initial page load and every AJAX response use.
+ *       The result count is likewise read from the view's own footer
+ *       "Result summary" total (see readTotalFromGrid()) rather than
+ *       from the number of cards currently rendered, so it no longer
+ *       drifts as more cards are appended by "load more".
  */
 (function (Drupal, drupalSettings) {
   'use strict';
@@ -94,11 +111,13 @@
   // but never sent to the view as a filter.
   var FILTER_IDENTIFIERS = ['art', 'immobilienart', 'ort'];
 
-  // Matches views.view.search_requests.yml -> display.default.
-  // display_options.pager.options.items_per_page. There's no way to
-  // read this from drupalSettings, so keep it in sync by hand if that
-  // value ever changes.
-  var ITEMS_PER_PAGE = 12;
+  // This theme's own simplified sort vocabulary — the sort-select in
+  // page--front.html.twig only ever offers these two. Translated to
+  // the view's real exposed-sort identifiers (sort_by/sort_order) by
+  // sortToViewParams() below, the same way suchauftrag_theme.theme
+  // translates it server-side for the initial page load.
+  var SORT_IDENTIFIER = 'sort';
+  var DEFAULT_SORT = 'newest';
 
   /** Finds the ajaxViews settings entry Drupal generated for search_requests/block_1. */
   function getAjaxViewSettings() {
@@ -206,6 +225,79 @@
     return grid;
   }
 
+  /**
+   * The filters actually in effect for the page currently on screen —
+   * read from the URL query string, the exact same way
+   * suchauftrag_theme_preprocess_page__front() builds $exposed_input
+   * server-side (only a present, non-empty value counts as a filter).
+   * Deliberately NOT read from the form's current field values: the
+   * form pre-selects "Mieten" by default even when no search has been
+   * submitted, which used to leak into "load more" as an unintended
+   * art=mieten filter on an otherwise-unfiltered page.
+   */
+  function readAppliedFiltersFromLocation() {
+    var params = new URLSearchParams(location.search);
+    var out = {};
+    FILTER_IDENTIFIERS.forEach(function (key) {
+      var value = params.get(key);
+      if (value) {
+        out[key] = value;
+      }
+    });
+    return out;
+  }
+
+  /** Same idea as readAppliedFiltersFromLocation(), for the sort-select. Always resolves to a valid value — 'newest' if absent/unrecognized, matching the view's own default order. */
+  function readAppliedSortFromLocation() {
+    var value = new URLSearchParams(location.search).get(SORT_IDENTIFIER);
+    return value === 'oldest' ? 'oldest' : DEFAULT_SORT;
+  }
+
+  /**
+   * Translates this theme's own sort vocabulary (newest|oldest) into
+   * the real exposed-sort query parameters Drupal reads — 'sort_by'
+   * (which exposed sort; matches views.view.search_requests.yml's
+   * sorts.created.expose.field_identifier) and 'sort_order' (ASC or
+   * DESC). This is a fixed Views mechanism, not a custom identifier —
+   * see Drupal\views\Plugin\views\exposed_form\ExposedFormPluginBase::query().
+   */
+  function sortToViewParams(sortValue) {
+    return {
+      sort_by: 'created',
+      sort_order: sortValue === 'oldest' ? 'ASC' : 'DESC'
+    };
+  }
+
+  /**
+   * Whether a rendered .property-grid (from the initial page load or
+   * an /views/ajax response) has a next page, per the view's own full
+   * pager — never guessed from how many cards came back. Drupal's
+   * core pager.html.twig marks the "next" link with rel="next"; no
+   * next link in the markup means no next page, which is exactly how
+   * the "hide Load More on the last page" requirement is satisfied.
+   */
+  function pagerHasNext(root) {
+    var pagerEl = root ? root.querySelector('.property-grid__pager') : null;
+    return !!(pagerEl && pagerEl.querySelector('a[rel="next"]'));
+  }
+
+  /**
+   * The view's true total match count, read from its footer "Result
+   * summary" area (views.view.search_requests.yml -> footer.result,
+   * content: "@total") — plain digits, present in the initial page
+   * load and in every /views/ajax response alike. Returns null if the
+   * area isn't present (defensive — falls back to the caller's own
+   * count in that case).
+   */
+  function readTotalFromGrid(root) {
+    var footerEl = root ? root.querySelector('.property-grid__footer') : null;
+    if (!footerEl) {
+      return null;
+    }
+    var match = footerEl.textContent.match(/\d+/);
+    return match ? parseInt(match[0], 10) : null;
+  }
+
   Drupal.behaviors.searchAjax = {
     attach: function () {
       var form = document.getElementById('search-filter-form');
@@ -233,6 +325,9 @@
       // so "load more" always continues the CURRENTLY active search,
       // not necessarily whatever is live in the form controls.
       var currentFilters = {};
+      // Same idea, for the sort-select — so "load more" continues in
+      // whatever sort order is currently applied, not always "newest".
+      var currentSort = DEFAULT_SORT;
       var loadMorePage = 1;
 
       /**
@@ -244,7 +339,7 @@
        * sending both works either way) — and returns the parsed JSON
        * AJAX-command array.
        */
-      function fetchViewCommands(filterValues, extra) {
+      function fetchViewCommands(filterValues, sortValue, extra) {
         var viewSettings = getAjaxViewSettings();
         if (!viewSettings) {
           return Promise.reject(new Error(
@@ -265,6 +360,9 @@
         Object.keys(filters).forEach(function (key) {
           params.set(key, filters[key]);
         });
+        var sortParams = sortToViewParams(sortValue || DEFAULT_SORT);
+        params.set('sort_by', sortParams.sort_by);
+        params.set('sort_order', sortParams.sort_order);
         if (extra) {
           Object.keys(extra).forEach(function (key) {
             params.set(key, extra[key]);
@@ -343,12 +441,13 @@
       function performSearch(values, options) {
         options = options || {};
         currentFilters = onlyFilters(values);
+        currentSort = (values && values.sort === 'oldest') ? 'oldest' : DEFAULT_SORT;
         loadMorePage = 1;
         resultsRegion.setAttribute('aria-busy', 'true');
 
         var viewSettingsForThisRequest = getAjaxViewSettings();
 
-        return fetchViewCommands(currentFilters, { page: '0' })
+        return fetchViewCommands(currentFilters, currentSort, { page: '0' })
           .then(function (commands) {
             var grid = findViewMarkup(commands, viewSettingsForThisRequest);
 
@@ -361,8 +460,9 @@
             resultsRegion.appendChild(grid);
             var rows = grid.querySelector('.property-grid__rows');
             var itemCount = rows ? rows.querySelectorAll('.property-grid__item').length : 0;
-            setCount(itemCount);
-            setLoadMoreVisible(itemCount > 0);
+            var total = readTotalFromGrid(grid);
+            setCount(total !== null ? total : itemCount);
+            setLoadMoreVisible(itemCount > 0 && pagerHasNext(grid));
 
             // Re-run all Drupal behaviors (bookmark toggle, custom
             // selects, etc. from theme.js) scoped to the new markup —
@@ -398,7 +498,7 @@
         loadMoreBtn.setAttribute('aria-busy', 'true');
         var viewSettingsForThisRequest = getAjaxViewSettings();
 
-        fetchViewCommands(currentFilters, { page: String(loadMorePage) })
+        fetchViewCommands(currentFilters, currentSort, { page: String(loadMorePage) })
           .then(function (commands) {
             var grid = findViewMarkup(commands, viewSettingsForThisRequest);
             var newItems = grid ? grid.querySelectorAll('.property-grid__rows .property-grid__item') : [];
@@ -425,15 +525,16 @@
 
             if (appended > 0) {
               loadMorePage++;
-              setCount(rowsContainer.querySelectorAll('.property-grid__item').length);
+              // The count badge reports the view's true total match
+              // count (see readTotalFromGrid), which does not change
+              // just because more of it is now visible — it is
+              // intentionally left untouched here.
               Drupal.attachBehaviors(rowsContainer, drupalSettings);
             }
-            // Stop offering more once a request adds nothing new, or
-            // returns fewer than a full page — both mean "no more
-            // results" (see the pager.type: "some" note in the file
-            // header: today, appended will be 0 from the very first
-            // click, which is the correct, honest outcome).
-            setLoadMoreVisible(appended > 0 && newItems.length >= ITEMS_PER_PAGE);
+            // The pager's own rel="next" link is the authoritative
+            // "more results exist" signal — not a guess from how many
+            // cards this request happened to return.
+            setLoadMoreVisible(pagerHasNext(grid));
           })
           .catch(function (error) {
             console.error('search-ajax: load more failed —', error);
@@ -486,12 +587,49 @@
         if (ortInput) {
           ortInput.value = values.ort || '';
         }
+
+        // Sort-select lives outside #search-filter-form (see
+        // page--front.html.twig), so it's synced separately here
+        // rather than by the form-scoped loop above.
+        var sortValue = values.sort === 'oldest' ? 'oldest' : DEFAULT_SORT;
+        var sortSelectTrigger = document.getElementById('sort-select');
+        var sortSelect = sortSelectTrigger ? sortSelectTrigger.closest('[data-select]') : null;
+        var sortInput = sortSelect ? sortSelect.querySelector('[data-select-input]') : null;
+        if (sortInput && sortSelect) {
+          sortInput.value = sortValue;
+          var sortValueEl = sortSelect.querySelector('[data-select-value]');
+          var sortOption = sortSelect.querySelector('.select__option[data-value="' + CSS.escape(sortValue) + '"]');
+          sortSelect.querySelectorAll('.select__option').forEach(function (o) {
+            o.classList.remove('is-selected');
+          });
+          if (sortOption) {
+            sortOption.classList.add('is-selected');
+            if (sortValueEl) {
+              sortValueEl.textContent = sortOption.textContent.trim();
+            }
+          }
+        }
       }
 
       form.addEventListener('submit', function (event) {
         event.preventDefault();
-        performSearch(readFormValues(), { pushHistory: true });
+        performSearch(Object.assign({}, readFormValues(), { sort: currentSort }), { pushHistory: true });
       });
+
+      // "Sortieren nach": lives outside #search-filter-form, so it's
+      // wired separately. Its hidden input dispatches a bubbling
+      // 'change' event on selection (see theme.js's [data-select]
+      // behavior) — reuse the currently active filters and re-run the
+      // search with the new sort order.
+      var sortSelectTrigger = document.getElementById('sort-select');
+      var sortSelectEl = sortSelectTrigger ? sortSelectTrigger.closest('[data-select]') : null;
+      var sortSelectInput = sortSelectEl ? sortSelectEl.querySelector('[data-select-input]') : null;
+      if (sortSelectInput) {
+        sortSelectInput.addEventListener('change', function () {
+          var values = Object.assign({}, readFormValues(), { sort: sortSelectInput.value === 'oldest' ? 'oldest' : DEFAULT_SORT });
+          performSearch(values, { pushHistory: true });
+        });
+      }
 
       if (loadMoreBtn) {
         loadMoreBtn.addEventListener('click', loadMore);
@@ -505,11 +643,20 @@
 
       // Normalize the initial history entry so the very first popstate
       // (e.g. the user's first action being "back") has a well-formed
-      // state to restore, and seed currentFilters from what the server
-      // already rendered for this load.
-      var initialValues = withoutEmpty(readFormValues());
-      currentFilters = onlyFilters(initialValues);
+      // state to restore.
+      var initialValues = Object.assign({}, withoutEmpty(readFormValues()), { sort: readAppliedSortFromLocation() });
       history.replaceState({ params: initialValues }, '', location.href);
+
+      // Seed currentFilters from the URL — the filters that actually
+      // produced the page currently on screen — never from the form's
+      // current field values (see the file header: the form's default
+      // "Mieten" tab is checked even on an unfiltered page).
+      currentFilters = readAppliedFiltersFromLocation();
+      currentSort = initialValues.sort;
+
+      // The initial batch is server-rendered already; just read its
+      // own pager to decide whether "load more" has anything to do.
+      setLoadMoreVisible(pagerHasNext(resultsRegion));
     }
   };
 

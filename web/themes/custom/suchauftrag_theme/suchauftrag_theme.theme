@@ -28,6 +28,7 @@ function suchauftrag_theme_preprocess_page(array &$variables) {
     'immobilienart' => $request->query->get('immobilienart', ''),
     'ort' => $request->query->get('ort', ''),
     'radius' => $request->query->get('radius', '25'),
+    'sort' => $request->query->get('sort', 'newest'),
   ];
 }
 
@@ -65,6 +66,14 @@ function suchauftrag_theme_preprocess_page__front(array &$variables) {
       $exposed_input[$filter_identifier] = $value;
     }
   }
+  // "sort" (newest|oldest) is this theme's own simplified vocabulary —
+  // translated here into the real exposed-sort identifiers that
+  // views.view.search_requests.yml's "created" sort (now exposed, see
+  // that file's sorts.created.expose.field_identifier) actually reads.
+  // "newest" matches the sort's own default (DESC), so this is always
+  // safe to set, present or absent from the URL.
+  $exposed_input['sort_by'] = 'created';
+  $exposed_input['sort_order'] = $request->query->get('sort') === 'oldest' ? 'ASC' : 'DESC';
 
   // Build + execute the Search Requests view ONCE, with that exposed
   // input, and reuse the same executed $view for both the rendered
@@ -112,6 +121,8 @@ function suchauftrag_theme_preprocess_page__front(array &$variables) {
     ],
   ];
 }
+
+
 
 /**
  * Implements hook_preprocess_HOOK() for the property-card component.
@@ -183,16 +194,24 @@ function suchauftrag_theme_preprocess_property_card(array &$variables) {
  *                            Heute/Gestern/d.m.Y formatting is kept,
  *                            just fed from this instead)
  */
-function suchauftrag_theme_preprocess_views_view_unformatted__search_requests(array &$variables) {
+/**
+ * Implements hook_preprocess_views_view_unformatted().
+ */
+/**
+ * Implements hook_preprocess_views_view_unformatted().
+ */
+function suchauftrag_theme_preprocess_views_view_unformatted(array &$variables) {
+  $view = $variables['view'] ?? NULL;
+  if (!$view || !in_array($view->id(), ['search_requests', 'similar_search_requests'])) {
+    return;
+  }
+
+  $is_similar = ($view->id() === 'similar_search_requests');
   $variables['property_cards'] = [];
 
   foreach ($variables['rows'] as $id => $row) {
-    // The "entity:node" row plugin normally exposes the raw ResultRow
-    // (with its ->_entity property) at $row['content']['#row']. As a
-    // fallback for any Views internals differences, also try pulling
-    // the entity straight from the executed view's result array.
     $node = $row['content']['#row']->_entity
-      ?? $variables['view']->result[$id]->_entity
+      ?? $view->result[$id]->_entity
       ?? NULL;
 
     if (!$node) {
@@ -213,22 +232,11 @@ function suchauftrag_theme_preprocess_views_view_unformatted__search_requests(ar
         : '';
     };
 
-    // Format the node's own submission date (the base `created` field)
-    // into "Heute" / "Gestern" / "d.m.Y", matching the reference
-    // design's card header — same formatting as before, just no longer
-    // reading a dedicated date field that search_request never had.
     $date_label = '';
     $created_timestamp = $node->getCreatedTime();
     if ($created_timestamp) {
       try {
         $date = new \DateTime('@' . $created_timestamp);
-        // The "@timestamp" constructor form always yields a UTC
-        // DateTime regardless of the site's configured timezone — set
-        // it explicitly before comparing Y-m-d against "today"/
-        // "yesterday" (which use the site's local timezone), or a
-        // request made shortly before/after midnight could be off by
-        // a day depending on how far the site's timezone sits from
-        // UTC.
         $date->setTimezone(new \DateTimeZone(date_default_timezone_get()));
         $today = new \DateTime('today');
         $yesterday = new \DateTime('yesterday');
@@ -247,16 +255,10 @@ function suchauftrag_theme_preprocess_views_view_unformatted__search_requests(ar
       }
     }
 
+    // Use different theme hooks depending on which view is rendering
     $variables['property_cards'][$id] = [
-      '#theme' => 'property_card',
-      // IMPORTANT: every variable key below MUST be '#'-prefixed.
-      // This array is processed by Drupal's Renderer (not a plain Twig
-      // include), and the Renderer treats any NON-'#' key as a child
-      // render element that must itself be an array — passing a scalar
-      // there throws "... is an invalid render array key" (Element::children()).
-      // Also note: the property is named '#request_type', not '#type' —
-      // '#type' is a reserved Render API property (element plugin ID)
-      // and using it here would collide with that system, not our data.
+      '#theme' => $is_similar ? 'similar_property_card' : 'property_card',
+      '#node_id' => $node->id(),
       '#request_type' => $type,
       '#badge_label' => $type === 'kaufen' ? 'KAUFEN' : 'MIETEN',
       '#date' => $date_label,
@@ -268,11 +270,6 @@ function suchauftrag_theme_preprocess_views_view_unformatted__search_requests(ar
       '#description' => $get('field_notes'),
       '#details_url' => $node->toUrl()->toString(),
       '#offer_url' => $node->toUrl()->toString() . '/angebot',
-      // Not yet rendered anywhere in property-card.html.twig (see that
-      // template's variable list) — passed through per the task's
-      // field mapping table so it's available the moment the card is
-      // ever updated to show it, without adding new visible markup to
-      // the card as part of this migration.
       '#reference_number' => $get('field_reference_number'),
     ];
   }
@@ -347,6 +344,9 @@ function _suchauftrag_theme_property_card_stats(\Drupal\node\NodeInterface $node
     ],
   };
 }
+
+
+
 
 /**
  * Reads which of a garage/Stellplatz node's field_criteria selections
@@ -757,6 +757,10 @@ function suchauftrag_theme_theme($existing, $type, $theme, $path) {
   return [
     'property_card' => [
       'variables' => [
+        // See the '#node_id' comment where this render array is built
+        // (suchauftrag_theme_preprocess_views_view_unformatted__search_requests())
+        // for why this exists — the saved-searches localStorage feature only.
+        'node_id' => '',
         'request_type' => 'mieten',
         'badge_label' => 'MIETEN',
         'date' => '',
@@ -779,6 +783,24 @@ function suchauftrag_theme_theme($existing, $type, $theme, $path) {
         'offer_url' => '#',
       ],
       'template' => 'components/property-card',
+    ],
+    'similar_property_card' => [
+      'variables' => [
+        'node_id' => '',
+        'request_type' => 'mieten',
+        'badge_label' => 'MIETEN',
+        'date' => '',
+        'icon' => 'home',
+        'title' => '',
+        'location' => '',
+        'radius' => '',
+        'stats' => [],
+        'description' => '',
+        'details_url' => '#',
+        'offer_url' => '#',
+        'reference_number' => '',
+      ],
+      'template' => 'components/similar-property-card',
     ],
     'search_form' => [
       'variables' => [],

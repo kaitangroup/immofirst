@@ -34,6 +34,21 @@ search-ajax:
     - core/drupal
     - core/drupalSettings
 
+# NEW library — used only by templates/page--front.html.twig via
+# {{ attach_library('suchauftrag_theme/saved-searches') }}. Implements
+# the "Nur gemerkte anzeigen" browser-only saved-search feature
+# (bookmark toggle persistence + filtering already-loaded cards) using
+# localStorage only — no Drupal field, view filter, or DB table.
+# Depends on "global" because it toggles the existing
+# .property-card__bookmark buttons that theme.js also binds a
+# (purely visual, non-persisted) click handler to — see
+# js/saved-searches.js's own header comment for how the two coexist.
+saved-searches:
+  js:
+    js/saved-searches.js: {}
+  dependencies:
+    - suchauftrag_theme/global
+
 # NEW library — used only by templates/page--user-login.html.twig via
 # {{ attach_library('suchauftrag_theme/auth') }}. Kept separate from
 # "global" so no other page's CSS payload changes.

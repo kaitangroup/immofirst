@@ -38,6 +38,7 @@
         "drupal/stage_file_proxy": "^4.0",
         "drupal/token": "^1.17",
         "drupal/twig_tweak": "^4.0@alpha",
+        "drupal/webform": "^6.3",
         "drush/drush": "^13.7"
     },
     "conflict": {

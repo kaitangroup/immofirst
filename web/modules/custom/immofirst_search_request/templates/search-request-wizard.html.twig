@@ -37,12 +37,48 @@
 
     {% else %}
 
-      <div class="wizard-progress" data-wizard-progress>
-        <p class="wizard-progress__label">Schritt {{ current_step }} von {{ total_steps }}</p>
-        <div class="wizard-progress__track">
-          <div class="wizard-progress__fill" style="width: {{ progress_percent }}%"></div>
-        </div>
+      {# Mobile Progress Bar #}
+<div class="wizard-progress wizard-progress--mobile" data-wizard-progress>
+  <p class="wizard-progress__label">
+    Schritt {{ current_step }} von {{ total_steps }}
+  </p>
+
+  <div class="wizard-progress__track">
+    <div class="wizard-progress__fill"
+         style="width: {{ progress_percent }}%"></div>
+  </div>
+</div>
+
+{# Desktop Stepper #}
+<div class="wizard-stepper wizard-stepper--desktop">
+
+  {% set labels = {
+    1:'Suchen',
+    2:'Anforderungen',
+    3:'Kriterien',
+    4:'Kontakt',
+    5:'Bestätigung'
+  } %}
+
+  {% for i in 1..5 %}
+    <div class="wizard-stepper__item
+      {% if i < current_step %} is-complete{% elseif i == current_step %} is-active{% endif %}">
+
+      <div class="wizard-stepper__circle">
+        {{ i }}
       </div>
+
+      <div class="wizard-stepper__label">
+        {{ labels[i] }}
+      </div>
+
+      {% if i != 5 %}
+        <div class="wizard-stepper__line"></div>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+</div>
 
       <div class="wizard__inner">
         <h1 class="wizard__step-title">{{ step_titles[current_step] }}</h1>

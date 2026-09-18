@@ -1,0 +1,9 @@
+uuid: 376614b9-fa7f-413e-85ac-d55df995391e
+langcode: en
+status: true
+dependencies: {  }
+name: 'Requester Type'
+vid: requester_type
+description: 'Private or Business'
+weight: 0
+new_revision: false

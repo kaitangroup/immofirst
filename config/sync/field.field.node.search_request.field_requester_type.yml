@@ -1,0 +1,27 @@
+uuid: 944bb5f8-701d-4574-b55d-8f40af093e10
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_requester_type
+    - node.type.search_request
+    - taxonomy.vocabulary.requester_type
+id: node.search_request.field_requester_type
+field_name: field_requester_type
+entity_type: node
+bundle: search_request
+label: 'Gesucht von'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:taxonomy_term'
+  handler_settings:
+    target_bundles:
+      requester_type: requester_type
+    sort:
+      field: weight
+      direction: ASC
+field_type: entity_reference

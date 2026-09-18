@@ -1,0 +1,140 @@
+uuid: 7d070dd9-b6e8-46aa-9354-3beab7940816
+langcode: de
+status: open
+dependencies:
+  enforced:
+    module:
+      - suchauftrag_theme
+weight: 0
+open: null
+close: null
+uid: null
+template: false
+archive: false
+id: offer_to_search_request
+title: 'Angebot senden'
+description: 'Machen Sie dem Suchenden ein passendes Angebot. Ihre Kontaktdaten werden erst nach Annahme sichtbar.'
+categories: {  }
+elements: |
+  anrede:
+    '#type': select
+    '#title': 'Anrede'
+    '#options':
+      frau: Frau
+      herr: Herr
+      divers: Divers
+    '#empty_option': 'Bitte wählen'
+    '#required': true
+    '#attributes':
+      class:
+        - select
+        - input
+  name:
+    '#type': textfield
+    '#title': 'Ihr Name'
+    '#placeholder': 'z. B. Max Mustermann'
+    '#required': true
+    '#attributes':
+      class:
+        - input
+  email:
+    '#type': email
+    '#title': 'E-Mail'
+    '#placeholder': 'ihre@email.de'
+    '#required': true
+    '#attributes':
+      class:
+        - input
+  telefon:
+    '#type': tel
+    '#title': 'Telefon (optional)'
+    '#placeholder': 'z. B. 0171 1234567'
+    '#attributes':
+      class:
+        - input
+  angebot:
+    '#type': textarea
+    '#title': 'Ihr Angebot'
+    '#placeholder': 'Beschreiben Sie kurz Ihre Immobilie (z. B. Lage, Größe, Ausstattung, Mietpreis)...'
+    '#required': true
+    '#attributes':
+      class:
+        - input
+  dateien:
+    '#type': managed_file
+    '#title': 'Dateien hochladen (optional)'
+    '#description': 'Dateien hier ablegen oder klicken (z. B. Exposé, Bilder, Grundriss (max. 5 MB)).'
+    '#file_extensions': 'pdf doc docx jpg jpeg png'
+    '#max_filesize': '5'
+    '#attributes':
+      class:
+        - webform-upload-dropzone
+  datenschutz_agb:
+    '#type': checkbox
+    '#title': 'Ich stimme der Datenschutzerklärung und den AGB zu.'
+    '#required': true
+  datenschutz_hinweis:
+    '#type': webform_markup
+    '#markup': '<div class="webform-privacy-note"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="display:inline-block;vertical-align:middle;margin-right:4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Ihre Daten werden vertraulich behandelt und nur bei Interesse weitergegeben.</div>'
+css: ''
+javascript: ''
+settings:
+  ajax: true
+  ajax_scroll_top: form
+  page: false
+  submission_label: ''
+  submission_log: false
+  draft: none
+  draft_multiple: false
+  draft_auto_save: false
+  draft_saved_message: ''
+  draft_loaded_message: ''
+  confirmation_type: message
+  confirmation_url: ''
+  confirmation_title: ''
+  confirmation_message: 'Vielen Dank! Ihr Angebot wurde erfolgreich gesendet.'
+  confirmation_attributes: {  }
+  limit_total: null
+  limit_total_interval: null
+  limit_total_message: ''
+  limit_user: null
+  limit_user_interval: null
+  limit_user_message: ''
+  entity_limit_total: null
+  entity_limit_total_interval: null
+  entity_limit_user: null
+  submit_button_label: 'Angebot senden'
+  submit_button_attributes:
+    class:
+      - btn
+      - btn--primary
+      - btn--block
+  draft_pending_confirmation_message: ''
+  entity_limit_user_message: ''
+  access_rules:
+    create:
+      roles:
+        - anonymous
+        - authenticated
+      users: {  }
+      permissions: {  }
+    view_any:
+      roles: {  }
+      users: {  }
+      permissions: {  }
+    update_any:
+      roles: {  }
+      users: {  }
+      permissions: {  }
+    delete_any:
+      roles: {  }
+      users: {  }
+      permissions: {  }
+    purge_any:
+      roles: {  }
+      users: {  }
+      permissions: {  }
+  handlers: {  }
+access: {  }
+handlers: {  }
+variants: {  }

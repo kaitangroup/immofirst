@@ -134,11 +134,19 @@
 
       if (currentStep !== null && (isFreshStep1Load || (lastSeenStep !== null && lastSeenStep !== currentStep))) {
         requestAnimationFrame(function () {
-          var progressEl = document.querySelector('.wizard-progress');
-          if (progressEl) {
-            var targetY = progressEl.getBoundingClientRect().top + window.pageYOffset - SCROLL_OFFSET;
-            window.scrollTo({ top: Math.max(targetY, 0), behavior: 'smooth' });
-          }
+          var wizardPage = document.querySelector('.wizard-page');
+
+if (wizardPage) {
+  var targetY =
+    wizardPage.getBoundingClientRect().top +
+    window.pageYOffset -
+    SCROLL_OFFSET;
+
+  window.scrollTo({
+    top: Math.max(targetY, 0),
+    behavior: 'smooth'
+  });
+}
         });
       }
       lastSeenStep = currentStep;
