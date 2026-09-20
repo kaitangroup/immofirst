@@ -11,7 +11,6 @@ dependencies:
     - field.field.node.search_request.field_criteria
     - field.field.node.search_request.field_email
     - field.field.node.search_request.field_first_name
-    - field.field.node.search_request.field_geo
     - field.field.node.search_request.field_land_size_max
     - field.field.node.search_request.field_land_size_min
     - field.field.node.search_request.field_last_name
@@ -38,22 +37,12 @@ dependencies:
     - field.field.node.search_request.field_views
     - node.type.search_request
   module:
-    - geofield
     - user
 id: node.search_request.default
 targetEntityType: node
 bundle: search_request
 mode: default
 content:
-  field_geo:
-    type: geofield_default
-    label: above
-    settings:
-      output_format: wkt
-      output_escape: true
-    third_party_settings: {  }
-    weight: 101
-    region: content
   links:
     settings: {  }
     third_party_settings: {  }
