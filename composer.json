@@ -28,6 +28,10 @@
         "drupal/devel": "^5.5",
         "drupal/devel_generate": "^5.5",
         "drupal/easy_breadcrumb": "^2.0",
+        "drupal/geocoder": "*",
+        "drupal/geocoder_address": "*",
+        "drupal/geocoder_field": "*",
+        "drupal/geofield": "^10.3",
         "drupal/gin": "^5.0",
         "drupal/gin_toolbar": "^3.0",
         "drupal/imce": "^3.1",
@@ -39,7 +43,8 @@
         "drupal/token": "^1.17",
         "drupal/twig_tweak": "^4.0@alpha",
         "drupal/webform": "^6.3",
-        "drush/drush": "^13.7"
+        "drush/drush": "^13.7",
+        "geocoder-php/mapbox-provider": "^1.5"
     },
     "conflict": {
         "drupal/drupal": "*"

@@ -1,0 +1,38 @@
+uuid: cc0b9d96-bec5-4ef2-91f8-523b42c9ce41
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_geo
+    - node.type.search_request
+  module:
+    - geocoder_field
+    - geofield
+third_party_settings:
+  geocoder_field:
+    method: geocode
+    weight: 0
+    field: field_location
+    skip_not_empty_value: false
+    disabled: false
+    hidden: false
+    providers:
+      - mapbox
+    dumper: wkt
+    delta_handling: default
+    failure:
+      handling: preserve
+      status_message: true
+      log: true
+id: node.search_request.field_geo
+field_name: field_geo
+entity_type: node
+bundle: search_request
+label: GEO
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: geofield

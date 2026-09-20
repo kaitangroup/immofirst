@@ -1,0 +1,12 @@
+name: "Geocoder Test Provider"
+type: module
+description: "Mock provider for Geocoder tests"
+package: Testing
+dependencies:
+  - geocoder:geocoder
+hidden: true
+
+# Information added by Drupal.org packaging script on 2026-09-18
+version: '8.x-4.37'
+project: 'geocoder'
+datestamp: 1789770773

@@ -91,6 +91,16 @@
       </div>
 
     {% endif %}
+
+          
+
+        {% if current_step == 1 %}
+          <img class="wizard-step1-illustration"
+               src="{{ base_path ~ directory }}/images/wizard-step1-illustration.png"
+               alt="" aria-hidden="true" loading="lazy">
+        {% endif %}
+
+        
   </form>
 
   {% if form.overview is empty %}

@@ -1,0 +1,94 @@
+uuid: 9e512b98-1e08-435a-a461-6c8c7a5eb21c
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.search_request.field_area_max
+    - field.field.node.search_request.field_area_min
+    - field.field.node.search_request.field_commercial_type
+    - field.field.node.search_request.field_consent
+    - field.field.node.search_request.field_construction_year
+    - field.field.node.search_request.field_criteria
+    - field.field.node.search_request.field_email
+    - field.field.node.search_request.field_first_name
+    - field.field.node.search_request.field_geo
+    - field.field.node.search_request.field_land_size_max
+    - field.field.node.search_request.field_land_size_min
+    - field.field.node.search_request.field_last_name
+    - field.field.node.search_request.field_lease_price_max
+    - field.field.node.search_request.field_lease_price_min
+    - field.field.node.search_request.field_location
+    - field.field.node.search_request.field_notes
+    - field.field.node.search_request.field_parking_type
+    - field.field.node.search_request.field_phone
+    - field.field.node.search_request.field_preferred_contact
+    - field.field.node.search_request.field_price_max
+    - field.field.node.search_request.field_price_min
+    - field.field.node.search_request.field_property_type
+    - field.field.node.search_request.field_radius
+    - field.field.node.search_request.field_reference_number
+    - field.field.node.search_request.field_request_type
+    - field.field.node.search_request.field_requester_type
+    - field.field.node.search_request.field_rooms_max
+    - field.field.node.search_request.field_rooms_min
+    - field.field.node.search_request.field_status
+    - field.field.node.search_request.field_usage
+    - field.field.node.search_request.field_vehicle_type
+    - field.field.node.search_request.field_verified
+    - field.field.node.search_request.field_views
+    - node.type.search_request
+  module:
+    - geofield
+    - user
+id: node.search_request.default
+targetEntityType: node
+bundle: search_request
+mode: default
+content:
+  field_geo:
+    type: geofield_default
+    label: above
+    settings:
+      output_format: wkt
+      output_escape: true
+    third_party_settings: {  }
+    weight: 101
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  field_area_max: true
+  field_area_min: true
+  field_commercial_type: true
+  field_consent: true
+  field_construction_year: true
+  field_criteria: true
+  field_email: true
+  field_first_name: true
+  field_land_size_max: true
+  field_land_size_min: true
+  field_last_name: true
+  field_lease_price_max: true
+  field_lease_price_min: true
+  field_location: true
+  field_notes: true
+  field_parking_type: true
+  field_phone: true
+  field_preferred_contact: true
+  field_price_max: true
+  field_price_min: true
+  field_property_type: true
+  field_radius: true
+  field_reference_number: true
+  field_request_type: true
+  field_requester_type: true
+  field_rooms_max: true
+  field_rooms_min: true
+  field_status: true
+  field_usage: true
+  field_vehicle_type: true
+  field_verified: true
+  field_views: true

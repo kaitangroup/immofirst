@@ -2008,3 +2008,88 @@ textarea.form-textarea:focus{
     grid-column:1 / -1;
   }
 }
+
+
+/* ==========================================================
+   DESKTOP WIZARD — ACTION ROW FIX (Steps 2–4)
+   MOBILE LOCKED. Step 1's own action-row rules (further up
+   this file, '[data-wizard-step="1"] ~ .wizard__actions...')
+   are untouched — these selectors are explicitly scoped to
+   Steps 2–4 only and never match Step 1's markup.
+
+   ROOT CAUSE: '.wizard__btn-next, .wizard__btn-finish{ flex:1 1
+   auto; }' in the base "Buttons" section above is GLOBAL and
+   unscoped — it makes the primary button grow to fill 100% of
+   whatever width is left in its flex row. That's the intended
+   mobile design (a small Zurück text-link + a full-width primary
+   button), but nothing ever countermanded it for desktop on
+   Steps 2–4, so the same full-width behavior carried straight
+   through to 1024px+ — exactly what the uploaded screenshot
+   shows. Step 1 already has its own desktop override for this
+   (it just never has a Zurück button, being the first step, so
+   it only needed 'justify-content:flex-end' + a fixed-width
+   button); Steps 2–4 need the two-sided version: Zurück pinned
+   left, primary action pinned right, neither stretched.
+
+   Independent of dynamic field content: these selectors only
+   ever touch '.wizard__actions' and its two button children,
+   never anything inside '.wizard__step-content' above it, so
+   this is unaffected by which/how many fields a given step
+   renders. */
+@media (min-width:1024px){
+
+  [data-wizard-step="2"] ~ .wizard__actions,
+  [data-wizard-step="3"] ~ .wizard__actions,
+  [data-wizard-step="4"] ~ .wizard__actions{
+    justify-content:space-between;
+  }
+
+  /* Reuses Step 1's own compact-button metrics (see
+     '[data-wizard-step="1"] ~ .wizard__actions .wizard__btn-next'
+     above) so all four steps read consistently. min-width is a
+     floor, not a fixed width — "Weiter" sits at 180px, while the
+     longer "Suchauftrag anlegen" label on Step 4 naturally grows
+     past it; neither ever stretches to fill the row. */
+  [data-wizard-step="2"] ~ .wizard__actions .wizard__btn-next,
+  [data-wizard-step="2"] ~ .wizard__actions .wizard__btn-finish,
+  [data-wizard-step="3"] ~ .wizard__actions .wizard__btn-next,
+  [data-wizard-step="3"] ~ .wizard__actions .wizard__btn-finish,
+  [data-wizard-step="4"] ~ .wizard__actions .wizard__btn-next,
+  [data-wizard-step="4"] ~ .wizard__actions .wizard__btn-finish{
+    flex:0 0 auto;
+    min-width:180px;
+    padding-left:32px;
+    padding-right:32px;
+  }
+}
+
+/* ==========================================================
+   DESKTOP WIZARD — STEP 4 PRIVACY CHECKBOX ALIGNMENT
+   MOBILE LOCKED. The base ".form-item-consent{ display:flex;
+   align-items:flex-start; gap:10px; }" rule (see the "Step 4:
+   consent checkbox" section above) already puts the checkbox
+   and label in a row at every width — this adds a desktop-only,
+   more specific (child-combinator + [data-wizard-step="4"])
+   re-assertion of that same row so the layout is guaranteed
+   regardless of anything else that may be affecting this
+   element, plus the two changes that only make sense once the
+   viewport is wide enough for the whole sentence to fit on one
+   line: centering the checkbox on the text's single line
+   (mobile keeps 'align-items:flex-start', correct for text that
+   may still wrap there) and removing the 3px top offset that
+   flex-start alignment needed. No markup, links, text or Drupal
+   behavior touched — purely alignment. */
+@media (min-width:1024px){
+  .wizard__step-content[data-wizard-step="4"] > .js-form-item-consent,
+  .wizard__step-content[data-wizard-step="4"] > .form-item-consent{
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    gap:10px;
+  }
+
+  .wizard__step-content[data-wizard-step="4"] > .js-form-item-consent input,
+  .wizard__step-content[data-wizard-step="4"] > .form-item-consent input{
+    margin-top:0;
+  }
+}

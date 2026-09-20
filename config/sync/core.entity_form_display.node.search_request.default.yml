@@ -11,9 +11,12 @@ dependencies:
     - field.field.node.search_request.field_criteria
     - field.field.node.search_request.field_email
     - field.field.node.search_request.field_first_name
+    - field.field.node.search_request.field_geo
     - field.field.node.search_request.field_land_size_max
     - field.field.node.search_request.field_land_size_min
     - field.field.node.search_request.field_last_name
+    - field.field.node.search_request.field_lease_price_max
+    - field.field.node.search_request.field_lease_price_min
     - field.field.node.search_request.field_location
     - field.field.node.search_request.field_notes
     - field.field.node.search_request.field_parking_type
@@ -25,13 +28,17 @@ dependencies:
     - field.field.node.search_request.field_radius
     - field.field.node.search_request.field_reference_number
     - field.field.node.search_request.field_request_type
+    - field.field.node.search_request.field_requester_type
     - field.field.node.search_request.field_rooms_max
     - field.field.node.search_request.field_rooms_min
     - field.field.node.search_request.field_status
     - field.field.node.search_request.field_usage
     - field.field.node.search_request.field_vehicle_type
+    - field.field.node.search_request.field_verified
+    - field.field.node.search_request.field_views
     - node.type.search_request
   module:
+    - geofield
     - path
 id: node.search_request.default
 targetEntityType: node
@@ -92,6 +99,13 @@ content:
     settings:
       size: 60
       placeholder: ''
+    third_party_settings: {  }
+  field_geo:
+    type: geofield_latlon
+    weight: 33
+    region: content
+    settings:
+      html5_geolocation: false
     third_party_settings: {  }
   field_land_size_max:
     type: number
@@ -261,5 +275,10 @@ content:
     third_party_settings: {  }
 hidden:
   field_criteria: true
+  field_lease_price_max: true
+  field_lease_price_min: true
+  field_requester_type: true
+  field_verified: true
+  field_views: true
   promote: true
   sticky: true
