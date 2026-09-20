@@ -15,10 +15,10 @@ function suchauftrag_theme_preprocess_page(array &$variables) {
 
   // Primary navigation links used by includes/header.html.twig.
   $variables['main_nav_links'] = [
-    ['title' => 'Suchaufträge', 'url' => '/suchauftraege', 'active' => TRUE],
-    ['title' => 'Suchauftrag erstellen', 'url' => '/suchauftrag/erstellen', 'active' => FALSE],
-    ['title' => "So funktioniert's", 'url' => '/so-funktionierts', 'active' => FALSE],
-    ['title' => 'Über uns', 'url' => '/ueber-uns', 'active' => FALSE],
+    ['title' => 'Suchaufträge', 'url' => '/', 'active' => TRUE],
+    ['title' => 'Suchauftrag erstellen', 'url' => '/suchauftrag-erstellen', 'active' => FALSE],
+    // ['title' => "So funktioniert's", 'url' => '/so-funktionierts', 'active' => FALSE],
+    // ['title' => 'Über uns', 'url' => '/ueber-uns', 'active' => FALSE],
     ['title' => 'FAQ', 'url' => '/faq', 'active' => FALSE],
   ];
   $request = \Drupal::request();
@@ -621,6 +621,20 @@ function suchauftrag_theme_preprocess_node__search_request(array &$variables) {
   $status_labels = ['new' => 'Neu'];
   $status = $get('field_status');
   $variables['status_label'] = $status !== NULL ? ($status_labels[$status] ?? ucfirst($status)) : NULL;
+
+  // ===== Requester type + verified badge =====
+  // field_requester_type (entity reference to a taxonomy term, e.g.
+  // "Privatperson" / "Makler") and field_verified (boolean) — resolved
+  // to plain values here, per this function's existing convention, so
+  // the template never reads an entity directly.
+  $variables['requester_type_label'] = NULL;
+  if ($node->hasField('field_requester_type') && !$node->get('field_requester_type')->isEmpty()) {
+    $requester_type_term = $node->get('field_requester_type')->entity;
+    if ($requester_type_term instanceof \Drupal\taxonomy\TermInterface) {
+      $variables['requester_type_label'] = $requester_type_term->label();
+    }
+  }
+  $variables['verified'] = $node->hasField('field_verified') && (bool) $node->get('field_verified')->value;
 
   // "Gesucht seit X Tagen" — derived purely from the base `created`
   // field. No custom request-date field is ever written by

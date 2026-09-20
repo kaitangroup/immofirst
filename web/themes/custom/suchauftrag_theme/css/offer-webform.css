@@ -169,6 +169,31 @@
 }
 
 /* ==========================================================
+   Order polish (design item: checkbox -> primary button -> lock icon
+   + privacy text, never inverted). The privacy note is already
+   guaranteed last — it lives in the twig template as a sibling AFTER
+   {{ children }}, outside the form's own flex column entirely. Within
+   the form itself, `order` is applied defensively so the on-screen
+   result is correct even if a future webform config change reorders
+   the underlying elements: every other field keeps the default
+   `order: 0` (so text/select fields stay first, in whatever order the
+   form defines), while the consent checkbox and the submit action are
+   explicitly pinned last, checkbox before button.
+   ========================================================== */
+.offer-webform .webform-submission-offer-to-search-request-form > .js-form-type-checkbox,
+.offer-webform .webform-submission-offer-to-search-request-form > .form-type-checkbox,
+.offer-webform .webform-form > .js-form-type-checkbox,
+.offer-webform .webform-form > .form-type-checkbox {
+  order: 8;
+}
+.offer-webform .webform-submission-offer-to-search-request-form > .form-actions,
+.offer-webform .webform-submission-offer-to-search-request-form > .webform-actions,
+.offer-webform .webform-form > .form-actions,
+.offer-webform .webform-form > .webform-actions {
+  order: 9;
+}
+
+/* ==========================================================
    Checkbox row polish
    ========================================================== */
 .offer-webform .form-type-checkbox,
@@ -214,6 +239,13 @@
 .offer-webform__panel-header { display: none; }
 
 @media (max-width: 780px) {
+
+  /* The bottom sheet has its own "Angebot senden" title in
+     .offer-webform__panel-header (above) — hide the desktop intro
+     block here so it never shows twice. */
+  .offer-webform__intro {
+    display: none;
+  }
 
   .offer-webform__mobile-cta {
     display: flex;

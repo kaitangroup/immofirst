@@ -7,9 +7,22 @@
  * changes. Reuses existing tokens (css/style.css) and existing
  * components (.badge, .btn, .stat-item from css/components.css)
  * rather than redefining them.
+ *
+ * NOTE on css/components.css: an earlier "Pixel-Perfect Polish" pass
+ * already added detail-page rules directly into components.css
+ * (search "DETAIL PAGE & SIDEBAR ALIGNMENT") — outside this task's
+ * allowed CSS file. Rather than duplicate or fight those rules here
+ * (risking a cascade-order tie), this file either reuses them as-is
+ * where they're already correct (e.g. .bookmark-btn's filled/outline
+ * states, the webform's internal field styling) or overrides them
+ * with a deliberately MORE SPECIFIC selector where this task's spec
+ * needs a different result (e.g. .request-detail__row
+ * .request-sidebar__card below, for the card's shared border/radius/
+ * padding) — specificity, not source order, is what makes this file
+ * win where it needs to, regardless of which stylesheet loads last.
  */
 
- .request-detail__back{
+.request-detail__back{
   display:inline-flex;
   align-items:center;
   gap:8px;
@@ -19,37 +32,100 @@
   margin-bottom:24px;
 }
 
-.request-detail__grid{
+/* ===== The two independent row grids =====
+ * Row 1 (top): Detail card (flexible) + Offer/webform card (360px),
+ * equal height. Row 2 (bottom): Similar Requests + "So funktioniert
+ * es", same column widths so both rows line up, but its own separate
+ * grid — Row 2's height is never tied to Row 1's.
+ */
+.request-detail__row{
   display:grid;
-  grid-template-columns:2fr 1fr;
+  grid-template-columns:1fr 360px;
   gap:32px;
+  margin-bottom:32px;
+}
+.request-detail__row:last-child{ margin-bottom:0; }
+
+/* Row 1 only: stretch both columns to the same height, and make sure
+   each grid item's own child ends up filling that stretched height —
+   a grid item stretches by default, but the CARD DIV one level down
+   (aside > .request-sidebar__card) only fills that if told to. */
+.request-detail__row--top{
+  align-items:stretch;
+}
+.request-detail__row--top > *{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+}
+.request-detail__sidebar > .request-detail__card{
+  flex:1 1 auto;
+}
+
+/* Row 2: top-aligned (not stretched) — Similar Requests and "So
+   funktioniert es" start on the same line but are independent
+   heights. */
+.request-detail__row--bottom{
   align-items:start;
+}
+
+/* ===== Shared white-card look (spec section 8) =====
+ * Applied to all four cards: Detail, Offer, Similar Requests, How it
+ * works. The extra .request-detail__row ancestor in each selector
+ * below is deliberate — see the file-level note above for why. */
+.request-detail__row .request-detail__card{
+  background:#FFFFFF;
+  border:1px solid #E5E7EB;
+  border-radius:var(--radius-lg); /* 20px */
+  padding:32px;
+}
+@media (max-width:640px){
+  .request-detail__row .request-detail__card{
+    padding:20px;
+  }
 }
 
 .request-detail__main{
   display:flex;
   flex-direction:column;
   gap:32px;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  box-shadow:var(--shadow-sm);
-  padding:32px;
+}
+
+/* "So funktioniert es" (templates/includes/how-it-works.html.twig)
+   ships with its own complete card styling (css/how-it-works.css) —
+   correct on its own, but this page now wraps it in an OUTER card
+   (.request-detail__howitworks) for the shared look, so the
+   INCLUDE's own background/border/padding must be neutralized here
+   to avoid a card inside a card. how-it-works.html.twig/.css are not
+   modified — this override lives entirely on this page. */
+.request-detail__howitworks .how-it-works{
+  background:none;
+  border:none;
+  border-radius:0;
+  box-shadow:none;
+  padding:0;
 }
 
 /* ===== Header ===== */
 .request-detail__header-top{
   display:flex;
   align-items:center;
+  justify-content:space-between;
   gap:12px;
   margin-bottom:14px;
+}
+.request-detail__header-left{
+  display:flex;
+  align-items:center;
+  gap:12px;
 }
 .request-detail__days-ago{
   font-size:13.5px;
   color:var(--muted);
 }
 .request-detail__title{
-  font-size:28px;
+  font-size:40px;
+  font-weight:700;
   margin-bottom:10px;
 }
 .request-detail__location{
@@ -62,28 +138,45 @@
 }
 .request-detail__location svg{ flex-shrink:0; color:var(--primary); }
 
+/* ===== Statistics cards (spec section 7) =====
+ * 4 columns desktop, 2 columns mobile, equal height, 16px radius,
+ * light gray background, centered icon/value/label. Overrides the
+ * shared .stat-item component's own alignment ONLY inside this
+ * wrapper (.request-detail__stat .stat-item), never .stat-item
+ * itself, so property-card's use of the same component elsewhere is
+ * untouched. */
 .request-detail__stats{
-  display:flex;
-  flex-wrap:wrap;
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
   gap:16px;
   padding-top:20px;
   border-top:1px solid var(--border);
 }
-/* Page-scoped wrapper that gives each requirement its own clean
-   bordered "card" (per spec section 5) — deliberately NOT applied to
-   .stat-item itself, since that class is shared with property-card
-   elsewhere and must not change there (section 10: no global
-   overrides of unrelated components). */
 .request-detail__stat{
+  display:flex;
   background:var(--bg);
-  border:1px solid var(--border);
-  border-radius:var(--radius-md);
-  padding:14px 18px;
-  min-width:120px;
+  border-radius:16px;
+  padding:16px 14px;
 }
-/* .stat-item / __icon / __value / __label already styled in
-   components.css — only the icon size differs slightly here (18px vs
-   the property-card's 16px), which is set inline on the SVG itself. */
+.request-detail__stat .stat-item{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  gap:4px;
+}
+.request-detail__stat .stat-item__icon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.request-detail__stat .stat-item__value{ font-weight:700; }
+.request-detail__stat .stat-item__label{ font-size:12.5px; }
+
+@media (max-width:640px){
+  .request-detail__stats{ grid-template-columns:repeat(2, 1fr); }
+}
 
 /* ===== Generic content sections ===== */
 .request-detail__section{
@@ -91,7 +184,8 @@
   border-top:1px solid var(--border);
 }
 .request-detail__section-title{
-  font-size:18px;
+  font-size:28px;
+  font-weight:700;
   margin-bottom:16px;
 }
 
@@ -142,15 +236,23 @@
 /* ===== Notes ===== */
 .request-detail__notes{
   color:var(--text);
-  font-size:15px;
+  font-size:16px;
   line-height:1.6;
 }
 
-/* ===== Metadata ===== */
+/* ===== "Gesucht von" metadata block (spec section 3) =====
+ * Two grid columns: "Gesucht von" on its own on the left; Such-ID /
+ * Erstellt am / Status visually grouped together as ONE cluster in
+ * the right column — never three equal columns of their own. */
 .request-detail__meta{
-  display:flex;
-  flex-wrap:wrap;
+  display:grid;
+  grid-template-columns:1fr 1fr;
   gap:32px;
+}
+.request-detail__meta-group{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
 }
 .request-detail__meta-label{
   display:block;
@@ -160,25 +262,63 @@
 }
 .request-detail__meta-value{
   display:block;
-  font-size:14.5px;
+  font-size:16px;
   font-weight:600;
   color:var(--text);
 }
-
-/* ===== Similar requests (placeholder) ===== */
-.request-detail__similar-head{ margin-bottom:4px; }
-.request-detail__similar-placeholder{
-  font-size:14px;
-  color:var(--muted);
+.request-detail__verified{
+  display:inline-block;
+  margin-left:8px;
+  font-size:13px;
+  font-weight:600;
+  color:var(--success);
+}
+@media (max-width:640px){
+  .request-detail__meta{
+    grid-template-columns:1fr;
+    gap:20px;
+  }
 }
 
-/* ===== Sidebar ===== */
-.request-sidebar__card{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  box-shadow:var(--shadow-sm);
-  padding:28px;
+/* ===== Privacy notice (spec section 4) =====
+ * Dedicated class, blue icon + blue text — no inline style. */
+.privacy-location-note{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:28px;
+  padding-top:28px;
+  border-top:1px solid var(--border);
+  font-size:14px;
+  font-weight:500;
+  color:var(--primary);
+}
+.privacy-location-note svg{
+  flex-shrink:0;
+  color:var(--primary);
+}
+
+/* ===== Similar requests card ===== */
+.request-detail__similar-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:16px;
+}
+.request-detail__similar-link{
+  font-size:13.5px;
+  font-weight:600;
+  color:var(--primary);
+}
+
+/* ===== Sidebar (Row 1 right column) ===== */
+.request-detail__sidebar{
+  height:100%;
+}
+/* Sticky while scrolling past the (often taller) Detail card next to
+   it — scoped to Row 1's card specifically, not Row 2's "So
+   funktioniert es" card, which sits in its own, separate row/grid. */
+.request-detail__row--top .request-sidebar__card{
   position:sticky;
   top:calc(var(--header-height) + 24px);
 }
@@ -192,39 +332,51 @@
   margin-bottom:20px;
 }
 
+/* ===== Bookmark button position (spec section 6) =====
+ * Top-right of the header — the button's own filled/outline visual
+ * states already come from components.css's
+ * ".request-detail__header-right .bookmark-btn(.is-active)" rules
+ * (see the file-level note above), reused as-is; this only makes
+ * sure it actually sits at the far right of its row, which the
+ * justify-content:space-between on .request-detail__header-top above
+ * now provides. */
+.request-detail__header-right{
+  flex-shrink:0;
+}
+
 /* ===== Responsive =====
- * Reuses the theme's own 3-tier breakpoint scheme from
+ * Per spec section 9: desktop 1fr/360px, tablet 1fr/320px, mobile a
+ * single column in document order (Detail -> Offer -> Similar
+ * Requests -> How it works — already true from the two rows' own DOM
+ * order once both collapse to one column, so no CSS `order` is
+ * needed). Reuses the theme's own 3-tier breakpoint scheme from
  * css/responsive.css (1024 tablet / 780 mobile-nav-switch / 640
- * mobile) instead of inventing new ones. Per spec section 8:
- * desktop = 2 columns; tablet = STILL 2 columns, just tighter gap/
- * spacing; mobile = 1 column, main content before the sidebar (already
- * true by DOM order — main comes before aside in the markup, so no
- * CSS `order` is needed). */
+ * mobile) instead of inventing new ones. */
 @media (max-width: 1024px){
-  .request-detail__grid{
+  .request-detail__row{
+    grid-template-columns:1fr 320px;
     gap:20px;
+    margin-bottom:20px;
   }
-  .request-detail__main{
+  .request-detail__row .request-detail__card{
     padding:24px;
-    gap:24px;
   }
   .request-detail__stats{ gap:12px; }
-  .request-sidebar__card{ padding:22px; }
 }
 
 @media (max-width: 780px){
-  .request-detail__grid{
+  .request-detail__row{
     grid-template-columns:1fr;
   }
-  .request-sidebar__card{
+  .request-detail__row--top .request-sidebar__card{
     position:static;
   }
 }
 
 @media (max-width: 640px){
-  .request-detail__title{ font-size:22px; }
-  .request-detail__main{ padding:20px; gap:24px; }
-  .request-detail__stat{ min-width:0; flex:1 1 45%; }
+  .request-detail__title{ font-size:26px; }
+  .request-detail__row .request-detail__card{ padding:20px; }
+  .request-detail__row{ gap:24px; }
   .criteria-list__row{
     grid-template-columns:20px 1fr;
     grid-template-areas:

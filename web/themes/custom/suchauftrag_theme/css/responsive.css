@@ -1,12 +1,14 @@
 /**
  * responsive.css
- * Breakpoints: 1024px (tablet), 780px (mobile nav switch), 640px (mobile).
+ * Breakpoints: 1024px (tablet), 780px (mobile nav switch), 768px (mobile).
  * Mobile behaviour per spec:
  *  - Hero stacks vertically
  *  - Search filter becomes single column
+ *  - Feature icons: 2 columns x 2 rows
  *  - Cards become horizontal compact cards (icon left / content
  *    center / bookmark+arrow right), one per row
- *  - CTA stacks
+ *  - Result section: counter left, sort right, Load More full width
+ *  - CTA stacks, full-width button
  *  - Footer stacks
  *  - No horizontal scrolling anywhere
  */
@@ -30,12 +32,11 @@
   }
 
   .feature-icons__grid{
-    grid-template-columns:repeat(2, 1fr);
+    grid-template-columns:repeat(2, minmax(0, 1fr));
     row-gap:28px;
   }
 
-  .property-grid,
-  .property-grid__rows{
+  .property-grid .property-grid__rows{
     grid-template-columns:repeat(2, 1fr);
   }
 
@@ -174,8 +175,18 @@
   }
 }
 
-/* ===== Mobile: ≤640px ===== */
-@media (max-width: 640px){
+/* ===== Mobile: ≤768px =====
+   Raised from the previous ≤640px: widths between 641-768px were
+   previously getting the ≤1024px "tablet" block's 2-column grid
+   (.property-grid, .search-card__grid) while still using this
+   block's compact/single-column card and form styles ONLY below
+   640px — i.e. a 2-column grid of cards that were each still trying
+   to lay out as full desktop-style cards, which is what produced the
+   overlapping/misaligned card content in that width range. Since
+   this block is last in the file, its rules still correctly win over
+   the ≤1024px block's for any width they both match — nothing in the
+   ≤1024px block itself needed to change. */
+@media (max-width: 768px){
   :root{
     --container-padding:16px;
     --space-header-to-content:28px;
@@ -203,17 +214,21 @@
 
   .feature-icons{ padding:32px 0; }
   .feature-icons__grid{
-    grid-template-columns:1fr;
+    /* Client spec: 2 columns x 2 rows (was 1 column) — gap stays a
+       single shorthand value so row and column spacing match.
+       minmax(0, 1fr), not plain 1fr — see the component's base rule
+       in components.css for why (same shrink-floor issue that caused
+       the "Direkter Kontakt" text to overlap/overflow at this width). */
+    grid-template-columns:repeat(2, minmax(0, 1fr));
     gap:22px;
   }
 
   .search-requests{ padding:36px 0 40px; }
-  .search-requests__head{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:14px;
-  }
-  .search-requests__sort{ width:100%; }
+  /* Client spec: counter left, sort control right — same row layout
+     as desktop's .search-requests__head (display:flex;
+     justify-content:space-between in components.css), so nothing to
+     override here beyond letting the sort control shrink to fit. */
+  .search-requests__sort{ min-width:0; }
   .search-requests__sort .select{ flex:1; min-width:0; }
   /* Client spec: mobile keeps only the "Sortieren" control in this
      row — the saved-search filter button is hidden here rather than
@@ -223,9 +238,26 @@
      approved design for where exactly it'd sit in the filter panel). */
   .saved-filter-btn{ display:none; }
 
-  .property-grid,
-  .property-grid__rows{
+  .search-requests__load-more [data-load-more]{
+    width:100%;
+    justify-content:center;
+  }
+
+  /* ROOT CAUSE of the 3-narrow-column bug: components.css's base rule
+     is ".property-grid .property-grid__rows" — a DESCENDANT
+     combinator (specificity 0,2,0), not a comma list. The previous
+     override here was ".property-grid, .property-grid__rows" — a
+     comma list, which splits into two independent 0,1,0 selectors.
+     0,1,0 loses to 0,2,0 regardless of media query or source order,
+     so the 3-column base rule was winning at every width, including
+     ≤768px. Fixed by matching the base rule's exact selector shape
+     (same 0,2,0 specificity) so normal cascade order — this rule
+     comes later in the file — decides it, instead of stacking on an
+     !important or a more-specific hack. */
+  .property-grid .property-grid__rows{
+    display:grid;
     grid-template-columns:1fr;
+    gap:16px;
   }
 
   /* ==========================================================
@@ -275,6 +307,8 @@
     align-items:center;
     gap:12px;
     padding:14px;
+    /* Client spec: 16px (base .property-card in components.css is 12px). */
+    border-radius:16px;
   }
   .property-card__leading{
     display:flex;

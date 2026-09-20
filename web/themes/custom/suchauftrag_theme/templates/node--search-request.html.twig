@@ -42,12 +42,35 @@
  *   reference_number       field_reference_number, or NULL
  *   created_date           formatted from the base `created` field
  *   status_label           mapped from field_status, or NULL
- *   requester_type_label   New preprocess variable
- *   verified               New preprocess variable
- *   view_count             New preprocess variable
+ *   requester_type_label   field_requester_type's referenced taxonomy
+ *                          term label, or NULL
+ *   verified               boolean — field_verified
  */
 #}
 {{ attach_library('suchauftrag_theme/search-request-detail') }}
+{#
+  The detail page's own bookmark button (below, data-bookmark) is
+  bound by the SAME js/theme.js click handler that already runs on
+  property cards elsewhere on the site — see theme.js's "Bookmark
+  toggle" section, which reads/writes via the single shared
+  Drupal.suchauftragSavedSearches API (js/saved-searches.js) so every
+  bookmark button on the site — detail page, similar-card, homepage —
+  reads and writes the exact same localStorage key
+  (suchauftrag:savedSearchNodeIds) as a plain array of ids, with
+  nothing about bookmarking duplicated here or anywhere else.
+
+  That shared API is only ever DEFINED when the "saved-searches"
+  library is attached — which page--front.html.twig already does, but
+  this detail page's own "search-request-detail" library never
+  declared as a dependency. Without it, theme.js's own
+  `window.Drupal && Drupal.suchauftragSavedSearches` check on this
+  page finds nothing and silently falls back to its plain,
+  non-persisted visual-only toggle — which is exactly why the button
+  here visually toggled but never actually saved. Attaching the
+  existing library here (nothing new authored) is the fix, not a new
+  storage mechanism.
+#}
+{{ attach_library('suchauftrag_theme/saved-searches') }}
 
 {% import _self as icons %}
 
@@ -108,9 +131,11 @@
     Zurück zur Ergebnisliste
   </a>
 
-  <div class="request-detail__grid">
+  {# ===== Row 1: Detail card (left, flexible) + Offer/webform card
+     (right, 360px) — one parent grid, equal-height cards. ===== #}
+  <div class="request-detail__row request-detail__row--top">
 
-    <main class="request-detail__main">
+    <main class="request-detail__main request-detail__card">
 
       <header class="request-detail__header">
         <div class="request-detail__header-top">
@@ -124,7 +149,7 @@
             {% endif %}
           </div>
           <div class="request-detail__header-right">
-            <button type="button" class="bookmark-btn" data-nid="{{ node.id }}">
+            <button type="button" class="bookmark-btn" data-bookmark data-node-id="{{ node.id }}" data-nid="{{ node.id }}" aria-label="Zu Favoriten hinzufügen">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
               Merken
             </button>
@@ -184,7 +209,7 @@
       {% if requester_type_label or reference_number or created_date or status_label %}
         <section class="request-detail__section request-detail__meta">
           {% if requester_type_label %}
-            <div>
+            <div class="request-detail__meta-item">
               <span class="request-detail__meta-label">Gesucht von</span>
               <span class="request-detail__meta-value">
                 {{ requester_type_label }}
@@ -194,22 +219,30 @@
               </span>
             </div>
           {% endif %}
-          {% if reference_number %}
-            <div>
-              <span class="request-detail__meta-label">Such-ID</span>
-              <span class="request-detail__meta-value">{{ reference_number }}</span>
-            </div>
-          {% endif %}
-          {% if created_date %}
-            <div>
-              <span class="request-detail__meta-label">Erstellt am</span>
-              <span class="request-detail__meta-value">{{ created_date }}</span>
-            </div>
-          {% endif %}
-          {% if status_label %}
-            <div>
-              <span class="request-detail__meta-label">Status</span>
-              <span class="request-detail__meta-value">{{ status_label }}</span>
+          {# Such-ID / Erstellt am / Status are visually ONE grouped
+             cluster in a single grid column — not three equal
+             columns of their own — see .request-detail__meta-group
+             in search-request-detail.css. #}
+          {% if reference_number or created_date or status_label %}
+            <div class="request-detail__meta-group">
+              {% if reference_number %}
+                <div class="request-detail__meta-item">
+                  <span class="request-detail__meta-label">Such-ID</span>
+                  <span class="request-detail__meta-value">{{ reference_number }}</span>
+                </div>
+              {% endif %}
+              {% if created_date %}
+                <div class="request-detail__meta-item">
+                  <span class="request-detail__meta-label">Erstellt am</span>
+                  <span class="request-detail__meta-value">{{ created_date }}</span>
+                </div>
+              {% endif %}
+              {% if status_label %}
+                <div class="request-detail__meta-item">
+                  <span class="request-detail__meta-label">Status</span>
+                  <span class="request-detail__meta-value">{{ status_label }}</span>
+                </div>
+              {% endif %}
             </div>
           {% endif %}
         </section>
@@ -220,24 +253,34 @@
         <span>Der genaue Standort wird aus Datenschutzgründen nicht angezeigt.</span>
       </div>
 
-      <section class="request-detail__section">
-        <div class="request-detail__similar-head">
-          <h2 class="request-detail__section-title">Ähnliche Suchaufträge</h2>
-          <a href="/suchauftraege" class="request-detail__similar-link">Alle anzeigen</a>
-        </div>
-        {{ drupal_view('similar_search_requests', 'block_1', node.id) }}
-      </section>
-
     </main>
 
     <aside class="request-detail__sidebar">
-      <div class="request-sidebar__card">
+      <div class="request-sidebar__card request-detail__card">
         {{ drupal_entity('webform', 'offer_to_search_request') }}
       </div>
-      
-         {% include '@suchauftrag_theme/templates/includes/how-it-works.html.twig' %}
-   
     </aside>
 
   </div>
+
+  {# ===== Row 2: Similar Requests (left) + "So funktioniert es"
+     (right) — a SEPARATE parent grid from Row 1, same column
+     widths, so both rows line up, but independent of Row 1's
+     height. ===== #}
+  <div class="request-detail__row request-detail__row--bottom">
+
+    <section class="request-detail__similar request-detail__card">
+      <div class="request-detail__similar-head">
+        <h2 class="request-detail__section-title">Ähnliche Suchaufträge</h2>
+        <a href="/suchauftraege" class="request-detail__similar-link">Alle anzeigen</a>
+      </div>
+      {{ drupal_view('similar_search_requests', 'block_1', node.id) }}
+    </section>
+
+    <div class="request-detail__howitworks request-detail__card">
+      {% include '@suchauftrag_theme/templates/includes/how-it-works.html.twig' %}
+    </div>
+
+  </div>
+
 </div>

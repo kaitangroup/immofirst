@@ -165,8 +165,16 @@
         if (btn.dataset.bound) { return; }
         btn.dataset.bound = 'true';
 
+        // The property-card grid supplies the node id via an
+        // ANCESTOR .property-card's data-node-id (see above). The
+        // search-request DETAIL page's own bookmark button (node--
+        // search-request.html.twig) isn't inside a .property-card —
+        // it puts data-node-id directly on the button itself instead.
+        // Checking the button's own attribute first, falling back to
+        // the ancestor lookup, lets both markups share this exact
+        // same toggle/persistence code with nothing duplicated.
         var card = btn.closest('.property-card');
-        var nodeId = card ? card.getAttribute('data-node-id') : null;
+        var nodeId = btn.getAttribute('data-node-id') || (card ? card.getAttribute('data-node-id') : null);
 
         // Reflect already-saved state on initial paint/AJAX insert,
         // not just after a click — otherwise a bookmarked card would

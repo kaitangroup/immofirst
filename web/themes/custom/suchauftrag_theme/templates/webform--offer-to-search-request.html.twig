@@ -77,6 +77,26 @@
        plain, non-scrolling wrapper around the exact same content. #}
     <div class="offer-webform__scroll" data-offer-webform-scroll>
 
+      {#
+        Desktop card heading + description (design item: "Angebot
+        senden" / "Machen Sie dem Suchenden ein passendes Angebot.
+        Ihre Kontaktdaten werden erst nach Annahme sichtbar."). Reuses
+        the .request-sidebar__title / .request-sidebar__text classes
+        already defined for exactly this purpose in
+        search-request-detail.css (spacing already tuned to the
+        reference design there — nothing new added), which were never
+        actually output by this template until now.
+
+        On mobile these are hidden via offer-webform.css — the sheet
+        already renders its own "Angebot senden" title in
+        .offer-webform__panel-header, so this is desktop-only chrome
+        and never a duplicate heading in the bottom sheet.
+      #}
+      <div class="offer-webform__intro">
+        <h2 class="request-sidebar__title">Angebot senden</h2>
+        <p class="request-sidebar__text">Machen Sie dem Suchenden ein passendes Angebot. Ihre Kontaktdaten werden erst nach Annahme sichtbar.</p>
+      </div>
+
       {{ children }}
 
       <p class="webform-privacy-note">
