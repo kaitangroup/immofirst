@@ -37,7 +37,7 @@
   }
 
   .property-grid .property-grid__rows{
-    grid-template-columns:repeat(2, 1fr);
+    grid-template-columns:repeat(2, minmax(0, 1fr));
   }
 
   /* Similar Search Requests ("Ähnliche Suchaufträge") — tablet: 2
@@ -224,12 +224,57 @@
   }
 
   .search-requests{ padding:36px 0 40px; }
-  /* Client spec: counter left, sort control right — same row layout
-     as desktop's .search-requests__head (display:flex;
-     justify-content:space-between in components.css), so nothing to
-     override here beyond letting the sort control shrink to fit. */
+  /* Client spec (Issue 2): left = title + count badge (unchanged
+     markup/CSS — .search-requests__count is already styled as a
+     badge, see components.css), right = a single icon-only sort
+     button, no visible "Sortieren nach" label and no visible current-
+     value text. Scoped to .search-requests__sort .select specifically
+     so the search filter's own selects elsewhere on the page are
+     untouched. align-items:center (desktop uses flex-end) so the
+     small icon button sits centered against the title/count block
+     rather than bottom-aligned against it. */
+  .search-requests__head{ align-items:center; }
+  .sort__label{ display:none; }
   .search-requests__sort{ min-width:0; }
-  .search-requests__sort .select{ flex:1; min-width:0; }
+  .search-requests__sort .select{ flex:0 0 auto; min-width:0; }
+  .search-requests__sort .select__trigger{
+    width:40px;
+    height:40px;
+    padding:0;
+    justify-content:center;
+    gap:0;
+  }
+  /* Trigger's own value text + chevron are hidden; a plain sort icon
+     (mask-image so it inherits the same currentColor as every other
+     icon in the theme) takes their place. Clicking/tapping the
+     trigger still opens the exact same dropdown — theme.js's
+     [data-select] logic is untouched, this only changes what's
+     visually inside the (still real) button. */
+  .search-requests__sort .select__trigger [data-select-value],
+  .search-requests__sort .select__chevron{
+    display:none;
+  }
+  /* .select__menu is normally left:0;right:0 (full width of .select) —
+     with the trigger now only 40px wide, that would shrink the actual
+     dropdown/menu to 40px too, wrapping every option label. Anchor it
+     to the trigger's right edge instead, at a fixed readable width. */
+  .search-requests__sort .select__menu{
+    left:auto;
+    right:0;
+    width:200px;
+  }
+  .search-requests__sort .select__trigger::before{
+    content:'';
+    width:18px;
+    height:18px;
+    background-color:var(--text);
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3'/%3E%3C/svg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3'/%3E%3C/svg%3E");
+    -webkit-mask-size:contain;
+    mask-size:contain;
+    -webkit-mask-repeat:no-repeat;
+    mask-repeat:no-repeat;
+  }
   /* Client spec: mobile keeps only the "Sortieren" control in this
      row — the saved-search filter button is hidden here rather than
      squeezed in beside it, to avoid disturbing the existing mobile
@@ -253,10 +298,23 @@
      ≤768px. Fixed by matching the base rule's exact selector shape
      (same 0,2,0 specificity) so normal cascade order — this rule
      comes later in the file — decides it, instead of stacking on an
-     !important or a more-specific hack. */
+     !important or a more-specific hack.
+
+     SEPARATE bug, fixed here too: this rule's value was plain `1fr`,
+     not `minmax(0, 1fr)` like the base rule and every other grid in
+     this file (.feature-icons__grid, the tablet override above). A
+     bare `1fr` track is `minmax(auto, 1fr)` — its floor is the
+     content's min-content width, not 0 — so a card whose title/
+     location text can't wrap (white-space:nowrap + ellipsis, see
+     .property-card__title/.property-card__location) forced this
+     "single" column, and the card inside it, past the viewport width
+     (~538px on a 360px screen) instead of the text ellipsis-
+     truncating as intended. See the new .property-grid__item rule in
+     components.css for the other half of this same shrink-floor
+     fix — the track and the item both needed it. */
   .property-grid .property-grid__rows{
     display:grid;
-    grid-template-columns:1fr;
+    grid-template-columns:minmax(0, 1fr);
     gap:16px;
   }
 
@@ -306,7 +364,9 @@
     flex-direction:row;
     align-items:center;
     gap:12px;
-    padding:14px;
+    /* Client spec (Issue 2): 18–20px padding. Previously 14px — under
+       the required range. */
+    padding:18px;
     /* Client spec: 16px (base .property-card in components.css is 12px). */
     border-radius:16px;
   }

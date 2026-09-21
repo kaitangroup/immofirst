@@ -264,17 +264,49 @@
 
       var mobileQuery = window.matchMedia('(max-width: 780px)');
 
+      /*
+       * ROOT CAUSE of "Filter ändern jumps while scrolling" (Issue 1):
+       *
+       * syncSpacerHeight() used to size the spacer to match ONLY the
+       * newly-pinned element's own height (`pinned.getBoundingClientRect()
+       * .height`) — on mobile that's the ~56–60px compact bar. But
+       * `.search-filter.is-stuck{ padding-top:0; padding-bottom:0; }`
+       * (components.css) ALSO removes this section's own ~40px of
+       * padding the instant it becomes stuck, and the full mobile
+       * search form being replaced is ~350–450px tall (it's a single-
+       * column stack of 4 fields + an actions row on mobile — see
+       * .search-card__grid in responsive.css). So the section's actual
+       * in-flow height collapsed from roughly padding + ~400px down to
+       * just the ~56px spacer, losing ~350px+ of document height in a
+       * single frame — every bit of page content below (feature icons,
+       * "Aktuelle Suchaufträge", the cards) suddenly jumped upward by
+       * that amount the moment the user scrolled past the sentinel.
+       *
+       * Fix: measure the section's OWN full natural height (including
+       * its padding) while it is still in its normal, non-stuck state,
+       * and give the spacer that exact value once stuck — so the
+       * section keeps occupying precisely the same total document
+       * space it always did, and only the visible pinned bar/form
+       * changes, with nothing around it ever moving.
+       */
+      var naturalHeight = null;
+
+      function measureNaturalHeight() {
+        if (!section.classList.contains('is-stuck')) {
+          naturalHeight = section.getBoundingClientRect().height;
+        }
+      }
+
       function headerHeight() {
         var value = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height'));
         return isNaN(value) ? 72 : value;
       }
 
-      /** Keeps the spacer the exact height of whichever element is currently pinned, so page content never jumps. */
+      /** Keeps the spacer the exact height this section naturally occupies when NOT stuck (see the root-cause comment above), so page content never jumps. */
       function syncSpacerHeight() {
         if (!spacer || !section.classList.contains('is-stuck')) { return; }
-        var pinned = mobileQuery.matches ? stickyBar : bar;
-        if (pinned) {
-          spacer.style.height = pinned.getBoundingClientRect().height + 'px';
+        if (naturalHeight !== null) {
+          spacer.style.height = naturalHeight + 'px';
         }
       }
 
@@ -291,6 +323,14 @@
       }
 
       function setStuck(stuck) {
+        // Capture the section's natural (un-stuck) height BEFORE toggling
+        // the class that removes its padding — see the root-cause
+        // comment above measureNaturalHeight(). Only relevant on the
+        // false->true transition; on the true->false transition the
+        // section is simply returning to a layout we already know.
+        if (stuck && !section.classList.contains('is-stuck')) {
+          measureNaturalHeight();
+        }
         section.classList.toggle('is-stuck', stuck);
         // Compact bar (added): desktop/tablet only — mobile keeps its
         // existing separate "Filter ändern" toggle-bar behavior
@@ -308,10 +348,37 @@
         syncSpacerHeight();
       }
 
+      // Measure once up front too, so the very first scroll-triggered
+      // stick (before any resize event has had a chance to fire) still
+      // has a correct value rather than relying solely on the
+      // just-in-time measurement inside setStuck().
+      measureNaturalHeight();
+
+      // Re-measure on viewport size changes (rotation, browser chrome
+      // showing/hiding, resizing a desktop window) — but only capture
+      // while genuinely un-stuck, exactly like the initial measurement,
+      // since layout while stuck no longer reflects the natural height.
+      var resizeTimer;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(measureNaturalHeight, 150);
+      });
+
       if ('IntersectionObserver' in window) {
         var observer = new IntersectionObserver(function (entries) {
           entries.forEach(function (entry) {
-            setStuck(!entry.isIntersecting);
+            // BUG FIX: `!entry.isIntersecting` alone is also true when
+            // the sentinel simply hasn't been scrolled to YET (e.g. on
+            // initial page load, if the hero is taller than the
+            // viewport, the sentinel starts off-screen BELOW the fold —
+            // which also reports isIntersecting:false). That falsely
+            // triggered "stuck" before the user had scrolled past the
+            // filter at all. Checking boundingClientRect.top confirms
+            // the sentinel is specifically ABOVE the (shrunk) viewport —
+            // i.e. genuinely scrolled past from above — which is the
+            // only case that should ever pin the bar.
+            var scrolledPast = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+            setStuck(scrolledPast);
           });
         }, { rootMargin: '-' + headerHeight() + 'px 0px 0px 0px', threshold: 0 });
         observer.observe(sentinel);

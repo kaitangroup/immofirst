@@ -497,7 +497,9 @@
     padding:10px 14px;
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:var(--radius-sm);
+    /* Client spec (Issue 1): 12px radius specifically, not the 8px
+       --radius-sm token used elsewhere for similar small controls. */
+    border-radius:12px;
     font-family:inherit;
     text-align:left;
     cursor:pointer;
@@ -651,6 +653,19 @@
     gap:24px;
     width:100%;
   }
+  /* .property-grid__item (the actual Views-rendered grid cell wrapper,
+     see templates/views/views-view-unformatted--search-requests.html.twig)
+     had NO rule anywhere in this theme — as a CSS Grid item its default
+     min-width is `auto`, meaning the browser won't let it shrink below
+     the min-content width of whatever is inside it (.property-card).
+     minmax(0, 1fr) on the TRACK above only caps the *track*; the ITEM
+     sitting in that track needs this too, or a wide enough card (e.g.
+     a long title/location with white-space:nowrap, see .property-card__
+     title/.property-card__location) still forces the whole column, and
+     therefore the card, wider than the viewport. Same shrink-floor
+     issue already fixed for .feature-icon's children — see that
+     comment in this file for the general pattern. */
+  .property-grid__item{ min-width:0; }
   .search-requests__load-more{
     display:flex;
     justify-content:center;

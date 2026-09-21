@@ -2,28 +2,45 @@
  * saved-searches.js
  * Vanilla JS only — no jQuery.
  *
- * Implements the "Nur gemerkte anzeigen" (saved searches) feature on
- * the homepage, entirely client-side:
- *   - Bookmarking a property card stores ONLY that node's id in the
- *     visitor's own browser localStorage. No Drupal field, View
- *     filter, or database table is created or touched by this file.
- *   - Clicking "Nur gemerkte anzeigen" filters the cards ALREADY
- *     loaded in the DOM down to bookmarked ones only; clicking again
- *     restores all of them. This never re-queries the server — it is
- *     a pure client-side show/hide over whatever
- *     views-view-unformatted--search-requests.html.twig has already
- *     rendered (including anything appended later by search-ajax.js's
- *     "load more" / filter-change flows).
+ * Bookmark PERSISTENCE (unchanged): bookmarking a property card still
+ * stores ONLY that node's id in the visitor's own browser localStorage.
+ * No Drupal field, View filter, or database table is created or
+ * touched by this file — Drupal.suchauftragSavedSearches (defined
+ * below) remains the single source of truth for the saved-id list,
+ * still read by js/theme.js's bookmark-button click handler exactly as
+ * before, so a card's bookmark icon and this file can never disagree
+ * about what's saved.
  *
- * Drupal.suchauftragSavedSearches (defined below) is the single
- * source of truth for the saved-id list and is also read by
- * js/theme.js's bookmark-button click handler, so a card's bookmark
- * icon and this file's filtering can never disagree about what's
- * saved. Load order is guaranteed safe regardless of which file's
- * <script> tag executes first: Drupal.suchauftragSavedSearches is
- * only ever READ lazily, inside event handlers and attach() calls —
- * never at parse time — so by the time a visitor can actually click
- * anything, both files have already finished running.
+ * Bookmark FILTERING (changed): "Nur gemerkte anzeigen" used to hide/
+ * show whatever cards happened to already be in the DOM — which could
+ * never surface a bookmarked item outside the first loaded batch, and
+ * "Weitere Suchaufträge laden" had no idea the filter was even active.
+ * It now calls into js/search-ajax.js's Drupal.suchauftragSearchAjax
+ * .refresh() — a REAL request to Drupal's own /views/ajax, through the
+ * exact same pipeline the Kaufen/Mieten, Immobilienart, Ort/PLZ and
+ * Sortieren controls already use — so the toggle now searches the
+ * full result set on the server, not just what's currently rendered,
+ * and "load more" (which also reads the bookmark state — see
+ * search-ajax.js's bookmarkExtraParams()) continues to respect it.
+ *
+ * HOW BOOKMARKED IDS REACH THE SERVER: search-ajax.js's
+ * bookmarkExtraParams() reads Drupal.suchauftragSavedSearches
+ * .getAll() (this file) whenever isFilterActive() (also this file) is
+ * true, and merges { bookmarked: [...ids] } into the same /views/ajax
+ * POST request it already builds for every other filter. Those ids
+ * are sent as repeated bookmarked[]=<id> parameters — matching
+ * views.view.search_requests.yml's existing "bookmarked" exposed
+ * filter (field: nid, plugin_id: in_operator, multiple: true) exactly
+ * as Drupal's own exposed form would submit it, so no View
+ * configuration change was needed: that filter already expected this
+ * shape.
+ *
+ * Cross-file load order is safe regardless of which of the two
+ * libraries' <script> tags executes first: both
+ * Drupal.suchauftragSavedSearches (read by search-ajax.js) and
+ * Drupal.suchauftragSearchAjax (read by this file, below) are only
+ * ever accessed lazily — inside event handlers / attach() calls —
+ * never at parse time.
  */
 (function (Drupal) {
   'use strict';
@@ -54,10 +71,19 @@
     }
   }
 
+  // Whether the "Nur gemerkte anzeigen" filter is currently switched
+  // on. Deliberately NOT persisted across a page refresh — a full
+  // reload always starts back at "show everything", matching how
+  // every other filter/sort control on this page already behaves
+  // (only the underlying saved-id data itself is expected to persist,
+  // per the task spec).
+  var filterActive = false;
+
   /**
-   * Small shared API — used by THIS file's filter button and by
-   * js/theme.js's bookmark-button click handler (see that file's
-   * updated "Bookmark toggle" section for how it's consumed).
+   * Small shared API — used by THIS file's toggle button, by
+   * js/theme.js's bookmark-button click handler (unchanged there),
+   * and now also read by js/search-ajax.js's bookmarkExtraParams()
+   * (see this file's header comment).
    */
   Drupal.suchauftragSavedSearches = {
     isSaved: function (nodeId) {
@@ -81,30 +107,45 @@
       return nowSaved;
     },
     getAll: readSavedIds,
+    /** Whether "Nur gemerkte anzeigen" is currently switched on — read by search-ajax.js so it knows whether to include the bookmark filter in a request. */
+    isFilterActive: function () {
+      return filterActive;
+    }
   };
 
-  // Whether the "Nur gemerkte anzeigen" filter is currently switched
-  // on. Deliberately NOT persisted across a page refresh — a full
-  // reload always starts back at "show everything", which matches
-  // how every other filter/sort control on this page already behaves
-  // (there is no other example on this page of a UI toggle state
-  // surviving a refresh, only the underlying saved-id data itself is
-  // expected to persist per the task spec).
-  var filterActive = false;
+  /**
+   * Renders the same visual "no results" state the View's own empty
+   * text uses (.property-grid__empty, inside .property-grid — see
+   * css/components.css and views-view--search-requests.html.twig)
+   * directly, with no request to the server at all.
+   *
+   * Needed specifically for the "zero bookmarks" case: the View's
+   * "bookmarked" filter is only ever a real, applied restriction when
+   * at least one id is actually submitted — an exposed in_operator
+   * filter with nothing in it is indistinguishable from "not applied"
+   * to Views, which would show EVERY result instead of none. Rather
+   * than sending a fake/sentinel id to force a zero-row match, this
+   * is decided client-side (we already know the count is zero from
+   * localStorage) and skips the network entirely.
+   */
+  function showEmptyBookmarksState() {
+    var resultsRegion = document.getElementById('search-results-region');
+    if (resultsRegion) {
+      resultsRegion.innerHTML =
+        '<div class="property-grid">' +
+          '<div class="property-grid__empty">Sie haben noch keine Suchaufträge gemerkt.</div>' +
+        '</div>';
+    }
 
-  /** Shows/hides one card per the current filterActive state. A card with no data-node-id (shouldn't normally happen) is always shown, never hidden, so a data gap can't accidentally hide real content. */
-  function applyFilterToCard(card) {
-    var nodeId = card.getAttribute('data-node-id');
-    var shouldHide = filterActive && nodeId && !Drupal.suchauftragSavedSearches.isSaved(nodeId);
-    card.classList.toggle('u-hidden', !!shouldHide);
-  }
+    var countEl = document.getElementById('search-requests-count');
+    if (countEl) {
+      countEl.textContent = '0 Suchaufträge gefunden';
+    }
 
-  /** Applies the current filter state to every property card within a given root (document on first load; the AJAX-inserted region on subsequent search-ajax.js updates). */
-  function applyFilterWithin(root) {
-    var cards = root.querySelectorAll ? root.querySelectorAll('.property-card') : [];
-    cards.forEach(function (card) {
-      applyFilterToCard(card);
-    });
+    var loadMoreWrapper = document.querySelector('.search-requests__load-more');
+    if (loadMoreWrapper) {
+      loadMoreWrapper.hidden = true;
+    }
   }
 
   Drupal.behaviors.suchauftragSavedSearchesFilter = {
@@ -114,7 +155,7 @@
       // subsequent search-ajax.js update (new search results, "load
       // more" appends), so a visitor who has the filter switched on
       // doesn't see un-bookmarked cards sneak back in after either.
-      applyFilterWithin(context);
+   //   applyFilterWithin(context);
 
       var toggleBtn = context.querySelector ? context.querySelector('[data-saved-filter-toggle]') : null;
       if (!toggleBtn || toggleBtn.dataset.bound) { return; }
@@ -124,11 +165,39 @@
         filterActive = !filterActive;
         toggleBtn.classList.toggle('is-active', filterActive);
         toggleBtn.setAttribute('aria-pressed', String(filterActive));
-        // Always re-scan the whole document, not just `context` — the
+  // Always re-scan the whole document, not just `context` — the
         // button lives outside #search-results-region, so a click on
         // it needs to reach every card currently on screen, wherever
         // they came from (initial render, AJAX search, or load more).
-        applyFilterWithin(document);
+       // applyFilterWithin(document);
+
+        // Zero bookmarks: show the empty state directly, no request —
+        // see showEmptyBookmarksState()'s docblock for why this can't
+        // just be "send an empty bookmarked[] filter" instead.
+        if (filterActive && readSavedIds().length === 0) {
+          showEmptyBookmarksState();
+          return;
+        }
+
+        // Every other case — turning the filter ON with at least one
+        // bookmark, or turning it OFF again — goes through a real
+        // server reload via search-ajax.js, which re-applies whatever
+        // Kaufen/Mieten, Immobilienart, Ort/PLZ and Sortieren values
+        // are already active (see search-ajax.js's own
+        // Drupal.suchauftragSearchAjax.refresh() docblock) and merges
+        // in the bookmark filter itself only when filterActive is now
+        // true. This is what correctly restores the FULL result set
+        // on "off" too, rather than just un-hiding whatever happens
+        // to still be in the DOM (which, after a bookmarked-only
+        // reload, is only ever the bookmarked subset — the rest was
+        // never fetched to begin with).
+        var searchAjax = window.Drupal && Drupal.suchauftragSearchAjax;
+        if (searchAjax && searchAjax.refresh) {
+          searchAjax.refresh();
+        }
+        else {
+          console.warn('saved-searches: Drupal.suchauftragSearchAjax is not available — is suchauftrag_theme/search-ajax attached on this page?');
+        }
       });
     }
   };

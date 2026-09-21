@@ -97,6 +97,22 @@
  *       "Result summary" total (see readTotalFromGrid()) rather than
  *       from the number of cards currently rendered, so it no longer
  *       drifts as more cards are appended by "load more".
+ *
+ * BOOKMARK FILTER ("Nur gemerkte anzeigen"), added:
+ *   js/saved-searches.js's toggle button no longer hides/shows
+ *   already-loaded cards client-side — it calls
+ *   Drupal.suchauftragSearchAjax.refresh() (exposed at the bottom of
+ *   attach(), below), which re-runs the currently active search
+ *   through this same performSearch() pipeline. bookmarkExtraParams()
+ *   merges { bookmarked: [...ids] } into that request — and into
+ *   loadMore()'s — whenever the toggle is active, reading the id list
+ *   from Drupal.suchauftragSavedSearches.getAll() (saved-searches.js).
+ *   Those ids are sent as repeated bookmarked[]=<id> parameters via
+ *   fetchViewCommands()'s extra-params handling (now array-aware),
+ *   matching views.view.search_requests.yml's existing "bookmarked"
+ *   exposed filter (nid, in_operator, multiple: true) exactly as
+ *   Drupal's own exposed form would submit it — no View config change
+ *   needed, that filter already expected this shape.
  */
 (function (Drupal, drupalSettings) {
   'use strict';
@@ -298,6 +314,30 @@
     return match ? parseInt(match[0], 10) : null;
   }
 
+  /**
+   * Whether the "Nur gemerkte anzeigen" toggle (js/saved-searches.js)
+   * is currently active, and if so, the extra { bookmarked: [...] }
+   * to merge into every /views/ajax request this file makes — both
+   * a fresh search AND "load more", so pagination keeps respecting
+   * the bookmark filter exactly like every other active filter does.
+   *
+   * Reads Drupal.suchauftragSavedSearches lazily (only when actually
+   * called, i.e. from inside performSearch()/loadMore(), themselves
+   * only ever invoked from a user action) — never at parse time — so
+   * it doesn't matter which of the two files' <script> tags happens
+   * to execute first; see saved-searches.js's own header comment for
+   * the same reasoning applied to its (separate) consumer, theme.js.
+   * Returns {} (no-op) if that file isn't attached to this page at
+   * all, so this file has no hard dependency on it.
+   */
+  function bookmarkExtraParams() {
+    var saved = window.Drupal && Drupal.suchauftragSavedSearches;
+    if (saved && saved.isFilterActive && saved.isFilterActive()) {
+      return { bookmarked: saved.getAll() };
+    }
+    return {};
+  }
+
   Drupal.behaviors.searchAjax = {
     attach: function () {
       var form = document.getElementById('search-filter-form');
@@ -365,7 +405,21 @@
         params.set('sort_order', sortParams.sort_order);
         if (extra) {
           Object.keys(extra).forEach(function (key) {
-            params.set(key, extra[key]);
+            var value = extra[key];
+            if (Array.isArray(value)) {
+              // views.view.search_requests.yml's "bookmarked" filter
+              // (nid, plugin_id: in_operator) has multiple: true —
+              // Drupal reads that as a genuinely submitted array
+              // (bookmarked[]=123&bookmarked[]=456), not one
+              // comma-joined value, so each entry is appended under
+              // its own "key[]" rather than params.set()'d once.
+              value.forEach(function (v) {
+                params.append(key + '[]', v);
+              });
+            }
+            else {
+              params.set(key, value);
+            }
           });
         }
 
@@ -447,7 +501,7 @@
 
         var viewSettingsForThisRequest = getAjaxViewSettings();
 
-        return fetchViewCommands(currentFilters, currentSort, { page: '0' })
+        return fetchViewCommands(currentFilters, currentSort, Object.assign({ page: '0' }, bookmarkExtraParams()))
           .then(function (commands) {
             var grid = findViewMarkup(commands, viewSettingsForThisRequest);
 
@@ -498,7 +552,7 @@
         loadMoreBtn.setAttribute('aria-busy', 'true');
         var viewSettingsForThisRequest = getAjaxViewSettings();
 
-        fetchViewCommands(currentFilters, currentSort, { page: String(loadMorePage) })
+        fetchViewCommands(currentFilters, currentSort, Object.assign({ page: String(loadMorePage) }, bookmarkExtraParams()))
           .then(function (commands) {
             var grid = findViewMarkup(commands, viewSettingsForThisRequest);
             var newItems = grid ? grid.querySelectorAll('.property-grid__rows .property-grid__item') : [];
@@ -653,6 +707,36 @@
       // "Mieten" tab is checked even on an unfiltered page).
       currentFilters = readAppliedFiltersFromLocation();
       currentSort = initialValues.sort;
+
+      /**
+       * Small API surface for js/saved-searches.js's "Nur gemerkte
+       * anzeigen" toggle to call into (read lazily, only from inside
+       * that file's click handler — see bookmarkExtraParams() above
+       * for why load order between the two files doesn't matter).
+       * Re-runs the CURRENTLY active search — the same art/
+       * immobilienart/ort/sort already applied, exactly what
+       * loadMore() itself continues — through the normal
+       * performSearch() pipeline, which now also merges in
+       * bookmarkExtraParams() itself. This is how turning the
+       * bookmark filter on AND off both result in a real server
+       * reload (never a client-side hide/show): "off" is just
+       * another refresh() call where bookmarkExtraParams() happens
+       * to return {}.
+       *
+       * pushHistory is left at its performSearch() default of true
+       * only when explicitly requested — normally false here, since
+       * bookmarked ids live in localStorage (per the task spec), not
+       * the URL, so there is nothing about this toggle for the
+       * browser's back/forward to meaningfully restore.
+       */
+      Drupal.suchauftragSearchAjax = {
+        refresh: function (options) {
+          return performSearch(
+            Object.assign({}, currentFilters, { sort: currentSort }),
+            Object.assign({ pushHistory: false }, options)
+          );
+        }
+      };
 
       // The initial batch is server-rendered already; just read its
       // own pager to decide whether "load more" has anything to do.
