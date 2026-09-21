@@ -60,7 +60,7 @@ function suchauftrag_theme_preprocess_page__front(array &$variables) {
   // stored as an empty string).
   $request = \Drupal::request();
   $exposed_input = [];
-  foreach (['art', 'immobilienart', 'ort'] as $filter_identifier) {
+  foreach (['art', 'immobilienart', 'ort',  'bookmarked'] as $filter_identifier) {
     $value = $request->query->get($filter_identifier);
     if ($value !== NULL && $value !== '') {
       $exposed_input[$filter_identifier] = $value;
@@ -274,6 +274,23 @@ function suchauftrag_theme_preprocess_views_view_unformatted(array &$variables) 
     ];
   }
 }
+
+/**
+ * TEMPORARY DEBUG — remove once the bookmark/nid filter issue is found.
+ *
+ * Fires after the search_requests view has fully built + executed its
+ * query (this is a preprocess hook, so it runs after Views' own
+ * pre_view/pre_build/pre_execute stages) — logs exactly what the "nid"
+ * filter handler resolved to and the literal SQL WHERE clause Views
+ * generated, so we can see directly whether the nid/bookmarked
+ * condition made it into the query at all, rather than guessing.
+ *
+ * Implements hook_preprocess_HOOK() for the search_requests view's
+ * OUTER wrapper (views-view--search-requests.html.twig) — this fires
+ * for every display of this view (page preview AND the /views/ajax
+ * block_1 request alike).
+ */
+
 
 /**
  * Builds the property-card's 3 stat columns for one node, per the

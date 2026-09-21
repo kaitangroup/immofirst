@@ -16,16 +16,14 @@
  * exposed-form AJAX uses), swapping only #search-results-region in
  * page--front.html.twig and updating the URL via history.pushState().
  *
- * Field name <-> View filter identifier map:
+ * Field name <-> View filter identifier map (views.view.search_requests.yml):
  *   art            <-> field_request_type_value (Kaufen/Mieten)
- *   immobilienart  <-> field_property_icon_value (Immobilienart)
+ *   immobilienart  <-> field_property_type_value (Immobilienart)
  *   ort            <-> field_location_value (Ort oder PLZ, contains)
- *   radius         <-> NOT wired to filtering yet — no geolocation field
- *                      exists on the content type. Its submitted value
- *                      is preserved across redirects (selected below)
- *                      but has no effect on results yet. Wiring real
- *                      radius search needs a geofield + proximity
- *                      filter (Geofield + Geocoder contrib modules).
+ *   radius         <-> field_radius_value (Umkreis, equality match against
+ *                      field_radius — a plain list_integer field, no
+ *                      geolocation/lat-lon involved; NOT a proximity
+ *                      search, just "= this exact radius value")
  *
  * All four fields below read their current value from the URL query
  * string so a submitted search stays reflected in the form after the

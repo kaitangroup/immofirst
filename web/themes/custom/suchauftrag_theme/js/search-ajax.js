@@ -97,22 +97,6 @@
  *       "Result summary" total (see readTotalFromGrid()) rather than
  *       from the number of cards currently rendered, so it no longer
  *       drifts as more cards are appended by "load more".
- *
- * BOOKMARK FILTER ("Nur gemerkte anzeigen"), added:
- *   js/saved-searches.js's toggle button no longer hides/shows
- *   already-loaded cards client-side — it calls
- *   Drupal.suchauftragSearchAjax.refresh() (exposed at the bottom of
- *   attach(), below), which re-runs the currently active search
- *   through this same performSearch() pipeline. bookmarkExtraParams()
- *   merges { bookmarked: [...ids] } into that request — and into
- *   loadMore()'s — whenever the toggle is active, reading the id list
- *   from Drupal.suchauftragSavedSearches.getAll() (saved-searches.js).
- *   Those ids are sent as repeated bookmarked[]=<id> parameters via
- *   fetchViewCommands()'s extra-params handling (now array-aware),
- *   matching views.view.search_requests.yml's existing "bookmarked"
- *   exposed filter (nid, in_operator, multiple: true) exactly as
- *   Drupal's own exposed form would submit it — no View config change
- *   needed, that filter already expected this shape.
  */
 (function (Drupal, drupalSettings) {
   'use strict';
@@ -314,30 +298,6 @@
     return match ? parseInt(match[0], 10) : null;
   }
 
-  /**
-   * Whether the "Nur gemerkte anzeigen" toggle (js/saved-searches.js)
-   * is currently active, and if so, the extra { bookmarked: [...] }
-   * to merge into every /views/ajax request this file makes — both
-   * a fresh search AND "load more", so pagination keeps respecting
-   * the bookmark filter exactly like every other active filter does.
-   *
-   * Reads Drupal.suchauftragSavedSearches lazily (only when actually
-   * called, i.e. from inside performSearch()/loadMore(), themselves
-   * only ever invoked from a user action) — never at parse time — so
-   * it doesn't matter which of the two files' <script> tags happens
-   * to execute first; see saved-searches.js's own header comment for
-   * the same reasoning applied to its (separate) consumer, theme.js.
-   * Returns {} (no-op) if that file isn't attached to this page at
-   * all, so this file has no hard dependency on it.
-   */
-  function bookmarkExtraParams() {
-    var saved = window.Drupal && Drupal.suchauftragSavedSearches;
-    if (saved && saved.isFilterActive && saved.isFilterActive()) {
-      return { bookmarked: saved.getAll() };
-    }
-    return {};
-  }
-
   Drupal.behaviors.searchAjax = {
     attach: function () {
       var form = document.getElementById('search-filter-form');
@@ -405,21 +365,7 @@
         params.set('sort_order', sortParams.sort_order);
         if (extra) {
           Object.keys(extra).forEach(function (key) {
-            var value = extra[key];
-            if (Array.isArray(value)) {
-              // views.view.search_requests.yml's "bookmarked" filter
-              // (nid, plugin_id: in_operator) has multiple: true —
-              // Drupal reads that as a genuinely submitted array
-              // (bookmarked[]=123&bookmarked[]=456), not one
-              // comma-joined value, so each entry is appended under
-              // its own "key[]" rather than params.set()'d once.
-              value.forEach(function (v) {
-                params.append(key + '[]', v);
-              });
-            }
-            else {
-              params.set(key, value);
-            }
+            params.set(key, extra[key]);
           });
         }
 
@@ -501,7 +447,7 @@
 
         var viewSettingsForThisRequest = getAjaxViewSettings();
 
-        return fetchViewCommands(currentFilters, currentSort, Object.assign({ page: '0' }, bookmarkExtraParams()))
+        return fetchViewCommands(currentFilters, currentSort, { page: '0' })
           .then(function (commands) {
             var grid = findViewMarkup(commands, viewSettingsForThisRequest);
 
@@ -552,7 +498,7 @@
         loadMoreBtn.setAttribute('aria-busy', 'true');
         var viewSettingsForThisRequest = getAjaxViewSettings();
 
-        fetchViewCommands(currentFilters, currentSort, Object.assign({ page: String(loadMorePage) }, bookmarkExtraParams()))
+        fetchViewCommands(currentFilters, currentSort, { page: String(loadMorePage) })
           .then(function (commands) {
             var grid = findViewMarkup(commands, viewSettingsForThisRequest);
             var newItems = grid ? grid.querySelectorAll('.property-grid__rows .property-grid__item') : [];
@@ -708,36 +654,6 @@
       currentFilters = readAppliedFiltersFromLocation();
       currentSort = initialValues.sort;
 
-      /**
-       * Small API surface for js/saved-searches.js's "Nur gemerkte
-       * anzeigen" toggle to call into (read lazily, only from inside
-       * that file's click handler — see bookmarkExtraParams() above
-       * for why load order between the two files doesn't matter).
-       * Re-runs the CURRENTLY active search — the same art/
-       * immobilienart/ort/sort already applied, exactly what
-       * loadMore() itself continues — through the normal
-       * performSearch() pipeline, which now also merges in
-       * bookmarkExtraParams() itself. This is how turning the
-       * bookmark filter on AND off both result in a real server
-       * reload (never a client-side hide/show): "off" is just
-       * another refresh() call where bookmarkExtraParams() happens
-       * to return {}.
-       *
-       * pushHistory is left at its performSearch() default of true
-       * only when explicitly requested — normally false here, since
-       * bookmarked ids live in localStorage (per the task spec), not
-       * the URL, so there is nothing about this toggle for the
-       * browser's back/forward to meaningfully restore.
-       */
-      Drupal.suchauftragSearchAjax = {
-        refresh: function (options) {
-          return performSearch(
-            Object.assign({}, currentFilters, { sort: currentSort }),
-            Object.assign({ pushHistory: false }, options)
-          );
-        }
-      };
-
       // The initial batch is server-rendered already; just read its
       // own pager to decide whether "load more" has anything to do.
       setLoadMoreVisible(pagerHasNext(resultsRegion));
@@ -745,3 +661,251 @@
   };
 
 })(Drupal, drupalSettings);
+
+/**
+ * Shared bookmark engine — window.SuchauftragBookmarks
+ * Vanilla JS only.
+ *
+ * Single source of truth for the "Merken" (bookmark) toggle, storing
+ * nothing but a plain array of node ids in localStorage under
+ * suchauftrag:savedSearchNodeIds — the existing key and shape, never
+ * renamed or restructured here.
+ *
+ * Markup contract for any bookmark button that wants this behavior:
+ *   <button class="bookmark-btn js-bookmark" data-nid="{{ node.id }}">
+ * Only .js-bookmark[data-nid] elements are ever read or written —
+ * nothing else on the page is touched by this module.
+ *
+ * One delegated click listener on document (bound exactly once, even
+ * if this script is ever parsed more than once) handles every
+ * current AND future .js-bookmark button, so Drupal AJAX swapping
+ * markup in/out never needs a rebind and can never double-bind.
+ */
+(function () {
+  'use strict';
+
+  if (window.SuchauftragBookmarks) {
+    // Already initialized — never rebind the delegated listener again.
+    if (window.SUCHAUFTRAG_BOOKMARKS_DEBUG !== false) {
+      console.debug('[SuchauftragBookmarks] init skipped — already initialized on this page.');
+    }
+    return;
+  }
+
+  // Debug logging is ON by default. Turn it off from the console with
+  // window.SUCHAUFTRAG_BOOKMARKS_DEBUG = false; (persists only for the
+  // current page load — set it before this script runs, e.g. in a
+  // snippet/extension, to silence the very first init log too).
+  function debug() {
+    if (window.SUCHAUFTRAG_BOOKMARKS_DEBUG === false) {
+      return;
+    }
+    var args = Array.prototype.slice.call(arguments);
+    args.unshift('[SuchauftragBookmarks]');
+    console.debug.apply(console, args);
+  }
+
+  var STORAGE_KEY = 'suchauftrag:savedSearchNodeIds';
+  var BUTTON_SELECTOR = '.js-bookmark[data-nid]';
+  // Anything that LOOKS like a bookmark button (by class name or a
+  // bookmark-flavored data attribute) but doesn't match
+  // BUTTON_SELECTOR — used only for the diagnostic scan in
+  // logMarkupMismatches() below, never for binding or storage.
+  var NEAR_MISS_SELECTOR = '[class*="bookmark"], [data-bookmark], [data-node-id], [data-nid]';
+
+  /**
+   * Diagnostic only: finds elements that look bookmark-related but
+   * don't satisfy BUTTON_SELECTOR, and logs exactly why each one was
+   * skipped (wrong class, missing data-nid, etc.) — e.g. the
+   * similar-search-requests view's cards currently render
+   * ".similar-card__bookmark" with "data-bookmark" instead of
+   * ".js-bookmark" with "data-nid", so they show up here instead of
+   * silently doing nothing.
+   */
+  function logMarkupMismatches(root) {
+    var scope = (root && typeof root.querySelectorAll === 'function') ? root : document;
+    var candidates = scope.querySelectorAll(NEAR_MISS_SELECTOR);
+    var mismatches = [];
+    for (var i = 0; i < candidates.length; i++) {
+      var el = candidates[i];
+      if (el.matches && el.matches(BUTTON_SELECTOR)) {
+        continue; // this one's fine, already handled by refresh()/the click listener
+      }
+      var reasons = [];
+      if (!el.classList.contains('js-bookmark')) {
+        reasons.push('missing .js-bookmark class (has: "' + el.className + '")');
+      }
+      if (!el.hasAttribute('data-nid')) {
+        reasons.push('missing data-nid attribute (has: ' +
+          (el.hasAttribute('data-node-id') ? 'data-node-id="' + el.getAttribute('data-node-id') + '"' : 'neither') +
+          (el.hasAttribute('data-bookmark') ? ', data-bookmark' : '') + ')');
+      }
+      mismatches.push({ element: el, reasons: reasons });
+    }
+    if (mismatches.length) {
+      debug(
+        mismatches.length + ' bookmark-looking element(s) found that will NOT be bound by SuchauftragBookmarks ' +
+        '(selector is "' + BUTTON_SELECTOR + '"). This is expected on templates that still use the old markup — ' +
+        'see each entry below for exactly why it was skipped:'
+      );
+      mismatches.forEach(function (m) {
+        debug(' →', m.element, '| reasons:', m.reasons.join('; '));
+      });
+    } else {
+      debug('markup scan: every bookmark-looking element under', scope, 'matches', BUTTON_SELECTOR, '— nothing skipped.');
+    }
+  }
+
+  /** Reads the saved id list defensively — a missing/corrupt/foreign value in this key must behave like "nothing saved", never throw. */
+  function getAll() {
+    var raw;
+    try {
+      raw = window.localStorage.getItem(STORAGE_KEY);
+    } catch (e) {
+      // Storage inaccessible (private browsing, disabled, quota) —
+      // behave exactly as if nothing were saved.
+      debug('localStorage.getItem threw — treating as empty:', e);
+      return [];
+    }
+    if (!raw) {
+      return [];
+    }
+    var parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      debug('stored value under', STORAGE_KEY, 'is not valid JSON — treating as empty. Raw value was:', raw);
+      return [];
+    }
+    if (!Array.isArray(parsed)) {
+      debug('stored value under', STORAGE_KEY, 'is not an array — treating as empty. Parsed value was:', parsed);
+      return [];
+    }
+    return parsed
+      .map(function (id) { return parseInt(id, 10); })
+      .filter(function (id) { return !isNaN(id); });
+  }
+
+  function writeAll(ids) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+      // Read straight back so the log reflects reality (not just what
+      // we attempted to write) — catches silent quota/private-mode
+      // failures where setItem doesn't throw but doesn't persist either.
+      var confirmed = window.localStorage.getItem(STORAGE_KEY);
+      debug('wrote', STORAGE_KEY, '=', confirmed, confirmed === JSON.stringify(ids) ? '(confirmed)' : '(MISMATCH — write may not have persisted)');
+    } catch (e) {
+      debug('localStorage.setItem THREW — this toggle will NOT persist past a reload:', e);
+    }
+  }
+
+  function isSaved(nid) {
+    var id = parseInt(nid, 10);
+    return !isNaN(id) && getAll().indexOf(id) !== -1;
+  }
+
+  /** Adds nid if absent, removes it if present. Returns the resulting saved state (true = now saved). */
+  function toggle(nid) {
+    var id = parseInt(nid, 10);
+    if (isNaN(id)) {
+      debug('toggle() called with a non-numeric nid — ignoring. Raw value was:', nid);
+      return false;
+    }
+    var before = getAll();
+    var ids = before.slice();
+    var idx = ids.indexOf(id);
+    var nowSaved;
+    if (idx === -1) {
+      ids.push(id);
+      nowSaved = true;
+    } else {
+      ids.splice(idx, 1);
+      nowSaved = false;
+    }
+    debug('toggle(' + id + ') —', nowSaved ? 'ADDING' : 'REMOVING', '| before:', before, '| after:', ids);
+    writeAll(ids);
+    return nowSaved;
+  }
+
+  function applyState(btn, active) {
+    // .is-active, not .is-saved: css/components.css only ever styled
+    // the bookmark button's saved state as
+    // ".request-detail__header-right .bookmark-btn.is-active" (see
+    // its "DETAIL PAGE & SIDEBAR ALIGNMENT" section) — matching that
+    // existing class is what makes the toggle actually visible,
+    // without touching the CSS file itself.
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-pressed', String(active));
+    btn.setAttribute('aria-label', active ? 'Von Favoriten entfernen' : 'Zu Favoriten hinzufügen');
+  }
+
+  /**
+   * Re-reads storage and re-paints every .js-bookmark button under
+   * root (default: the whole document) to match it. Called after
+   * every toggle so every visible copy of a given node id — however
+   * many templates render one — updates in the same frame, and again
+   * whenever Drupal attaches behaviors to newly-inserted markup.
+   */
+  function refresh(root) {
+    var scope = (root && typeof root.querySelectorAll === 'function') ? root : document;
+    var buttons = scope.querySelectorAll(BUTTON_SELECTOR);
+    debug('refresh() on', scope, '—', buttons.length, 'button(s) matched', BUTTON_SELECTOR);
+    for (var i = 0; i < buttons.length; i++) {
+      var btn = buttons[i];
+      var nid = btn.getAttribute('data-nid');
+      var active = isSaved(nid);
+      applyState(btn, active);
+      debug(' →', btn, '| data-nid=' + nid, '| is-active now:', active);
+    }
+    logMarkupMismatches(scope);
+  }
+
+  // Single delegated listener, bound once for the lifetime of the
+  // page — handles every current and future .js-bookmark button.
+  document.addEventListener('click', function (event) {
+    var btn = event.target.closest ? event.target.closest(BUTTON_SELECTOR) : null;
+    if (!btn) {
+      // Only worth logging if the click landed on/near something that
+      // LOOKS like a bookmark button but didn't match — a plain click
+      // anywhere else on the page shouldn't spam the console.
+      var nearMiss = event.target.closest ? event.target.closest(NEAR_MISS_SELECTOR) : null;
+      if (nearMiss) {
+        debug('click landed on a bookmark-looking element that did NOT match', BUTTON_SELECTOR, '— ignoring it. Element:', nearMiss);
+      }
+      return;
+    }
+    debug('click matched', BUTTON_SELECTOR, '—', btn, '| data-nid=' + btn.getAttribute('data-nid'));
+    event.preventDefault();
+    toggle(btn.getAttribute('data-nid'));
+    // Every button for this node id anywhere in the document — not
+    // just the one clicked — must reflect the new state instantly.
+    refresh(document);
+  });
+
+  window.SuchauftragBookmarks = {
+    getAll: getAll,
+    isSaved: isSaved,
+    toggle: toggle,
+    refresh: refresh
+  };
+
+  debug('initialized. Storage key:', STORAGE_KEY, '| button selector:', BUTTON_SELECTOR, '| current saved ids:', getAll());
+
+  // Paint correct state for whatever is already in the DOM at parse
+  // time, and again for anything Drupal AJAX inserts later (see
+  // performSearch()/loadMore() above, which already call
+  // Drupal.attachBehaviors on newly-inserted markup).
+  if (window.Drupal && Drupal.behaviors) {
+    Drupal.behaviors.suchauftragBookmarks = {
+      attach: function (context) {
+        debug('Drupal behavior attach() fired for context:', context);
+        window.SuchauftragBookmarks.refresh(context);
+      }
+    };
+  } else if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { refresh(document); });
+  } else {
+    refresh(document);
+  }
+
+})();

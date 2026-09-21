@@ -7,6 +7,66 @@
 
 declare(strict_types=1);
 
+use Drupal\views\ViewExecutable;
+use Drupal\views\Plugin\views\query\Sql;
+
+function immofirst_search_request_views_pre_view(ViewExecutable $view, $display_id, array &$args): void {
+
+  if ($view->id() !== 'search_requests' || $display_id !== 'block_1') {
+    return;
+  }
+
+  $request = \Drupal::request();
+
+
+
+  // Preserve exposed filters.
+  $exposed = $view->getExposedInput();
+
+  foreach (['art', 'immobilienart', 'ort'] as $key) {
+    $value = $request->query->get($key);
+    if ($value !== NULL && $value !== '') {
+      $exposed[$key] = $value;
+    }
+  }
+
+  $view->setExposedInput($exposed);
+
+  // Bookmark filter.
+  // ---------------------------------------------------------------------------
+// Bookmark filter.
+// JS sends: bookmarked[]=102&bookmarked[]=103...
+// ---------------------------------------------------------------------------
+
+
+}
+
+
+
+
+/**
+ * Implements hook_views_query_alter().
+ */
+function immofirst_search_request_views_query_alter(ViewExecutable $view, Sql $query) {
+
+  if ($view->id() !== 'search_requests' || $view->current_display !== 'block_1') {
+    return;
+  }
+
+  $radius = (int) \Drupal::request()->query->get('radius');
+
+  if ($radius <= 0) {
+    return;
+  }
+
+  // Ensure the field table is joined.
+  $table = $query->ensureTable('node__field_radius');
+
+  // field_radius_value <= selected radius.
+  $query->addWhere(0, "$table.field_radius_value", $radius, '<=');
+}
+
+
 /**
  * Implements hook_theme().
  */
