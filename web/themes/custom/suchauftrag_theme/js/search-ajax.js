@@ -676,6 +676,15 @@
  * Only .js-bookmark[data-nid] elements are ever read or written —
  * nothing else on the page is touched by this module.
  *
+ * A .js-bookmark button must NOT also carry the legacy data-bookmark
+ * attribute: js/theme.js binds its own click handler to every
+ * [data-bookmark] element, which would toggle a second time and
+ * cancel this module's toggle out.
+ *
+ * Optional visible label (icon-only buttons just omit it):
+ *   <span data-bookmark-label data-label-on="Gemerkt" data-label-off="Merken">Merken</span>
+ * Optional data-title="…" keeps the card title in the aria-label.
+ *
  * One delegated click listener on document (bound exactly once, even
  * if this script is ever parsed more than once) handles every
  * current AND future .js-bookmark button, so Drupal AJAX swapping
@@ -716,11 +725,10 @@
   /**
    * Diagnostic only: finds elements that look bookmark-related but
    * don't satisfy BUTTON_SELECTOR, and logs exactly why each one was
-   * skipped (wrong class, missing data-nid, etc.) — e.g. the
-   * similar-search-requests view's cards currently render
-   * ".similar-card__bookmark" with "data-bookmark" instead of
-   * ".js-bookmark" with "data-nid", so they show up here instead of
-   * silently doing nothing.
+   * skipped (wrong class, missing data-nid, etc.) so a button with the
+   * wrong markup shows up here instead of silently doing nothing.
+   * (The homepage property cards still use "data-bookmark" + theme.js
+   * and will legitimately be listed here.)
    */
   function logMarkupMismatches(root) {
     var scope = (root && typeof root.querySelectorAll === 'function') ? root : document;
@@ -828,15 +836,35 @@
   }
 
   function applyState(btn, active) {
-    // .is-active, not .is-saved: css/components.css only ever styled
-    // the bookmark button's saved state as
-    // ".request-detail__header-right .bookmark-btn.is-active" (see
-    // its "DETAIL PAGE & SIDEBAR ALIGNMENT" section) — matching that
-    // existing class is what makes the toggle actually visible,
-    // without touching the CSS file itself.
+    // .is-saved is the state hook for the shared bookmark contract.
+    // .is-active is kept in lockstep because css/components.css only
+    // styles the saved look via .is-active (.bookmark-btn,
+    // .similar-card__bookmark, .property-card__bookmark) — painting
+    // both is what makes the change visible without touching CSS.
+    btn.classList.toggle('is-saved', active);
     btn.classList.toggle('is-active', active);
     btn.setAttribute('aria-pressed', String(active));
-    btn.setAttribute('aria-label', active ? 'Von Favoriten entfernen' : 'Zu Favoriten hinzufügen');
+
+    // Optional per-card context: a button carrying data-title (the
+    // similar cards) keeps the title in its accessible name instead
+    // of collapsing to one identical generic label per card.
+    var title = btn.getAttribute('data-title');
+    var action = active ? 'von Favoriten entfernen' : 'zu Favoriten hinzufügen';
+    btn.setAttribute(
+      'aria-label',
+      title ? '„' + title + '“ ' + action : (active ? 'Von Favoriten entfernen' : 'Zu Favoriten hinzufügen')
+    );
+
+    // Optional visible text (the detail page's "Merken" button):
+    //   <span data-bookmark-label data-label-on="Gemerkt" data-label-off="Merken">
+    // Icon-only buttons simply have no such element and skip this.
+    var label = btn.querySelector('[data-bookmark-label]');
+    if (label) {
+      var text = label.getAttribute(active ? 'data-label-on' : 'data-label-off');
+      if (text) {
+        label.textContent = text;
+      }
+    }
   }
 
   /**

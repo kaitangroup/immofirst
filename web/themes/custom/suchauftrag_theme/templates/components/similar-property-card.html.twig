@@ -92,7 +92,14 @@
   {# 7. Bottom action row #}
   <div class="similar-card__actions">
     <a href="{{ details_url }}" class="similar-card__details-btn">Details ansehen</a>
-    <button type="button" class="similar-card__bookmark" data-bookmark aria-pressed="false" aria-label="„{{ title }}“ zu Favoriten hinzufügen">
+    {#
+      Shared bookmark contract (see SuchauftragBookmarks in
+      js/search-ajax.js): .bookmark-btn + .js-bookmark + data-nid.
+      Deliberately NO data-bookmark attribute — theme.js binds its own
+      handler to that and would double-toggle. No inline state: refresh()
+      paints .is-saved/.is-active/aria-pressed from localStorage.
+    #}
+    <button type="button" class="similar-card__bookmark bookmark-btn js-bookmark" data-nid="{{ node_id }}" data-title="{{ title }}" aria-pressed="false" aria-label="„{{ title }}“ zu Favoriten hinzufügen">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M6.5 4h11a1 1 0 011 1v16l-6.5-4.3L5.5 21V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
