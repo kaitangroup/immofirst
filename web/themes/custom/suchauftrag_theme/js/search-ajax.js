@@ -87,9 +87,11 @@
     var params = new URLSearchParams(location.search);
     var out = {};
     FILTER_IDENTIFIERS.forEach(function (key) {
-      var value = params.get(key);
-      if (value) {
+      var value = params.getAll(key);
+      if (value.length > 1) {
         out[key] = value;
+      } else if (value.length === 1 && value[0]) {
+        out[key] = value[0];
       }
     });
     return out;
@@ -167,7 +169,14 @@
           });
         var filters = onlyFilters(filterValues);
         Object.keys(filters).forEach(function (key) {
-          params.set(key, filters[key]);
+          if (Array.isArray(filters[key])) {
+            filters[key].forEach(function (val) {
+              params.append(key + '[]', val);
+            });
+          }
+          else if (filters[key] !== undefined && filters[key] !== null && filters[key] !== '') {
+            params.set(key, filters[key]);
+          }
         });
         var sortParams = sortToViewParams(sortValue || DEFAULT_SORT);
         params.set('sort_by', sortParams.sort_by);
@@ -218,7 +227,15 @@
       }
 
       function toQueryString(values) {
-        return new URLSearchParams(withoutEmpty(values)).toString();
+        var flat = {};
+        Object.keys(values || {}).forEach(function (key) {
+          if (Array.isArray(values[key])) {
+            // query string representation for array
+          } else if (values[key] !== undefined && values[key] !== null && values[key] !== '') {
+            flat[key] = values[key];
+          }
+        });
+        return new URLSearchParams(withoutEmpty(flat)).toString();
       }
 
       function currentUrlFor(values) {
@@ -232,6 +249,9 @@
 
       function performSearch(values, options) {
         options = options || {};
+        if (window.Drupal && Drupal.suchauftragSavedSearches && Drupal.suchauftragSavedSearches.isFilterActive()) {
+          values = Object.assign({}, values, { bookmarked: Drupal.suchauftragSavedSearches.getAll() });
+        }
         currentFilters = onlyFilters(values);
         currentSort = (values && values.sort === 'oldest') ? 'oldest' : DEFAULT_SORT;
         loadMorePage = 1;
@@ -280,7 +300,12 @@
         loadMoreBtn.setAttribute('aria-busy', 'true');
         var viewSettingsForThisRequest = getAjaxViewSettings();
 
-        fetchViewCommands(currentFilters, currentSort, { page: String(loadMorePage) })
+        var loadMoreFilters = Object.assign({}, currentFilters);
+        if (window.Drupal && Drupal.suchauftragSavedSearches && Drupal.suchauftragSavedSearches.isFilterActive()) {
+          loadMoreFilters.bookmarked = Drupal.suchauftragSavedSearches.getAll();
+        }
+
+        fetchViewCommands(loadMoreFilters, currentSort, { page: String(loadMorePage) })
           .then(function (commands) {
             var grid = findViewMarkup(commands, viewSettingsForThisRequest);
             var newItems = grid ? grid.querySelectorAll('.property-grid__rows .property-grid__item') : [];
@@ -348,6 +373,12 @@
       currentSort = initialValues.sort;
 
       setLoadMoreVisible(pagerHasNext(resultsRegion));
+
+      Drupal.suchauftragSearchAjax = {
+        refresh: function () {
+          performSearch(currentFilters, { pushHistory: false });
+        }
+      };
 
       var backToTopBtn = document.querySelector('[data-back-to-top]');
       if (backToTopBtn && !backToTopBtn.dataset.bound) {

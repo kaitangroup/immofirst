@@ -42,28 +42,46 @@ function immofirst_search_request_views_pre_view(ViewExecutable $view, $display_
 }
 
 
-
-
 /**
  * Implements hook_views_query_alter().
  */
-function immofirst_search_request_views_query_alter(ViewExecutable $view, Sql $query) {
+function immofirst_search_request_views_query_alter(ViewExecutable $view, Sql $query): void {
 
   if ($view->id() !== 'search_requests' || $view->current_display !== 'block_1') {
     return;
   }
 
-  $radius = (int) \Drupal::request()->query->get('radius');
+  $request = \Drupal::request();
 
-  if ($radius <= 0) {
-    return;
+  /**
+   * ------------------------------------------------------------------
+   * Bookmark filter
+   * ------------------------------------------------------------------
+   */
+  $bookmarked = $request->query->all()['bookmarked'] ?? [];
+  $ids = array_values(array_filter(array_map('intval', (array) $bookmarked)));
+
+  if (!empty($ids)) {
+    $query->addWhere(0, 'node_field_data.nid', $ids, 'IN');
   }
 
-  // Ensure the field table is joined.
-  $table = $query->ensureTable('node__field_radius');
+  /**
+   * ------------------------------------------------------------------
+   * Radius filter
+   * ------------------------------------------------------------------
+   */
+  $radius = (int) $request->query->get('radius');
 
-  // field_radius_value <= selected radius.
-  $query->addWhere(0, "$table.field_radius_value", $radius, '<=');
+  if ($radius > 0) {
+    $table = $query->ensureTable('node__field_radius');
+
+    $query->addWhere(
+      0,
+      "$table.field_radius_value",
+      $radius,
+      '<='
+    );
+  }
 }
 
 
