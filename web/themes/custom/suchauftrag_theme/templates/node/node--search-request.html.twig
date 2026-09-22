@@ -162,16 +162,11 @@
             {% endif %}
             {% if created_date %}
               <div class="request-detail__meta-item">
-                <span class="request-detail__meta-label request-detail__meta-label--small">Erstellt am</span>
-                <span class="request-detail__meta-value">{{ created_date }}</span>
+                <span class="request-detail__meta-label request-detail__meta-label--small">Erstellt am {{ created_date }}</span>
+               
               </div>
             {% endif %}
-            {% if status_label %}
-              <div class="request-detail__meta-item">
-                <span class="request-detail__meta-label request-detail__meta-label--small">Status</span>
-                <span class="request-detail__meta-value">{{ status_label }}</span>
-              </div>
-            {% endif %}
+           
           </div>
         </section>
       {% endif %}

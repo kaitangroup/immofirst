@@ -224,6 +224,50 @@
   };
 
   /**
+   * Wraps Webform's real submit <input> in a positioning wrapper and
+   * layers a decorative icon+label overlay on top of it (design item
+   * 2). The input itself is only reparented (insertBefore + 
+   * appendChild move the existing node, they don't clone or replace
+   * it), never removed or swapped for a new element, so any event
+   * handling Drupal/Webform's own AJAX behaviors already attached to
+   * it — however they attached it — keeps working exactly as before.
+   * Idempotent via the dataset flag, same pattern as
+   * enhanceDropzone() below.
+   */
+  function enhanceSubmit(input) {
+    if (input.dataset.offerSubmitEnhanced) {
+      return;
+    }
+    input.dataset.offerSubmitEnhanced = 'true';
+
+    var wrap = document.createElement('span');
+    wrap.className = 'offer-webform__submit-wrap';
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+
+    input.classList.add('offer-webform__submit-input');
+
+    var visual = document.createElement('span');
+    visual.className = 'offer-webform__submit-visual';
+    visual.setAttribute('aria-hidden', 'true');
+
+    var iconTemplate = document.querySelector('[data-offer-webform-submit-icon]');
+    if (iconTemplate && 'content' in iconTemplate) {
+      visual.appendChild(iconTemplate.content.cloneNode(true));
+    }
+
+    var label = document.createElement('span');
+    // Mirrors the real input's own accessible label/value rather than
+    // hardcoding a second copy of the string, so the two can never
+    // drift out of sync with each other or with submit_button_label
+    // in the webform's YAML.
+    label.textContent = input.value || 'Angebot senden';
+    visual.appendChild(label);
+
+    wrap.appendChild(visual);
+  }
+
+  /**
    * Progressive dropzone enhancement: adds a decorative icon/action
    * overlay + moves Drupal's own help text into the grey helper slot,
    * and forwards HTML5 drag-and-drop onto the real file input.
@@ -303,6 +347,20 @@
 
         root.querySelectorAll('.form-managed-file, .js-form-managed-file').forEach(enhanceDropzone);
       });
+
+      // Submit-button enhancement is looked up from `document`, not
+      // scoped through `context`/`roots` above: Drupal's AJAX 'insert'
+      // command can call attachBehaviors() with the newly-replaced
+      // node ITSELF as context — if that happens to be the <form>
+      // Webform replaces (a descendant of [data-offer-webform], not
+      // an ancestor of it), `context.querySelectorAll('[data-offer-
+      // webform]')` structurally can never find it (querySelectorAll
+      // only ever matches descendants, and here the wrapper is an
+      // ancestor), which would silently skip re-enhancing the submit
+      // button on every validation-error AJAX rebuild. Searching from
+      // `document` sidesteps that entirely; enhanceSubmit()'s own
+      // dataset guard keeps this idempotent either way.
+      document.querySelectorAll('.offer-webform form input[type="submit"], .offer-webform form button[type="submit"]').forEach(enhanceSubmit);
     }
   };
 }(Drupal));

@@ -42,7 +42,12 @@
 .offer-webform .webform-form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 28px;
+}
+
+.request-sidebar__card .offer-webform .form-item {
+   
+    margin-bottom: 18px;
 }
 
 /* ==========================================================
@@ -191,6 +196,111 @@
 .offer-webform .webform-form > .form-actions,
 .offer-webform .webform-form > .webform-actions {
   order: 9;
+}
+
+/* ==========================================================
+   Required-field asterisk (nothing here touches '#required' or any
+   validation rule — only the visual marker). Correcting an earlier
+   version of this rule: '.form-required'/'.js-form-required' is the
+   class Drupal puts directly ON THE <label> element itself for a
+   required field (not on a separate child marker), with the actual
+   "*" character added via a ::after pseudo-element in Drupal core's
+   own base CSS. `display: none` on '.form-required' therefore hid
+   the ENTIRE label, not just the asterisk — fixed by removing only
+   the pseudo-element's content instead, which leaves the label text
+   fully visible.
+   ========================================================== */
+.offer-webform .form-required::after,
+.offer-webform .js-form-required::after,
+.offer-webform .form-required::before,
+.offer-webform .js-form-required::before {
+  content: none;
+}
+
+/* ==========================================================
+   Managed-file "Upload" button (design item 1): Drupal core's own
+   Drupal.behaviors.fileAutoUpload (core/modules/file/js/file.js,
+   unmodified, untouched) already triggers this exact button via a
+   synthetic mousedown as soon as the file <input>'s `change` event
+   fires — whether that change came from the native file picker or
+   from js/offer-webform.js's drag-and-drop handler dispatching its
+   own `change` event on the same input. That auto-upload path runs
+   regardless of whether this button is visible, since a synthetic
+   jQuery `.trigger('mousedown')` doesn't require the target element
+   to be rendered — so hiding it here is purely cosmetic and does not
+   disable or bypass any part of the managed_file upload flow itself.
+   Selector matches Drupal core's own naming convention for this
+   button (`[data-drupal-selector$="upload-button"]`, confirmed
+   against file.js's own `Drupal.file.triggerUploadButton`), with a
+   plain #type=submit fallback in case that attribute ever differs.
+   ========================================================== */
+.offer-webform .form-managed-file [data-drupal-selector$="upload-button"],
+.offer-webform .js-form-managed-file [data-drupal-selector$="upload-button"],
+.offer-webform .form-managed-file > .form-submit,
+.offer-webform .js-form-managed-file > .form-submit,
+.offer-webform .form-managed-file > input[type="submit"],
+.offer-webform .js-form-managed-file > input[type="submit"] {
+  display: none;
+}
+
+/* ==========================================================
+   Submit button (design item 2). The real control stays a plain
+   <input type="submit"> (see suchauftrag_theme_form_alter() — out of
+   this theme's scope to change) so all of Drupal/Webform's own AJAX
+   submit handling stays completely untouched; js/offer-webform.js
+   wraps it in `.offer-webform__submit-wrap` (a plain reparenting via
+   insertBefore/appendChild, which moves the existing input node
+   as-is rather than replacing it, so nothing bound to it is lost) and
+   layers a decorative icon+label overlay on top. The rules below
+   style the real input to the exact size/shape/gradient the design
+   calls for, hide only its own native text (its accessible
+   '#value'/"Angebot senden" name is unaffected — screen readers still
+   announce it), and let the overlay's text be what's actually seen.
+   If JS never runs, `.offer-webform__submit-wrap` simply never
+   exists and the plain, unstyled-by-this-block Webform button (via
+   its own existing .btn/.btn--primary/.btn--block classes) still
+   submits the form exactly as before.
+   ========================================================== */
+.offer-webform__submit-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.offer-webform__submit-input.offer-webform__submit-input {
+  display: block;
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #2563EB 0%, #1D4ED8 100%);
+  color: transparent;
+  cursor: pointer;
+  transition: box-shadow var(--ease), transform var(--ease);
+}
+.offer-webform__submit-input.offer-webform__submit-input:hover {
+  box-shadow: var(--shadow-md);
+}
+.offer-webform__submit-input.offer-webform__submit-input:focus-visible {
+  outline: 2px solid #1D4ED8;
+  outline-offset: 2px;
+}
+
+.offer-webform__submit-visual {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 600;
+  pointer-events: none;
+}
+.offer-webform__submit-visual svg {
+  flex-shrink: 0;
+  color: #FFFFFF;
 }
 
 /* ==========================================================
