@@ -274,6 +274,8 @@
     color:var(--text);
     margin-bottom:8px;
   }
+  .label-mobile, .btn-text-mobile { display: none; }
+  .label-desktop, .btn-text-desktop { display: inline; }
   
   /* Tabs — real <input type="radio" name="art"> + <label>, so the choice
      is a genuine, submittable form value (no JS required for it to work;
@@ -652,6 +654,7 @@
     grid-template-columns:repeat(3, minmax(0, 1fr));
     gap:24px;
     width:100%;
+    align-items:stretch;
   }
   /* .property-grid__item (the actual Views-rendered grid cell wrapper,
      see templates/views/views-view-unformatted--search-requests.html.twig)
@@ -671,6 +674,10 @@
     justify-content:center;
     margin-top:36px;
   }
+
+  .search-requests__load-more[hidden] {
+  display: none !important;
+}
   .property-grid__empty-state{
     text-align:center;
     padding:60px 20px;
@@ -722,6 +729,13 @@
     box-shadow:var(--shadow-sm);
     display:flex;
     flex-direction:column;
+    height:100%;
+  }
+  .property-card__content{
+    display:flex;
+    flex-direction:column;
+    flex-grow:1;
+    min-height:0;
   }
   /* Mobile-only slots (icon-left / bookmark+arrow-right) — see
      css/responsive.css for the ≤640px layout that reveals these and
@@ -749,43 +763,86 @@
     border-radius:50%;
     background:var(--success);
   }
+  .property-card__middle{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+    width:100%;
+  }
   .property-card__icon{
-    width:44px; height:44px;
+    flex:0 0 52px;
+    width:52px; height:52px;
     border-radius:12px;
     background:#EEF0FF;
     color:var(--primary);
     display:flex;
     align-items:center;
     justify-content:center;
-    margin-bottom:12px;
   }
-  /* Icon-circle color follows field_request_type (client spec), not
-     property type — the glyph itself is drawn with currentColor and
-     stays white on both variants since the circle background is now a
-     solid brand color rather than the light tint above. */
   .property-card__icon--rent{ background:#E58A2B; color:#FFFFFF; }
   .property-card__icon--buy{ background:#46B96A; color:#FFFFFF; }
-  .property-card__title{ font-size:17px; margin-bottom:6px; }
+  .property-card__info{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .property-card__title{
+    font-size:17px;
+    margin:0;
+    line-height:1.3;
+  }
   .property-card__location{
     display:flex;
     align-items:center;
     gap:6px;
     font-size:13.5px;
     color:var(--muted);
+    margin:0;
   }
   .property-card__stats{
     display:grid;
     grid-template-columns:repeat(3,1fr);
-    gap:8px;
+    gap:12px;
     margin:18px 0;
     padding:14px 0;
     border-top:1px solid var(--border);
     border-bottom:1px solid var(--border);
   }
-  .stat-item{ display:flex; flex-direction:column; gap:2px; }
-  .stat-item__icon{ color:var(--muted); margin-bottom:2px; }
-  .stat-item__value{ font-size:13.5px; font-weight:600; color:var(--text); }
-  .stat-item__label{ font-size:11.5px; color:var(--muted); }
+  .stat-item{
+    display:grid;
+    grid-template-columns:18px 1fr;
+    grid-template-rows:auto auto;
+    column-gap:8px;
+    row-gap:2px;
+    align-items:start;
+  }
+  .stat-item__icon,
+  .stat-item svg,
+  .stat-item i{
+    grid-column:1;
+    grid-row:1 / span 2;
+    width:18px;
+    height:18px;
+  }
+  .stat-item__value{
+    grid-column:2;
+    grid-row:1;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--text);
+    line-height:1.2;
+    margin:0;
+  }
+  .stat-item__label{
+    grid-column:2;
+    grid-row:2;
+    font-size:11.5px;
+    color:var(--muted);
+    line-height:1.2;
+    margin:0;
+  }
   /* A property type with no metric for this column (see the
      KAUFEN/MIETEN x Objektart mapping table in
      _suchauftrag_theme_property_card_stats()) still gets a real grid
@@ -795,17 +852,48 @@
   
   .property-card__description{
     font-size:13.5px;
-    line-height:1.6;
     margin-bottom:18px;
     flex-grow:1;
-    /* "max 2 lines" per the card spec — this already wasn't enforced
-       before; field_notes is free text with no length limit, so a
-       long note could otherwise grow the card taller than its
-       siblings in the same grid row. */
     display:-webkit-box;
-    -webkit-line-clamp:2;
     -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
     overflow:hidden;
+    text-overflow:ellipsis;
+    line-height:1.55;
+    min-height:calc(1.55em * 2);
+  }
+
+  .back-to-top{
+    position:fixed;
+    bottom:30px;
+    right:30px;
+    z-index:999;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    background:var(--primary);
+    color:#fff;
+    border:none;
+    cursor:pointer;
+    box-shadow:var(--shadow-md);
+    transition:opacity .2s ease, transform .2s ease;
+  }
+  .back-to-top[hidden]{
+    display:none !important;
+  }
+  .back-to-top__icon{
+    font-size:18px;
+    font-weight:bold;
+    line-height:1;
+  }
+  .back-to-top__label{
+    font-size:10px;
+    line-height:1;
+    margin-top:2px;
   }
   .property-card__bottom{
     display:flex;
@@ -813,6 +901,7 @@
     justify-content:space-between;
     gap:12px;
     padding-top:4px;
+    margin-top:auto;
   }
   .property-card__details{
     font-size:13.5px;

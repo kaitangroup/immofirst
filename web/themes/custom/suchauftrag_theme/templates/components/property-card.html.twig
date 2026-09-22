@@ -115,11 +115,13 @@
 
     <div class="property-card__middle">
       {{ icon_markup }}
-      <h3 class="property-card__title">{{ title }}</h3>
-      <p class="property-card__location">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21.5s7.2-6.7 7.2-12A7.2 7.2 0 104.8 9.5c0 5.3 7.2 12 7.2 12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        {{ location }}{% if radius %}, {{ radius }} km Umkreis{% endif %}
-      </p>
+      <div class="property-card__info">
+        <h3 class="property-card__title">{{ title }}</h3>
+        <p class="property-card__location">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21.5s7.2-6.7 7.2-12A7.2 7.2 0 104.8 9.5c0 5.3 7.2 12 7.2 12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          {{ location }}{% if radius %}, {{ radius }} km Umkreis{% endif %}
+        </p>
+      </div>
     </div>
 
     <div class="property-card__stats">

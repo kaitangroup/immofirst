@@ -194,13 +194,17 @@
     --space-content-to-footer:40px;
   }
 
-  .hero{ padding:36px 0 32px; }
+  .hero{ padding:36px 0 24px; }
   .hero__title{ font-size:26px; }
   .hero__subtitle{ font-size:15px; }
-  .hero__card{ padding:22px; }
+  .hero__card{ display:none; }
+  .feature-icons{ display:none; }
+
+  .label-mobile, .btn-text-mobile { display: inline; }
+  .label-desktop, .btn-text-desktop { display: none; }
 
   .search-filter{ margin-top:-16px; }
-  .search-card{ padding:18px; border-radius:var(--radius-md); }
+  .search-card{ padding:18px; margin-bottom:18px; border-radius:var(--radius-md); }
   .search-card__grid{
     grid-template-columns:1fr;
     gap:16px;

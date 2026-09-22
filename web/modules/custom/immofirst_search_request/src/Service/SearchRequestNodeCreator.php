@@ -205,9 +205,7 @@ final class SearchRequestNodeCreator {
       }
     }
 
-    $locationPart = $location !== '' ? ' in ' . $location : '';
-
-    return trim($noun . $locationPart . ' gesucht');
+    return trim($noun . ' gesucht');
   }
 
   /**

@@ -45,18 +45,23 @@
   <div class="search-card__grid">
 
     <div class="search-card__field search-card__field--tabs">
-      <span class="search-card__label" id="art-label">Ich suche zum...</span>
+      <span class="search-card__label" id="art-label">
+        <span class="label-desktop">Ich suche zum...</span>
+        <span class="label-mobile">Wen suchen Sie?</span>
+      </span>
       <div class="tabs" data-tabs role="radiogroup" aria-labelledby="art-label">
         <input type="radio" id="tab-kaufen" name="art" value="kaufen" class="tabs__radio" data-tab-radio {% if art == 'kaufen' %}checked{% endif %}>
         <label for="tab-kaufen" class="tabs__btn" data-tab="kaufen">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 4.5h2l1 2M6.5 6.5l1.8 8.2a1.6 1.6 0 001.6 1.3h6.4a1.6 1.6 0 001.6-1.3l1.1-6.2H6.5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="19.5" r="1.1" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="16.5" cy="19.5" r="1.1" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-          Kaufen
+          <span class="btn-text-desktop">Kaufen</span>
+          <span class="btn-text-mobile">Käufer</span>
         </label>
 
         <input type="radio" id="tab-mieten" name="art" value="mieten" class="tabs__radio" data-tab-radio {% if art == 'mieten' %}checked{% endif %}>
         <label for="tab-mieten" class="tabs__btn" data-tab="mieten">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Mieten
+          <span class="btn-text-desktop">Mieten</span>
+          <span class="btn-text-mobile">Mieter</span>
         </label>
 
         <span class="tabs__indicator" data-tabs-indicator aria-hidden="true"></span>

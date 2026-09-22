@@ -5,121 +5,17 @@
  * Connects the custom search form (components/search-form.html.twig)
  * and the "Weitere Suchaufträge laden" button (page--front.html.twig)
  * to the search_requests View (display: block_1) via Drupal's EXISTING
- * Views AJAX system (/views/ajax) — instead of a full-page GET reload,
- * and instead of any second/parallel filtering system.
- *
- * HOW THIS REUSES VIEWS AJAX:
- *   drupalSettings.views.ajaxViews (attached automatically because
- *   use_ajax: true is already set on the view) tells us view_name,
- *   view_display_id, view_dom_id, view_path, view_base_path and
- *   pager_element. We POST those plus our filter values to
- *   drupalSettings.views.ajax_path (never hardcoded) — Drupal core's
- *   own ViewAjaxController — which calls $view->setExposedInput() and
- *   renders exactly as a normal page load would. Nothing about
- *   filtering/querying/rendering is reimplemented; only the trigger
- *   (this form/button instead of Views' own exposed form/pager) and
- *   the transport (fetch() instead of jQuery-dependent Drupal.ajax())
- *   are custom.
- *
- * RESPONSE SHAPE — verified against core/modules/views/src/Controller/
- * ViewAjaxController.php (Drupal 11), not assumed:
- *   The controller always adds, in order:
- *     1. (optional) a "settings"/SetBrowserUrl-style command
- *     2. new ReplaceCommand(".js-view-dom-id-$dom_id", $preview)
- *     3. new PrependCommand(".js-view-dom-id-$dom_id", ['#type' => 'status_messages'])
- *   Both (2) and (3) serialize to the SAME JSON "command": "insert"
- *   shape (InsertCommand::render() — "method" is what differs:
- *   replaceWith vs prepend). That means picking "the first command
- *   with HTML-looking data" is NOT reliable — (3) is also an insert
- *   command, it's just normally empty/tiny (no messages to show).
- *   findViewMarkup() below matches (2) precisely, the same way
- *   Drupal's own Drupal.AjaxCommands.prototype.insert would: by the
- *   exact ".js-view-dom-id-{our dom id}" selector, sanitized the same
- *   way the controller sanitizes it server-side
- *   (preg_replace('/[^a-zA-Z0-9_-]+/', '-', $dom_id)). Two more
- *   fallback strategies exist below in case a core patch-level ever
- *   changes the selector format — see findViewMarkup().
- *
- *   Also: recent core reads view_name/view_display_id/view_path/etc.
- *   from $request->query first, falling back to $request->request
- *   (POST body); older core reads POST only. This file sends the
- *   same parameter set as BOTH the URL query string and the POST
- *   body, so it works regardless of which is checked.
- *
- * DIAGNOSTICS: every place this can fail to find something logs a
- * specific console.warn/error explaining what it looked for and what
- * it got instead (see findViewMarkup, fetchViewCommands) — and
- * window.__searchAjaxDebug always holds the last fetch's raw command
- * array, so "it's not updating" is diagnosable from the console
- * instead of being a silent no-op. If it ever DOES silently fail to
- * find the view's markup after all three fallback tiers, that is
- * treated exactly like a network failure (see performSearch): a real
- * navigation with the same filters, never a page that just sits
- * there unfiltered.
- *
- * ROOT CAUSE (fixed) — pager.type was "some":
- *   views.view.search_requests.yml's pager used to be type "some"
- *   ("Display a specified number of items"). Drupal\views\Plugin\
- *   views\pager\Some::query() sets LIMIT/OFFSET straight from the
- *   display's *config* (offset always 0) and never reads a page
- *   number from the request at all; useCountQuery() is also false,
- *   so no true result total ever existed server-side either. That
- *   meant every "load more" request — regardless of what page number
- *   this file sent — returned exactly the same first 12 rows, and
- *   the count badge had no real total to report.
- *
- *   Fixed in views.view.search_requests.yml by switching the pager to
- *   type "full" (a real SQL LIMIT/OFFSET pager that reads the current
- *   page from the request and runs a count query), and by adding a
- *   footer "Result summary" area (content: "@total") so the view's
- *   true total is present as plain text in every /views/ajax response
- *   — not just the initial page load. No JS change was required for
- *   the pager to start working: this file was already sending a page
- *   number on every "load more" request, exactly as noted below.
- *
- *   Two remaining bugs, fixed in this file:
- *     - "load more" seeded its filter state from the search FORM's
- *       current (default-checked) values instead of the filters that
- *       actually produced the page currently on screen. "Mieten" is
- *       checked in the UI by default even when nothing has been
- *       submitted, so clicking "load more" before ever searching sent
- *       an unintended art=mieten filter to a view that had rendered
- *       unfiltered — see readAppliedFiltersFromLocation() below, which
- *       now seeds from the URL exactly the way the server-side
- *       exposed-input logic does.
- *     - "has more results" was guessed from how many cards came back
- *       (and whether any were new after de-duplication) instead of
- *       asked from Drupal directly. With a real pager now in place,
- *       the rendered pager markup itself says whether there's a next
- *       page (a rel="next" link) — see pagerHasNext() below — which is
- *       what both the initial page load and every AJAX response use.
- *       The result count is likewise read from the view's own footer
- *       "Result summary" total (see readTotalFromGrid()) rather than
- *       from the number of cards currently rendered, so it no longer
- *       drifts as more cards are appended by "load more".
+ * Views AJAX system (/views/ajax).
  */
 (function (Drupal, drupalSettings) {
   'use strict';
 
   var VIEW_NAME = 'search_requests';
   var VIEW_DISPLAY_ID = 'block_1';
-
-  // Real Views exposed filter identifiers only (views.view.search_
-  // requests.yml). "radius" is deliberately excluded — it is UI-only
-  // today (see search-form.html.twig's header comment), so it is
-  // tracked in the URL/history/form state for a consistent search UI,
-  // but never sent to the view as a filter.
-  var FILTER_IDENTIFIERS = ['art', 'immobilienart', 'ort'];
-
-  // This theme's own simplified sort vocabulary — the sort-select in
-  // page--front.html.twig only ever offers these two. Translated to
-  // the view's real exposed-sort identifiers (sort_by/sort_order) by
-  // sortToViewParams() below, the same way suchauftrag_theme.theme
-  // translates it server-side for the initial page load.
+  var FILTER_IDENTIFIERS = ['art', 'immobilienart', 'ort', 'bookmarked'];
   var SORT_IDENTIFIER = 'sort';
   var DEFAULT_SORT = 'newest';
 
-  /** Finds the ajaxViews settings entry Drupal generated for search_requests/block_1. */
   function getAjaxViewSettings() {
     var ajaxViews = drupalSettings.views && drupalSettings.views.ajaxViews;
     if (!ajaxViews) {
@@ -131,7 +27,6 @@
     return matchKey ? ajaxViews[matchKey] : null;
   }
 
-  /** Drops empty/undefined values — an absent value must mean "no filter", never "filter for an empty string". */
   function withoutEmpty(values) {
     var out = {};
     Object.keys(values || {}).forEach(function (key) {
@@ -142,7 +37,6 @@
     return out;
   }
 
-  /** Restricts a values object down to the real, filterable identifiers only (drops "radius" and anything else). */
   function onlyFilters(values) {
     var out = {};
     FILTER_IDENTIFIERS.forEach(function (key) {
@@ -153,31 +47,10 @@
     return out;
   }
 
-  /** Mirrors ViewAjaxController's own dom_id sanitization exactly, so our selector matches what the server actually used. */
   function sanitizeDomId(domId) {
     return String(domId === undefined || domId === null ? '' : domId).replace(/[^a-zA-Z0-9_-]+/g, '-');
   }
 
-  /**
-   * Finds the view's own rendered markup within a /views/ajax command
-   * array and returns the matched element (never a whole document),
-   * or null. Three tiers, most reliable first — see file header for
-   * why a single "first HTML-looking command" check isn't safe:
-   *
-   *   1. The command whose selector is exactly this view's own
-   *      ".js-view-dom-id-{id}" wrapper — what Drupal's own AJAX
-   *      command processor would target. Most reliable: independent
-   *      of this theme's class names entirely.
-   *   2. Any command whose data contains this theme's own
-   *      ".property-grid" wrapper class.
-   *   3. The single largest HTML "insert" command by data length —
-   *      status-message prepend commands are reliably tiny/empty, so
-   *      the real view markup is reliably the biggest payload.
-   *
-   * Within whichever command is chosen, the actual grid element is
-   * then located the same three ways (dom-id class, then
-   * .property-grid, then just the first element in the markup).
-   */
   function findViewMarkup(commands, viewSettings) {
     commands = Array.isArray(commands) ? commands : [];
     window.__searchAjaxDebug = { commands: commands, viewSettings: viewSettings };
@@ -190,11 +63,6 @@
     });
 
     if (!htmlCommands.length) {
-      console.warn(
-        'search-ajax: /views/ajax response had no command with HTML "data". Got command types:',
-        commands.map(function (cmd) { return cmd && cmd.command; }),
-        '— full response in window.__searchAjaxDebug.commands'
-      );
       return null;
     }
 
@@ -210,31 +78,11 @@
       || htmlCommands.slice().sort(function (a, b) { return b.data.length - a.data.length; })[0];
 
     var fragment = new DOMParser().parseFromString(chosen.data, 'text/html').body;
-    var grid = (domIdSelector && fragment.querySelector(domIdSelector))
+    return (domIdSelector && fragment.querySelector(domIdSelector))
       || fragment.querySelector('.property-grid')
       || fragment.firstElementChild;
-
-    if (!grid) {
-      console.warn(
-        'search-ajax: matched an AJAX command but found no usable element inside it. Raw HTML (first 500 chars):',
-        chosen.data.slice(0, 500)
-      );
-      return null;
-    }
-
-    return grid;
   }
 
-  /**
-   * The filters actually in effect for the page currently on screen —
-   * read from the URL query string, the exact same way
-   * suchauftrag_theme_preprocess_page__front() builds $exposed_input
-   * server-side (only a present, non-empty value counts as a filter).
-   * Deliberately NOT read from the form's current field values: the
-   * form pre-selects "Mieten" by default even when no search has been
-   * submitted, which used to leak into "load more" as an unintended
-   * art=mieten filter on an otherwise-unfiltered page.
-   */
   function readAppliedFiltersFromLocation() {
     var params = new URLSearchParams(location.search);
     var out = {};
@@ -247,20 +95,11 @@
     return out;
   }
 
-  /** Same idea as readAppliedFiltersFromLocation(), for the sort-select. Always resolves to a valid value — 'newest' if absent/unrecognized, matching the view's own default order. */
   function readAppliedSortFromLocation() {
     var value = new URLSearchParams(location.search).get(SORT_IDENTIFIER);
     return value === 'oldest' ? 'oldest' : DEFAULT_SORT;
   }
 
-  /**
-   * Translates this theme's own sort vocabulary (newest|oldest) into
-   * the real exposed-sort query parameters Drupal reads — 'sort_by'
-   * (which exposed sort; matches views.view.search_requests.yml's
-   * sorts.created.expose.field_identifier) and 'sort_order' (ASC or
-   * DESC). This is a fixed Views mechanism, not a custom identifier —
-   * see Drupal\views\Plugin\views\exposed_form\ExposedFormPluginBase::query().
-   */
   function sortToViewParams(sortValue) {
     return {
       sort_by: 'created',
@@ -268,27 +107,6 @@
     };
   }
 
-  /**
-   * Whether a rendered .property-grid (from the initial page load or
-   * an /views/ajax response) has a next page, per the view's own full
-   * pager — never guessed from how many cards came back. Drupal's
-   * core pager.html.twig marks the "next" link with rel="next"; no
-   * next link in the markup means no next page, which is exactly how
-   * the "hide Load More on the last page" requirement is satisfied.
-   */
-  function pagerHasNext(root) {
-    var pagerEl = root ? root.querySelector('.property-grid__pager') : null;
-    return !!(pagerEl && pagerEl.querySelector('a[rel="next"]'));
-  }
-
-  /**
-   * The view's true total match count, read from its footer "Result
-   * summary" area (views.view.search_requests.yml -> footer.result,
-   * content: "@total") — plain digits, present in the initial page
-   * load and in every /views/ajax response alike. Returns null if the
-   * area isn't present (defensive — falls back to the caller's own
-   * count in that case).
-   */
   function readTotalFromGrid(root) {
     var footerEl = root ? root.querySelector('.property-grid__footer') : null;
     if (!footerEl) {
@@ -298,13 +116,23 @@
     return match ? parseInt(match[0], 10) : null;
   }
 
+  function pagerHasNext(root) {
+    var pagerEl = root ? root.querySelector('.property-grid__pager') : null;
+    var hasNextLink = !!(pagerEl && pagerEl.querySelector('a[rel="next"], .pager__item--next a, a[title*="Nächste"], a[title*="next"]'));
+    
+    var total = readTotalFromGrid(root);
+    var rows = root ? root.querySelector('.property-grid__rows') : null;
+    var loadedCount = rows ? rows.querySelectorAll('.property-grid__item').length : 0;
+    
+    if (total !== null && loadedCount > 0) {
+      return loadedCount < total;
+    }
+    return hasNextLink;
+  }
+
   Drupal.behaviors.searchAjax = {
     attach: function () {
       var form = document.getElementById('search-filter-form');
-
-      // Guarded on the form itself (not on `context`, which varies —
-      // see Drupal.attachBehaviors() calls below): this behavior must
-      // wire up exactly once, however many times attachBehaviors runs.
       if (!form || form.dataset.searchAjaxBound) {
         return;
       }
@@ -316,36 +144,17 @@
       var loadMoreBtn = loadMoreWrapper ? loadMoreWrapper.querySelector('[data-load-more]') : null;
 
       if (!resultsRegion) {
-        console.warn('search-ajax: #search-results-region not found in the DOM — see the Twig changes in the accompanying notes.');
         return;
       }
 
-      // The filters actually in effect for "load more" — set by every
-      // performSearch() call (a fresh submit or a popstate restore),
-      // so "load more" always continues the CURRENTLY active search,
-      // not necessarily whatever is live in the form controls.
       var currentFilters = {};
-      // Same idea, for the sort-select — so "load more" continues in
-      // whatever sort order is currently applied, not always "newest".
       var currentSort = DEFAULT_SORT;
       var loadMorePage = 1;
 
-      /**
-       * POSTs to Drupal's own /views/ajax (path read from
-       * drupalSettings, never hardcoded) with the view's identifying
-       * settings plus the given filter values — sent as BOTH the URL
-       * query string and the POST body (see file header: different
-       * core patch levels check query-first-then-POST, or POST-only;
-       * sending both works either way) — and returns the parsed JSON
-       * AJAX-command array.
-       */
       function fetchViewCommands(filterValues, sortValue, extra) {
         var viewSettings = getAjaxViewSettings();
         if (!viewSettings) {
-          return Promise.reject(new Error(
-            'search-ajax: no drupalSettings.views.ajaxViews entry for ' + VIEW_NAME + '/' + VIEW_DISPLAY_ID +
-            ' — is use_ajax enabled on that display, and did this page actually render it?'
-          ));
+          return Promise.reject(new Error('No AJAX view settings found.'));
         }
         var ajaxPath = (drupalSettings.views && drupalSettings.views.ajax_path) || '/views/ajax';
 
@@ -379,18 +188,12 @@
           body: params.toString()
         }).then(function (response) {
           if (!response.ok) {
-            throw new Error('search-ajax: /views/ajax responded with HTTP ' + response.status);
+            throw new Error('HTTP error ' + response.status);
           }
           return response.json();
-        }).then(function (commands) {
-          if (!Array.isArray(commands)) {
-            console.warn('search-ajax: expected a JSON array of AJAX commands from /views/ajax, got:', commands);
-          }
-          return commands;
         });
       }
 
-      /** The set of "Details ansehen" hrefs already on screen — each is unique per node, so this is what "load more" de-dupes against. */
       function existingDetailHrefs() {
         var hrefs = resultsRegion.querySelectorAll('.property-card__details');
         return new Set(Array.prototype.map.call(hrefs, function (a) {
@@ -423,21 +226,10 @@
         return location.pathname + (qs ? '?' + qs : '');
       }
 
-      function fallbackToRealNavigation(values, reason) {
-        console.error('search-ajax: falling back to a full page reload —', reason);
+      function fallbackToRealNavigation(values) {
         window.location.href = currentUrlFor(values);
       }
 
-      /**
-       * Runs a fresh search: fetches from /views/ajax, fully replaces
-       * #search-results-region with the view's own rendered markup
-       * (its rows, OR its own empty-message area — never a custom-
-       * built one), resets "load more" back to page 0, and — unless
-       * this call came from popstate — pushes the new URL. If the
-       * view's markup genuinely can't be found in the response (see
-       * findViewMarkup), that's treated the same as a network failure:
-       * a real navigation, never a page that silently stays stale.
-       */
       function performSearch(values, options) {
         options = options || {};
         currentFilters = onlyFilters(values);
@@ -450,9 +242,8 @@
         return fetchViewCommands(currentFilters, currentSort, { page: '0' })
           .then(function (commands) {
             var grid = findViewMarkup(commands, viewSettingsForThisRequest);
-
             if (!grid) {
-              fallbackToRealNavigation(values, 'no usable view markup in the /views/ajax response (see console warnings above)');
+              fallbackToRealNavigation(values);
               return;
             }
 
@@ -464,29 +255,20 @@
             setCount(total !== null ? total : itemCount);
             setLoadMoreVisible(itemCount > 0 && pagerHasNext(grid));
 
-            // Re-run all Drupal behaviors (bookmark toggle, custom
-            // selects, etc. from theme.js) scoped to the new markup —
-            // theme.js's own dataset.bound guards make this safe to
-            // call broadly without double-binding anything untouched.
             Drupal.attachBehaviors(resultsRegion, drupalSettings);
 
             if (options.pushHistory !== false) {
               history.pushState({ params: withoutEmpty(values) }, '', currentUrlFor(values));
             }
           })
-          .catch(function (error) {
-            // Network/server failure: fall back to a real navigation
-            // with the same parameters rather than leaving a dead UI —
-            // the equivalent server-side filtering already works
-            // correctly on a full reload regardless of this script.
-            fallbackToRealNavigation(values, error);
+          .catch(function () {
+            fallbackToRealNavigation(values);
           })
           .finally(function () {
             resultsRegion.removeAttribute('aria-busy');
           });
       }
 
-      /** Requests the next batch for the currently active filters and appends only genuinely new cards. */
       function loadMore() {
         if (!loadMoreBtn || loadMoreBtn.getAttribute('aria-busy') === 'true') {
           return;
@@ -513,8 +295,6 @@
             Array.prototype.forEach.call(newItems, function (item) {
               var link = item.querySelector('.property-card__details');
               var href = link ? link.getAttribute('href') : null;
-              // No stable href to key on — safer to skip than to risk
-              // a duplicate we can't detect.
               if (!href || seen.has(href)) {
                 return;
               }
@@ -525,90 +305,16 @@
 
             if (appended > 0) {
               loadMorePage++;
-              // The count badge reports the view's true total match
-              // count (see readTotalFromGrid), which does not change
-              // just because more of it is now visible — it is
-              // intentionally left untouched here.
               Drupal.attachBehaviors(rowsContainer, drupalSettings);
             }
-            // The pager's own rel="next" link is the authoritative
-            // "more results exist" signal — not a guess from how many
-            // cards this request happened to return.
             setLoadMoreVisible(pagerHasNext(grid));
           })
           .catch(function (error) {
-            console.error('search-ajax: load more failed —', error);
+            console.error('load more failed:', error);
           })
           .finally(function () {
             loadMoreBtn.removeAttribute('aria-busy');
           });
-      }
-
-      /** Restores the form's visual state (tabs, custom selects, text input) to match a values object — used on popstate. */
-      function applyFormState(values) {
-        var art = values.art || 'mieten';
-        var artRadio = form.querySelector('input[name="art"][value="' + CSS.escape(art) + '"]');
-        if (artRadio) {
-          artRadio.checked = true;
-        }
-
-        [
-          { name: 'immobilienart', fallback: '' },
-          { name: 'radius', fallback: '25' }
-        ].forEach(function (field) {
-          var input = form.querySelector('input[name="' + field.name + '"][data-select-input]');
-          var select = input ? input.closest('[data-select]') : null;
-          if (!input || !select) {
-            return;
-          }
-
-          var value = values[field.name] || field.fallback;
-          input.value = value;
-
-          var valueEl = select.querySelector('[data-select-value]');
-          var option = value ? select.querySelector('.select__option[data-value="' + CSS.escape(value) + '"]') : null;
-
-          select.querySelectorAll('.select__option').forEach(function (o) {
-            o.classList.remove('is-selected');
-          });
-
-          if (option) {
-            option.classList.add('is-selected');
-            if (valueEl) {
-              valueEl.textContent = option.textContent.trim();
-            }
-          }
-          else if (valueEl) {
-            valueEl.textContent = valueEl.dataset.placeholder || valueEl.textContent;
-          }
-        });
-
-        var ortInput = form.querySelector('input[name="ort"]');
-        if (ortInput) {
-          ortInput.value = values.ort || '';
-        }
-
-        // Sort-select lives outside #search-filter-form (see
-        // page--front.html.twig), so it's synced separately here
-        // rather than by the form-scoped loop above.
-        var sortValue = values.sort === 'oldest' ? 'oldest' : DEFAULT_SORT;
-        var sortSelectTrigger = document.getElementById('sort-select');
-        var sortSelect = sortSelectTrigger ? sortSelectTrigger.closest('[data-select]') : null;
-        var sortInput = sortSelect ? sortSelect.querySelector('[data-select-input]') : null;
-        if (sortInput && sortSelect) {
-          sortInput.value = sortValue;
-          var sortValueEl = sortSelect.querySelector('[data-select-value]');
-          var sortOption = sortSelect.querySelector('.select__option[data-value="' + CSS.escape(sortValue) + '"]');
-          sortSelect.querySelectorAll('.select__option').forEach(function (o) {
-            o.classList.remove('is-selected');
-          });
-          if (sortOption) {
-            sortOption.classList.add('is-selected');
-            if (sortValueEl) {
-              sortValueEl.textContent = sortOption.textContent.trim();
-            }
-          }
-        }
       }
 
       form.addEventListener('submit', function (event) {
@@ -616,11 +322,6 @@
         performSearch(Object.assign({}, readFormValues(), { sort: currentSort }), { pushHistory: true });
       });
 
-      // "Sortieren nach": lives outside #search-filter-form, so it's
-      // wired separately. Its hidden input dispatches a bubbling
-      // 'change' event on selection (see theme.js's [data-select]
-      // behavior) — reuse the currently active filters and re-run the
-      // search with the new sort order.
       var sortSelectTrigger = document.getElementById('sort-select');
       var sortSelectEl = sortSelectTrigger ? sortSelectTrigger.closest('[data-select]') : null;
       var sortSelectInput = sortSelectEl ? sortSelectEl.querySelector('[data-select-input]') : null;
@@ -637,303 +338,32 @@
 
       window.addEventListener('popstate', function (event) {
         var values = (event.state && event.state.params) || Object.fromEntries(new URLSearchParams(location.search).entries());
-        applyFormState(values);
         performSearch(values, { pushHistory: false });
       });
 
-      // Normalize the initial history entry so the very first popstate
-      // (e.g. the user's first action being "back") has a well-formed
-      // state to restore.
       var initialValues = Object.assign({}, withoutEmpty(readFormValues()), { sort: readAppliedSortFromLocation() });
       history.replaceState({ params: initialValues }, '', location.href);
 
-      // Seed currentFilters from the URL — the filters that actually
-      // produced the page currently on screen — never from the form's
-      // current field values (see the file header: the form's default
-      // "Mieten" tab is checked even on an unfiltered page).
       currentFilters = readAppliedFiltersFromLocation();
       currentSort = initialValues.sort;
 
-      // The initial batch is server-rendered already; just read its
-      // own pager to decide whether "load more" has anything to do.
       setLoadMoreVisible(pagerHasNext(resultsRegion));
+
+      var backToTopBtn = document.querySelector('[data-back-to-top]');
+      if (backToTopBtn && !backToTopBtn.dataset.bound) {
+        backToTopBtn.dataset.bound = 'true';
+        window.addEventListener('scroll', function () {
+          if (window.scrollY > 500) {
+            backToTopBtn.removeAttribute('hidden');
+          } else {
+            backToTopBtn.setAttribute('hidden', 'true');
+          }
+        });
+        backToTopBtn.addEventListener('click', function () {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
     }
   };
 
 })(Drupal, drupalSettings);
-
-/**
- * Shared bookmark engine — window.SuchauftragBookmarks
- * Vanilla JS only.
- *
- * Single source of truth for the "Merken" (bookmark) toggle, storing
- * nothing but a plain array of node ids in localStorage under
- * suchauftrag:savedSearchNodeIds — the existing key and shape, never
- * renamed or restructured here.
- *
- * Markup contract for any bookmark button that wants this behavior:
- *   <button class="bookmark-btn js-bookmark" data-nid="{{ node.id }}">
- * Only .js-bookmark[data-nid] elements are ever read or written —
- * nothing else on the page is touched by this module.
- *
- * A .js-bookmark button must NOT also carry the legacy data-bookmark
- * attribute: js/theme.js binds its own click handler to every
- * [data-bookmark] element, which would toggle a second time and
- * cancel this module's toggle out.
- *
- * Optional visible label (icon-only buttons just omit it):
- *   <span data-bookmark-label data-label-on="Gemerkt" data-label-off="Merken">Merken</span>
- * Optional data-title="…" keeps the card title in the aria-label.
- *
- * One delegated click listener on document (bound exactly once, even
- * if this script is ever parsed more than once) handles every
- * current AND future .js-bookmark button, so Drupal AJAX swapping
- * markup in/out never needs a rebind and can never double-bind.
- */
-(function () {
-  'use strict';
-
-  if (window.SuchauftragBookmarks) {
-    // Already initialized — never rebind the delegated listener again.
-    if (window.SUCHAUFTRAG_BOOKMARKS_DEBUG !== false) {
-      console.debug('[SuchauftragBookmarks] init skipped — already initialized on this page.');
-    }
-    return;
-  }
-
-  // Debug logging is ON by default. Turn it off from the console with
-  // window.SUCHAUFTRAG_BOOKMARKS_DEBUG = false; (persists only for the
-  // current page load — set it before this script runs, e.g. in a
-  // snippet/extension, to silence the very first init log too).
-  function debug() {
-    if (window.SUCHAUFTRAG_BOOKMARKS_DEBUG === false) {
-      return;
-    }
-    var args = Array.prototype.slice.call(arguments);
-    args.unshift('[SuchauftragBookmarks]');
-    console.debug.apply(console, args);
-  }
-
-  var STORAGE_KEY = 'suchauftrag:savedSearchNodeIds';
-  var BUTTON_SELECTOR = '.js-bookmark[data-nid]';
-  // Anything that LOOKS like a bookmark button (by class name or a
-  // bookmark-flavored data attribute) but doesn't match
-  // BUTTON_SELECTOR — used only for the diagnostic scan in
-  // logMarkupMismatches() below, never for binding or storage.
-  var NEAR_MISS_SELECTOR = '[class*="bookmark"], [data-bookmark], [data-node-id], [data-nid]';
-
-  /**
-   * Diagnostic only: finds elements that look bookmark-related but
-   * don't satisfy BUTTON_SELECTOR, and logs exactly why each one was
-   * skipped (wrong class, missing data-nid, etc.) so a button with the
-   * wrong markup shows up here instead of silently doing nothing.
-   * (The homepage property cards still use "data-bookmark" + theme.js
-   * and will legitimately be listed here.)
-   */
-  function logMarkupMismatches(root) {
-    var scope = (root && typeof root.querySelectorAll === 'function') ? root : document;
-    var candidates = scope.querySelectorAll(NEAR_MISS_SELECTOR);
-    var mismatches = [];
-    for (var i = 0; i < candidates.length; i++) {
-      var el = candidates[i];
-      if (el.matches && el.matches(BUTTON_SELECTOR)) {
-        continue; // this one's fine, already handled by refresh()/the click listener
-      }
-      var reasons = [];
-      if (!el.classList.contains('js-bookmark')) {
-        reasons.push('missing .js-bookmark class (has: "' + el.className + '")');
-      }
-      if (!el.hasAttribute('data-nid')) {
-        reasons.push('missing data-nid attribute (has: ' +
-          (el.hasAttribute('data-node-id') ? 'data-node-id="' + el.getAttribute('data-node-id') + '"' : 'neither') +
-          (el.hasAttribute('data-bookmark') ? ', data-bookmark' : '') + ')');
-      }
-      mismatches.push({ element: el, reasons: reasons });
-    }
-    if (mismatches.length) {
-      debug(
-        mismatches.length + ' bookmark-looking element(s) found that will NOT be bound by SuchauftragBookmarks ' +
-        '(selector is "' + BUTTON_SELECTOR + '"). This is expected on templates that still use the old markup — ' +
-        'see each entry below for exactly why it was skipped:'
-      );
-      mismatches.forEach(function (m) {
-        debug(' →', m.element, '| reasons:', m.reasons.join('; '));
-      });
-    } else {
-      debug('markup scan: every bookmark-looking element under', scope, 'matches', BUTTON_SELECTOR, '— nothing skipped.');
-    }
-  }
-
-  /** Reads the saved id list defensively — a missing/corrupt/foreign value in this key must behave like "nothing saved", never throw. */
-  function getAll() {
-    var raw;
-    try {
-      raw = window.localStorage.getItem(STORAGE_KEY);
-    } catch (e) {
-      // Storage inaccessible (private browsing, disabled, quota) —
-      // behave exactly as if nothing were saved.
-      debug('localStorage.getItem threw — treating as empty:', e);
-      return [];
-    }
-    if (!raw) {
-      return [];
-    }
-    var parsed;
-    try {
-      parsed = JSON.parse(raw);
-    } catch (e) {
-      debug('stored value under', STORAGE_KEY, 'is not valid JSON — treating as empty. Raw value was:', raw);
-      return [];
-    }
-    if (!Array.isArray(parsed)) {
-      debug('stored value under', STORAGE_KEY, 'is not an array — treating as empty. Parsed value was:', parsed);
-      return [];
-    }
-    return parsed
-      .map(function (id) { return parseInt(id, 10); })
-      .filter(function (id) { return !isNaN(id); });
-  }
-
-  function writeAll(ids) {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
-      // Read straight back so the log reflects reality (not just what
-      // we attempted to write) — catches silent quota/private-mode
-      // failures where setItem doesn't throw but doesn't persist either.
-      var confirmed = window.localStorage.getItem(STORAGE_KEY);
-      debug('wrote', STORAGE_KEY, '=', confirmed, confirmed === JSON.stringify(ids) ? '(confirmed)' : '(MISMATCH — write may not have persisted)');
-    } catch (e) {
-      debug('localStorage.setItem THREW — this toggle will NOT persist past a reload:', e);
-    }
-  }
-
-  function isSaved(nid) {
-    var id = parseInt(nid, 10);
-    return !isNaN(id) && getAll().indexOf(id) !== -1;
-  }
-
-  /** Adds nid if absent, removes it if present. Returns the resulting saved state (true = now saved). */
-  function toggle(nid) {
-    var id = parseInt(nid, 10);
-    if (isNaN(id)) {
-      debug('toggle() called with a non-numeric nid — ignoring. Raw value was:', nid);
-      return false;
-    }
-    var before = getAll();
-    var ids = before.slice();
-    var idx = ids.indexOf(id);
-    var nowSaved;
-    if (idx === -1) {
-      ids.push(id);
-      nowSaved = true;
-    } else {
-      ids.splice(idx, 1);
-      nowSaved = false;
-    }
-    debug('toggle(' + id + ') —', nowSaved ? 'ADDING' : 'REMOVING', '| before:', before, '| after:', ids);
-    writeAll(ids);
-    return nowSaved;
-  }
-
-  function applyState(btn, active) {
-    // .is-saved is the state hook for the shared bookmark contract.
-    // .is-active is kept in lockstep because css/components.css only
-    // styles the saved look via .is-active (.bookmark-btn,
-    // .similar-card__bookmark, .property-card__bookmark) — painting
-    // both is what makes the change visible without touching CSS.
-    btn.classList.toggle('is-saved', active);
-    btn.classList.toggle('is-active', active);
-    btn.setAttribute('aria-pressed', String(active));
-
-    // Optional per-card context: a button carrying data-title (the
-    // similar cards) keeps the title in its accessible name instead
-    // of collapsing to one identical generic label per card.
-    var title = btn.getAttribute('data-title');
-    var action = active ? 'von Favoriten entfernen' : 'zu Favoriten hinzufügen';
-    btn.setAttribute(
-      'aria-label',
-      title ? '„' + title + '“ ' + action : (active ? 'Von Favoriten entfernen' : 'Zu Favoriten hinzufügen')
-    );
-
-    // Optional visible text (the detail page's "Merken" button):
-    //   <span data-bookmark-label data-label-on="Gemerkt" data-label-off="Merken">
-    // Icon-only buttons simply have no such element and skip this.
-    var label = btn.querySelector('[data-bookmark-label]');
-    if (label) {
-      var text = label.getAttribute(active ? 'data-label-on' : 'data-label-off');
-      if (text) {
-        label.textContent = text;
-      }
-    }
-  }
-
-  /**
-   * Re-reads storage and re-paints every .js-bookmark button under
-   * root (default: the whole document) to match it. Called after
-   * every toggle so every visible copy of a given node id — however
-   * many templates render one — updates in the same frame, and again
-   * whenever Drupal attaches behaviors to newly-inserted markup.
-   */
-  function refresh(root) {
-    var scope = (root && typeof root.querySelectorAll === 'function') ? root : document;
-    var buttons = scope.querySelectorAll(BUTTON_SELECTOR);
-    debug('refresh() on', scope, '—', buttons.length, 'button(s) matched', BUTTON_SELECTOR);
-    for (var i = 0; i < buttons.length; i++) {
-      var btn = buttons[i];
-      var nid = btn.getAttribute('data-nid');
-      var active = isSaved(nid);
-      applyState(btn, active);
-      debug(' →', btn, '| data-nid=' + nid, '| is-active now:', active);
-    }
-    logMarkupMismatches(scope);
-  }
-
-  // Single delegated listener, bound once for the lifetime of the
-  // page — handles every current and future .js-bookmark button.
-  document.addEventListener('click', function (event) {
-    var btn = event.target.closest ? event.target.closest(BUTTON_SELECTOR) : null;
-    if (!btn) {
-      // Only worth logging if the click landed on/near something that
-      // LOOKS like a bookmark button but didn't match — a plain click
-      // anywhere else on the page shouldn't spam the console.
-      var nearMiss = event.target.closest ? event.target.closest(NEAR_MISS_SELECTOR) : null;
-      if (nearMiss) {
-        debug('click landed on a bookmark-looking element that did NOT match', BUTTON_SELECTOR, '— ignoring it. Element:', nearMiss);
-      }
-      return;
-    }
-    debug('click matched', BUTTON_SELECTOR, '—', btn, '| data-nid=' + btn.getAttribute('data-nid'));
-    event.preventDefault();
-    toggle(btn.getAttribute('data-nid'));
-    // Every button for this node id anywhere in the document — not
-    // just the one clicked — must reflect the new state instantly.
-    refresh(document);
-  });
-
-  window.SuchauftragBookmarks = {
-    getAll: getAll,
-    isSaved: isSaved,
-    toggle: toggle,
-    refresh: refresh
-  };
-
-  debug('initialized. Storage key:', STORAGE_KEY, '| button selector:', BUTTON_SELECTOR, '| current saved ids:', getAll());
-
-  // Paint correct state for whatever is already in the DOM at parse
-  // time, and again for anything Drupal AJAX inserts later (see
-  // performSearch()/loadMore() above, which already call
-  // Drupal.attachBehaviors on newly-inserted markup).
-  if (window.Drupal && Drupal.behaviors) {
-    Drupal.behaviors.suchauftragBookmarks = {
-      attach: function (context) {
-        debug('Drupal behavior attach() fired for context:', context);
-        window.SuchauftragBookmarks.refresh(context);
-      }
-    };
-  } else if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { refresh(document); });
-  } else {
-    refresh(document);
-  }
-
-})();
