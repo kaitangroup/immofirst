@@ -167,8 +167,20 @@
               params.set(key, viewSettings[key]);
             }
           });
+
+        var bookmarkFilterActive = window.Drupal && Drupal.suchauftragSavedSearches && Drupal.suchauftragSavedSearches.isFilterActive();
+        if (bookmarkFilterActive) {
+          var bookmarkedIds = Drupal.suchauftragSavedSearches.getAll();
+          bookmarkedIds.forEach(function (val) {
+            params.append('bookmarked[]', val);
+          });
+        }
+
         var filters = onlyFilters(filterValues);
         Object.keys(filters).forEach(function (key) {
+          if (key === 'bookmarked') {
+            return;
+          }
           if (Array.isArray(filters[key])) {
             filters[key].forEach(function (val) {
               params.append(key + '[]', val);
@@ -178,6 +190,7 @@
             params.set(key, filters[key]);
           }
         });
+
         var sortParams = sortToViewParams(sortValue || DEFAULT_SORT);
         params.set('sort_by', sortParams.sort_by);
         params.set('sort_order', sortParams.sort_order);
@@ -249,8 +262,13 @@
 
       function performSearch(values, options) {
         options = options || {};
-        if (window.Drupal && Drupal.suchauftragSavedSearches && Drupal.suchauftragSavedSearches.isFilterActive()) {
+        var bookmarkFilterActive = window.Drupal && Drupal.suchauftragSavedSearches && Drupal.suchauftragSavedSearches.isFilterActive();
+        if (bookmarkFilterActive) {
           values = Object.assign({}, values, { bookmarked: Drupal.suchauftragSavedSearches.getAll() });
+        } else {
+          var copy = Object.assign({}, values);
+          delete copy.bookmarked;
+          values = copy;
         }
         currentFilters = onlyFilters(values);
         currentSort = (values && values.sort === 'oldest') ? 'oldest' : DEFAULT_SORT;
@@ -301,8 +319,11 @@
         var viewSettingsForThisRequest = getAjaxViewSettings();
 
         var loadMoreFilters = Object.assign({}, currentFilters);
-        if (window.Drupal && Drupal.suchauftragSavedSearches && Drupal.suchauftragSavedSearches.isFilterActive()) {
+        var bookmarkFilterActive = window.Drupal && Drupal.suchauftragSavedSearches && Drupal.suchauftragSavedSearches.isFilterActive();
+        if (bookmarkFilterActive) {
           loadMoreFilters.bookmarked = Drupal.suchauftragSavedSearches.getAll();
+        } else {
+          delete loadMoreFilters.bookmarked;
         }
 
         fetchViewCommands(loadMoreFilters, currentSort, { page: String(loadMorePage) })
