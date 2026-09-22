@@ -2,67 +2,10 @@
 /**
  * @file
  * Detail page for a single "search_request" node.
- *
- * Filename per Drupal's node theme-suggestion convention: the bundle's
- * machine name (search_request) has its underscore converted to a
- * hyphen for the template file — node--search-request.html.twig.
- *
- * DATA SOURCE: every value on this page comes from the persisted
- * $node's own fields (set once, at submission time, by
- * SearchRequestNodeCreator — untouched, not read here) — never from
- * the wizard's PrivateTempStore session. All variables below are
- * built in suchauftrag_theme_preprocess_node__search_request() in
- * suchauftrag_theme.theme; nothing is computed inline in this
- * template beyond simple presentational conditionals.
- *
- * Variables (see the preprocess function for exact derivation):
- *   node                  the full node entity (standard $variables key)
- *   request_type          'kaufen' | 'mieten' — field_request_type
- *   request_type_label    'Kaufen' | 'Mieten'
- *   property_type         apartment|house|land|garage|commercial — field_property_type
- *   property_type_label   'Wohnung' | 'Haus' | 'Grundstück' | 'Garage / Stellplatz' | 'Gewerbe'
- *   location               field_location, or NULL
- *   radius                 field_radius (km), or NULL
- *   days_ago_label         derived from the base `created` field (no
- *                          custom request-date field exists — see the
- *                          architecture inspection report)
- *   requirements           ordered list of {icon, value, label} —
- *                          only the fields that apply to
- *                          property_type AND are actually set (see
- *                          section 5 of the task spec for the exact
- *                          per-property-type field list)
- *   criteria_groups         ordered list of {label, items[]}, built
- *                          from field_criteria's referenced
- *                          search_criteria terms, grouped by each
- *                          term's field_group and — for Mieten —
- *                          with the 3 purchase-only terms already
- *                          removed (defensive re-check; see the
- *                          preprocess function)
- *   notes                  field_notes value, or NULL
- *   reference_number       field_reference_number, or NULL
- *   created_date           formatted from the base `created` field
- *   status_label           mapped from field_status, or NULL
- *   requester_type_label   field_requester_type's referenced taxonomy
- *                          term label, or NULL
- *   verified               boolean — field_verified
  */
 #}
 {{ attach_library('suchauftrag_theme/search-request-detail') }}
 {{ attach_library('suchauftrag_theme/search-ajax') }}
-{#
-  Bookmarks on this page (the "Merken" button below AND every card in
-  the "Ähnliche Suchaufträge" view) all use ONE shared contract:
-  .bookmark-btn.js-bookmark + data-nid. They are handled exclusively by
-  window.SuchauftragBookmarks in js/search-ajax.js (attached above):
-  one delegated click listener -> toggle(nid) -> localStorage
-  (suchauftrag:savedSearchNodeIds) -> refresh(document), which repaints
-  every button with a matching data-nid at once.
-
-  These buttons must NOT carry the legacy data-bookmark attribute:
-  theme.js binds its own click handler to [data-bookmark] and would
-  toggle a second time. That attribute is now only used by the homepage
-  property cards.
-#}
 {{ attach_library('suchauftrag_theme/saved-searches') }}
 
 {% import _self as icons %}
@@ -124,8 +67,6 @@
     Zurück zur Ergebnisliste
   </a>
 
-  {# ===== Row 1: Detail card (left, flexible) + Offer/webform card
-     (right, 360px) — one parent grid, equal-height cards. ===== #}
   <div class="request-detail__row request-detail__row--top">
 
     <main class="request-detail__main request-detail__card">
@@ -199,9 +140,9 @@
         </section>
       {% endif %}
 
-      {% if requester_type_label or reference_number or created_date or status_label %}
+      {% if requester_type_label or reference_number or created_date %}
         <section class="request-detail__section request-detail__meta">
-          {% if requester_type_label %}
+          <div class="request-detail__meta-col">
             <div class="request-detail__meta-item">
               <span class="request-detail__meta-label">Gesucht von</span>
               <span class="request-detail__meta-value">
@@ -211,33 +152,27 @@
                 {% endif %}
               </span>
             </div>
-          {% endif %}
-          {# Such-ID / Erstellt am / Status are visually ONE grouped
-             cluster in a single grid column — not three equal
-             columns of their own — see .request-detail__meta-group
-             in search-request-detail.css. #}
-          {% if reference_number or created_date or status_label %}
-            <div class="request-detail__meta-group">
-              {% if reference_number %}
-                <div class="request-detail__meta-item">
-                  <span class="request-detail__meta-label">Such-ID</span>
-                  <span class="request-detail__meta-value">{{ reference_number }}</span>
-                </div>
-              {% endif %}
-              {% if created_date %}
-                <div class="request-detail__meta-item">
-                  <span class="request-detail__meta-label">Erstellt am</span>
-                  <span class="request-detail__meta-value">{{ created_date }}</span>
-                </div>
-              {% endif %}
-              {% if status_label %}
-                <div class="request-detail__meta-item">
-                  <span class="request-detail__meta-label">Status</span>
-                  <span class="request-detail__meta-value">{{ status_label }}</span>
-                </div>
-              {% endif %}
-            </div>
-          {% endif %}
+          </div>
+          <div class="request-detail__meta-col">
+            {% if reference_number %}
+              <div class="request-detail__meta-item">
+                <span class="request-detail__meta-label">Such-ID</span>
+                <span class="request-detail__meta-value">{{ reference_number }}</span>
+              </div>
+            {% endif %}
+            {% if created_date %}
+              <div class="request-detail__meta-item">
+                <span class="request-detail__meta-label request-detail__meta-label--small">Erstellt am</span>
+                <span class="request-detail__meta-value">{{ created_date }}</span>
+              </div>
+            {% endif %}
+            {% if status_label %}
+              <div class="request-detail__meta-item">
+                <span class="request-detail__meta-label request-detail__meta-label--small">Status</span>
+                <span class="request-detail__meta-value">{{ status_label }}</span>
+              </div>
+            {% endif %}
+          </div>
         </section>
       {% endif %}
 
@@ -256,10 +191,6 @@
 
   </div>
 
-  {# ===== Row 2: Similar Requests (left) + "So funktioniert es"
-     (right) — a SEPARATE parent grid from Row 1, same column
-     widths, so both rows line up, but independent of Row 1's
-     height. ===== #}
   <div class="request-detail__row request-detail__row--bottom">
 
     <section class="request-detail__similar request-detail__card">

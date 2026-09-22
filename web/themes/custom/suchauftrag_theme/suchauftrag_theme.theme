@@ -38,26 +38,6 @@ function suchauftrag_theme_preprocess_page(array &$variables) {
 function suchauftrag_theme_preprocess_page__front(array &$variables) {
   suchauftrag_theme_preprocess_page($variables);
 
-  // Read the search form's submitted GET parameters and pass them to the
-  // View as its exposed input.
-  //
-  // suchauftrag_theme_views_pre_view() further down this file was written
-  // to do exactly this, but hook_views_pre_view() is a general-purpose
-  // hook — Drupal's ModuleHandler only scans enabled MODULES for it
-  // (invokeAll() -> getImplementationInfo() iterates $this->moduleList
-  // only), never theme .theme files. So that function has always been
-  // dead code: it silently never ran, the View's exposed input was
-  // always empty, and every request returned the same unfiltered
-  // (newest-first, first 6) results regardless of the URL. It has been
-  // removed below in favor of this fix, which lives in a hook Drupal
-  // DOES invoke for themes (preprocess hooks) and runs early enough
-  // (before the view is built/executed) to actually affect filtering.
-  //
-  // Only genuinely-provided, non-empty values are passed through — an
-  // absent or empty-string query parameter must mean "no filter on this
-  // field", never "filter for an empty value" (which would incorrectly
-  // hide every result, since no node has e.g. field_request_type_value
-  // stored as an empty string).
   $request = \Drupal::request();
   $exposed_input = [];
   foreach (['art', 'immobilienart', 'ort',  'bookmarked'] as $filter_identifier) {
@@ -66,22 +46,9 @@ function suchauftrag_theme_preprocess_page__front(array &$variables) {
       $exposed_input[$filter_identifier] = $value;
     }
   }
-  // "sort" (newest|oldest) is this theme's own simplified vocabulary —
-  // translated here into the real exposed-sort identifiers that
-  // views.view.search_requests.yml's "created" sort (now exposed, see
-  // that file's sorts.created.expose.field_identifier) actually reads.
-  // "newest" matches the sort's own default (DESC), so this is always
-  // safe to set, present or absent from the URL.
   $exposed_input['sort_by'] = 'created';
   $exposed_input['sort_order'] = $request->query->get('sort') === 'oldest' ? 'ASC' : 'DESC';
 
-  // Build + execute the Search Requests view ONCE, with that exposed
-  // input, and reuse the same executed $view for both the rendered
-  // block (search_requests_view, printed in page--front.html.twig) and
-  // the result count (search_requests_count) — rather than the previous
-  // code's two separate, independently-unfiltered Views::getView() calls
-  // for the same view. This guarantees the count badge and the actual
-  // results are always counting/showing the exact same filtered set.
   $variables['search_requests_view'] = [];
   $variables['search_requests_count'] = 0;
 
@@ -93,7 +60,6 @@ function suchauftrag_theme_preprocess_page__front(array &$variables) {
     $variables['search_requests_count'] = $view->total_rows ?? count($view->result);
   }
 
-  // Feature icon row content (editable later via block config).
   $variables['feature_icons'] = [
     [
       'icon' => 'shield',
@@ -122,8 +88,6 @@ function suchauftrag_theme_preprocess_page__front(array &$variables) {
   ];
 }
 
-
-
 /**
  * Implements hook_preprocess_HOOK() for the property-card component.
  */
@@ -136,67 +100,6 @@ function suchauftrag_theme_preprocess_property_card(array &$variables) {
   }
 }
 
-/**
- * Implements hook_preprocess_HOOK() for the search_requests view's
- * unformatted row style.
- *
- * Builds one `property_card` render array per row and exposes them as
- * $property_cards, so the Twig template can simply print each one
- * ({{ card }}) instead of calling a "theme()" Twig function — which,
- * like drupal_view(), does not exist in core Twig without the contrib
- * Twig Tweak module. This keeps the theme dependency-free.
- *
- * Reads "search_request" node fields (migrated from "suchauftrag" —
- * see the Views YAML migration this shipped alongside). Field machine
- * names, confirmed against SearchRequestNodeCreator's mapping, not
- * guessed:
- *   field_request_type       (unchanged name/values: kaufen|mieten)
- *   field_property_type      apartment|house|land|garage|commercial
- *                            (suchauftrag's field_property_icon used a
- *                            different value set — home|apartment|
- *                            plot|garage — so this is translated via
- *                            _suchauftrag_theme_property_type_to_card_icon()
- *                            below, not read directly as the icon key)
- *   title                    (base field, unchanged — already reads as
- *                            "<Rooms>-Zimmer <Objektart> in <Ort>
- *                            gesucht", generated once at submission by
- *                            SearchRequestNodeCreator, not regenerated
- *                            here)
- *   field_location, field_radius
- *   field_area_min / field_land_size_min / field_construction_year /
- *   field_price_min / field_price_max / field_criteria
- *                            — see _suchauftrag_theme_property_card_stats()
- *                            below for exactly which of these feed
- *                            which of the 3 stat columns, per property
- *                            type; this is the client's Excel field-
- *                            mapping table (KAUFEN/MIETEN x Haus/
- *                            Wohnung/Grundstück/Stellplatz/Gewerbe),
- *                            transcribed there verbatim, not derived
- *                            here.
- *   field_notes              (suchauftrag's field_description — a
- *                            provider's own listing blurb — has no
- *                            equivalent on search_request; field_notes,
- *                            "Besondere Wünsche oder Hinweise", is the
- *                            closest existing field and is what the
- *                            reference screenshot's card description
- *                            text actually reads like: a buyer's own
- *                            wish, not a listing description)
- *   field_reference_number  (new — passed through for completeness/
- *                            future use; property-card.html.twig does
- *                            not currently render it anywhere, and
- *                            adding new visible markup to the card is
- *                            out of scope for this migration)
- *   created (base field)     (suchauftrag's field_request_date has no
- *                            equivalent on search_request — every node
- *                            already has Drupal's own base "created"
- *                            timestamp, which is exactly "when this
- *                            request was submitted", so the existing
- *                            Heute/Gestern/d.m.Y formatting is kept,
- *                            just fed from this instead)
- */
-/**
- * Implements hook_preprocess_views_view_unformatted().
- */
 /**
  * Implements hook_preprocess_views_view_unformatted().
  */
@@ -255,7 +158,6 @@ function suchauftrag_theme_preprocess_views_view_unformatted(array &$variables) 
       }
     }
 
-    // Use different theme hooks depending on which view is rendering
     $variables['property_cards'][$id] = [
       '#theme' => $is_similar ? 'similar_property_card' : 'property_card',
       '#node_id' => $node->id(),
@@ -275,45 +177,7 @@ function suchauftrag_theme_preprocess_views_view_unformatted(array &$variables) 
   }
 }
 
-/**
- * TEMPORARY DEBUG — remove once the bookmark/nid filter issue is found.
- *
- * Fires after the search_requests view has fully built + executed its
- * query (this is a preprocess hook, so it runs after Views' own
- * pre_view/pre_build/pre_execute stages) — logs exactly what the "nid"
- * filter handler resolved to and the literal SQL WHERE clause Views
- * generated, so we can see directly whether the nid/bookmarked
- * condition made it into the query at all, rather than guessing.
- *
- * Implements hook_preprocess_HOOK() for the search_requests view's
- * OUTER wrapper (views-view--search-requests.html.twig) — this fires
- * for every display of this view (page preview AND the /views/ajax
- * block_1 request alike).
- */
-
-
-/**
- * Builds the property-card's 3 stat columns for one node, per the
- * client's Excel KAUFEN/MIETEN x Objektart field-mapping table.
- * Transcribed verbatim from that table — not derived/normalized —
- * so each property type's column ORDER and which column is the price
- * vs. the "—" placeholder matches the table exactly (e.g. for Haus/
- * Wohnung, price is column 2 and Baujahr is column 3; for
- * Grundstück/Stellplatz/Gewerbe, column 2 is empty and price moves to
- * column 3 instead).
- *
- * Always returns exactly 3 entries. A column the table marks "—" is
- * still a real (4th key: 'empty' => TRUE) entry, not omitted — see
- * property-card.html.twig for why (keeps columns 1/3 aligned across
- * every property type's card, even mixed together in the same grid).
- *
- * @return array{0: array, 1: array, 2: array}
- */
 function _suchauftrag_theme_property_card_stats(\Drupal\node\NodeInterface $node, string $propertyType, string $requestType, callable $get): array {
-  // Price column LABEL per the table — transcribed directly, not
-  // derived from a "kaufen = Kaufpreis, mieten = generic Miete" rule,
-  // because Grundstück uses "Pacht" (not "Miete") for Mieten, which
-  // such a rule would get wrong.
   $priceLabels = [
     'kaufen' => [
       'house' => 'Kaufpreis',
@@ -331,9 +195,6 @@ function _suchauftrag_theme_property_card_stats(\Drupal\node\NodeInterface $node
     ],
   ];
   $priceLabel = $priceLabels[$requestType][$propertyType] ?? $priceLabels['mieten'][$propertyType] ?? 'Preis';
-  // Per the task spec (kept from before this refactor), the price
-  // stat uses the MAX of the field_price_min/max range — arguably
-  // more useful to a provider browsing requests: "will pay up to X".
   $price = ['icon' => 'price', 'value' => $get('field_price_max'), 'label' => $priceLabel, 'empty' => FALSE];
   $emptySlot = ['icon' => '', 'value' => '', 'label' => '', 'empty' => TRUE];
 
@@ -353,7 +214,6 @@ function _suchauftrag_theme_property_card_stats(\Drupal\node\NodeInterface $node
       $emptySlot,
       $price,
     ],
-    // 'commercial' and any unrecognized value.
     default => [
       ['icon' => 'area', 'value' => $get('field_area_min'), 'label' => 'Fläche', 'empty' => FALSE],
       $emptySlot,
@@ -362,20 +222,6 @@ function _suchauftrag_theme_property_card_stats(\Drupal\node\NodeInterface $node
   };
 }
 
-
-
-
-/**
- * Reads which of a garage/Stellplatz node's field_criteria selections
- * belong to the "Ausführungsart" search_criteria taxonomy group (see
- * the immofirst_search_request update hook that renamed this group
- * from "Art"), for the card's "Art" stat column.
- *
- * Multiple selected terms are joined with ", " — the wizard's Step 3
- * checkboxes for that group allow more than one (Garage, Carport,
- * etc. are not mutually exclusive), so the card shows all of them
- * rather than picking just one.
- */
 function _suchauftrag_theme_garage_art_label(\Drupal\node\NodeInterface $node): string {
   if (!$node->hasField('field_criteria') || $node->get('field_criteria')->isEmpty()) {
     return '';
@@ -393,17 +239,6 @@ function _suchauftrag_theme_garage_art_label(\Drupal\node\NodeInterface $node): 
   return implode(', ', $labels);
 }
 
-/**
- * Resolves a list_string field's stored machine value to its
- * configured human-readable label (e.g. field_construction_year's
- * "2010_heute" -> whatever German label that allowed value was given
- * in immofirst_search_request.install), without hardcoding a guessed
- * copy of that label map here — reads it straight off the field
- * storage's own 'allowed_values' setting, so it can never drift out
- * of sync with the module that actually owns this field. Falls back
- * to the raw stored value for any field with no such setting (or no
- * matching entry), so this is always safe to call.
- */
 function _suchauftrag_theme_list_field_label(\Drupal\node\NodeInterface $node, string $field): string {
   if (!$node->hasField($field) || $node->get($field)->isEmpty()) {
     return '';
@@ -415,19 +250,6 @@ function _suchauftrag_theme_list_field_label(\Drupal\node\NodeInterface $node, s
   return $allowed[$value] ?? $value;
 }
 
-/**
- * Maps a search_request "field_property_type" value to the icon
- * keyword property-card.html.twig actually understands.
- *
- * The two vocabularies don't match: field_property_type's values are
- * apartment|house|land|garage|commercial (Step 2 of the wizard), while
- * property-card.html.twig only special-cases 'apartment' | 'plot' |
- * 'garage' and falls back to a plain house icon for anything else (see
- * that template). 'house' therefore intentionally maps to the same
- * fallback as 'commercial' — the card template has no commercial-
- * specific icon of its own, and adding one is a template/design change
- * this migration does not make (see the migration report).
- */
 function _suchauftrag_theme_property_type_to_card_icon(string $property_type): string {
   return match ($property_type) {
     'apartment' => 'apartment',
@@ -437,35 +259,10 @@ function _suchauftrag_theme_property_type_to_card_icon(string $property_type): s
   };
 }
 
-/**
- * Implements hook_preprocess_HOOK() for node--search-request.html.twig.
- *
- * DATA SOURCE: reads only the persisted $node's own fields — never the
- * wizard's PrivateTempStore session (SearchRequestSession is not
- * touched or referenced here). Field machine names below are exactly
- * those confirmed in the architecture inspection report (not guessed):
- * field_request_type, field_property_type, field_location,
- * field_radius, field_area_min/max, field_rooms_min/max,
- * field_price_min/max, field_construction_year,
- * field_land_size_min/max, field_usage, field_parking_type,
- * field_vehicle_type, field_commercial_type, field_criteria,
- * field_notes, field_reference_number, field_status. The
- * search_criteria taxonomy term fields used below (field_group, the
- * plain string "Group"; field_property_types, "Gilt für
- * Objektart(en)") are likewise taken as confirmed, not assumed.
- *
- * No business logic (SearchRequestWizardForm, SearchRequestNodeCreator,
- * SearchCriteriaTermRepository, session storage, AJAX, node creation,
- * taxonomy/field configuration) is modified or duplicated here — this
- * only reads already-persisted data for display.
- */
 function suchauftrag_theme_preprocess_node__search_request(array &$variables) {
   /** @var \Drupal\node\NodeInterface $node */
   $node = $variables['node'];
 
-  // Local helper: NULL for a missing/empty field, its value otherwise —
-  // used throughout so "do not display empty fields" is enforced at a
-  // single point rather than repeated per field.
   $get = function (string $field_name) use ($node): ?string {
     return $node->hasField($field_name) && !$node->get($field_name)->isEmpty()
       ? $node->get($field_name)->value
@@ -494,12 +291,6 @@ function suchauftrag_theme_preprocess_node__search_request(array &$variables) {
   $variables['location'] = $get('field_location');
   $variables['radius'] = $get('field_radius');
 
-  // ===== Property-specific requirements row =====
-  // Section 5/6 of the spec: only the fields that apply to the
-  // selected property_type, in the given order, and only when
-  // actually set. Kaufpreis/Kaltmiete uses the SAME field_price_min/
-  // field_price_max pair for every property type ("where applicable")
-  // — just a different label depending on field_request_type.
   $price_label = $request_type === 'kaufen' ? 'Kaufpreis' : 'Kaltmiete';
   $price_range = _suchauftrag_theme_format_price($get('field_price_min'), $get('field_price_max'));
 
@@ -563,10 +354,8 @@ function suchauftrag_theme_preprocess_node__search_request(array &$variables) {
       break;
 
     case 'commercial':
-      // "Gewerbe already exists in the implementation" (field_commercial_type) —
-      // read here, not re-implemented.
       if ($commercial = $get('field_commercial_type')) {
-        $requirements[] = ['icon' => 'commercial', 'value' => $commercial, 'label' => 'Art der Gewerbeimmobilie'];
+        $requirements[] = ['icon' => 'commercial', 'value' => _suchauftrag_theme_list_field_label($node, 'field_commercial_type'), 'label' => 'Art der Gewerbeimmobilie'];
       }
       if ($range = _suchauftrag_theme_format_range($get('field_area_min'), $get('field_area_max'), 'm²')) {
         $requirements[] = ['icon' => 'area', 'value' => $range, 'label' => 'Fläche'];
@@ -578,18 +367,6 @@ function suchauftrag_theme_preprocess_node__search_request(array &$variables) {
   }
   $variables['requirements'] = $requirements;
 
-  // ===== Criteria, grouped by the term's field_group =====
-  // field_criteria (untouched, existing entity reference field) →
-  // search_criteria taxonomy terms → grouped by each term's
-  // "Group" (field_group). "Gilt für Objektart(en)"
-  // (field_property_types) already constrained which terms were
-  // offered in the wizard for this property_type, so it does not need
-  // to be re-checked here — every referenced term is, by construction,
-  // applicable. The 3 purchase-only terms are defensively re-excluded
-  // for Mieten (see inspection report §7: the wizard's render-time
-  // array_diff() filter is the only current gate, with no
-  // validateForm()/submitForm() re-check) — this is a display-time
-  // safeguard only, no taxonomy/field data is modified.
   $purchase_only_labels = [
     'Finanzierung gesichert',
     'Eigenkapital vorhanden',
@@ -611,10 +388,6 @@ function suchauftrag_theme_preprocess_node__search_request(array &$variables) {
       $group_label = $term->hasField('field_group') && !$term->get('field_group')->isEmpty()
         ? $term->get('field_group')->value
         : NULL;
-      // "Beim Kauf" is never a term/heading at all (confirmed in the
-      // inspection report), so there is nothing to specifically
-      // suppress for it here — an ungrouped term simply has no sane
-      // heading to render under and is skipped rather than inventing one.
       if ($group_label === NULL) {
         continue;
       }
@@ -628,10 +401,8 @@ function suchauftrag_theme_preprocess_node__search_request(array &$variables) {
     $variables['criteria_groups'][] = ['label' => $group_label, 'items' => $items];
   }
 
-  // ===== Notes =====
   $variables['notes'] = $get('field_notes');
 
-  // ===== Metadata =====
   $variables['reference_number'] = $get('field_reference_number');
   $variables['created_date'] = \Drupal::service('date.formatter')->format($node->getCreatedTime(), 'custom', 'd.m.Y');
 
@@ -639,11 +410,6 @@ function suchauftrag_theme_preprocess_node__search_request(array &$variables) {
   $status = $get('field_status');
   $variables['status_label'] = $status !== NULL ? ($status_labels[$status] ?? ucfirst($status)) : NULL;
 
-  // ===== Requester type + verified badge =====
-  // field_requester_type (entity reference to a taxonomy term, e.g.
-  // "Privatperson" / "Makler") and field_verified (boolean) — resolved
-  // to plain values here, per this function's existing convention, so
-  // the template never reads an entity directly.
   $variables['requester_type_label'] = NULL;
   if ($node->hasField('field_requester_type') && !$node->get('field_requester_type')->isEmpty()) {
     $requester_type_term = $node->get('field_requester_type')->entity;
@@ -653,11 +419,6 @@ function suchauftrag_theme_preprocess_node__search_request(array &$variables) {
   }
   $variables['verified'] = $node->hasField('field_verified') && (bool) $node->get('field_verified')->value;
 
-  // "Gesucht seit X Tagen" — derived purely from the base `created`
-  // field. No custom request-date field is ever written by
-  // SearchRequestNodeCreator (confirmed in the inspection report:
-  // field_request_date is read by the OLD views preprocess below but
-  // never set), so nothing here relies on that field.
   $days_ago = (int) floor((\Drupal::time()->getRequestTime() - $node->getCreatedTime()) / 86400);
   $variables['days_ago_label'] = match (TRUE) {
     $days_ago <= 0 => 'Heute eingestellt',
@@ -666,20 +427,11 @@ function suchauftrag_theme_preprocess_node__search_request(array &$variables) {
   };
 }
 
-/**
- * Formats a min/max pair as "70 – 80 m²" / "ab 70 m²" / "bis 80 m²".
- *
- * Used for the (decimal-as-string) area/rooms/land-size field pairs.
- * Returns NULL when both bounds are empty, so the caller can skip
- * rendering the row entirely ("do not display empty fields").
- */
 function _suchauftrag_theme_format_range(?string $min, ?string $max, ?string $unit): ?string {
   $format_number = static function (?string $value): ?string {
     if ($value === NULL || $value === '' || !is_numeric($value)) {
       return NULL;
     }
-    // Decimal-as-string fields (e.g. field_rooms_min) commonly carry a
-    // trailing ".0" — drop it so whole numbers show as "3", not "3.0".
     $float = (float) $value;
     return $float == (int) $float ? (string) (int) $float : rtrim(rtrim((string) $float, '0'), '.');
   };
@@ -690,12 +442,6 @@ function _suchauftrag_theme_format_range(?string $min, ?string $max, ?string $un
     return NULL;
   }
 
-  // Defensive display-only fix: if both bounds are present but stored
-  // out of order (e.g. min > max due to a data-entry mistake upstream,
-  // with no validation currently enforcing order — see inspection
-  // report §7), swap them for display so the range always reads
-  // low-to-high. This does not touch the stored field values or any
-  // wizard/node-creation logic, only how this preprocess renders them.
   if ($min_formatted !== NULL && $max_formatted !== NULL && (float) $min > (float) $max) {
     [$min_formatted, $max_formatted] = [$max_formatted, $min_formatted];
   }
@@ -709,14 +455,6 @@ function _suchauftrag_theme_format_range(?string $min, ?string $max, ?string $un
     : 'bis ' . $max_formatted . $suffix;
 }
 
-/**
- * Formats a min/max price pair as "300 – 400 €" / "ab 300 €" / "bis 400 €".
- *
- * Kept separate from _suchauftrag_theme_format_range() because prices
- * need German thousands-separator formatting (number_format), not the
- * plain-integer/decimal handling that field suffices for area/rooms.
- * Returns NULL when both bounds are empty.
- */
 function _suchauftrag_theme_format_price(?string $min, ?string $max): ?string {
   $format_currency = static function (?string $value): ?string {
     return ($value !== NULL && $value !== '' && is_numeric($value))
@@ -730,8 +468,6 @@ function _suchauftrag_theme_format_price(?string $min, ?string $max): ?string {
     return NULL;
   }
 
-  // Same defensive display-only ordering fix as
-  // _suchauftrag_theme_format_range() — see the comment there.
   if ($min_formatted !== NULL && $max_formatted !== NULL && (float) $min > (float) $max) {
     [$min_formatted, $max_formatted] = [$max_formatted, $min_formatted];
   }
@@ -742,20 +478,6 @@ function _suchauftrag_theme_format_price(?string $min, ?string $max): ?string {
   return ($min_formatted !== NULL ? 'ab ' . $min_formatted : 'bis ' . $max_formatted) . ' €';
 }
 
-/**
- * Formats a stored field_construction_year value into a readable label.
- *
- * BUG FIX: the detail page was printing this field's raw machine value
- * verbatim (e.g. "bis_1970" shown on screen), because no field storage
- * config ships in this repo to confirm its allowed-values list (see
- * inspection report: field storage lives in Config Sync, not in
- * either archive) — so no label map was ever built for it. Rather
- * than guess at unconfirmed taxonomy/allowed-value labels, this does
- * a generic, safe transform of the underscore-separated machine value
- * into the human formatting already used elsewhere on this page
- * (e.g. "bis 1970", "ab 2010", "2010 – heute"). Already-human values
- * (no underscore) pass through unchanged.
- */
 function _suchauftrag_theme_format_construction_year(string $value): string {
   if (!str_contains($value, '_')) {
     return $value;
@@ -763,34 +485,21 @@ function _suchauftrag_theme_format_construction_year(string $value): string {
 
   $parts = explode('_', $value);
 
-  // "bis_1970" / "ab_2010" -> "bis 1970" / "ab 2010".
   if (count($parts) === 2 && in_array($parts[0], ['bis', 'ab'], TRUE)) {
     return $parts[0] . ' ' . $parts[1];
   }
 
-  // "2010_heute" -> "2010 – heute"; "1970_1990" -> "1970 – 1990".
   if (count($parts) === 2) {
     return $parts[0] . ' – ' . $parts[1];
   }
 
-  // Fallback: just make it readable.
   return ucfirst(str_replace('_', ' ', $value));
 }
 
-/**
- * Implements hook_theme().
- *
- * Registers the reusable components as themeable render elements so they
- * can be invoked from views, preprocess functions, or other templates via
- * theme('property_card', [...]) etc.
- */
 function suchauftrag_theme_theme($existing, $type, $theme, $path) {
   return [
     'property_card' => [
       'variables' => [
-        // See the '#node_id' comment where this render array is built
-        // (suchauftrag_theme_preprocess_views_view_unformatted__search_requests())
-        // for why this exists — the saved-searches localStorage feature only.
         'node_id' => '',
         'request_type' => 'mieten',
         'badge_label' => 'MIETEN',
@@ -799,15 +508,6 @@ function suchauftrag_theme_theme($existing, $type, $theme, $path) {
         'title' => '',
         'location' => '',
         'radius' => '',
-        // Always exactly 3 entries — one per Step 3 stat column, in
-        // display order. Each: ['icon' => string, 'value' => string,
-        // 'label' => string, 'empty' => bool]. 'empty' TRUE means "no
-        // metric applies in this slot for this property type" (e.g.
-        // column 2 for Grundstück/Stellplatz/Gewerbe, per the
-        // KAUFEN/MIETEN mapping table) — rendered as an invisible
-        // spacer so columns 1/3 still line up, never simply omitted.
-        // See _suchauftrag_theme_property_card_stats() in the .theme
-        // file for how these are built.
         'stats' => [],
         'description' => '',
         'details_url' => '#',
@@ -873,13 +573,25 @@ function suchauftrag_theme_theme($existing, $type, $theme, $path) {
   ];
 }
 
-/*
- * NOTE: this file previously had a suchauftrag_theme_views_pre_view()
- * implementation here, written to feed the search form's GET parameters
- * into the search_requests View's exposed input. It has been removed:
- * hook_views_pre_view() is a general-purpose hook, and Drupal's
- * ModuleHandler only ever scans enabled MODULES for it — never theme
- * .theme files — so it silently never ran. The same fix now lives in
- * suchauftrag_theme_preprocess_page__front() above, in a hook Drupal
- * actually invokes for themes.
+/**
+ * Implements hook_form_alter().
  */
+function suchauftrag_theme_form_alter(array &$form, \Drupal\Core\Form\FormStateInterface $form_state, string $form_id) {
+  if (str_starts_with($form_id, 'webform_submission_offer_to_search_request')) {
+    if (isset($form['actions']['submit'])) {
+      $form['actions']['submit']['#value'] = t('Angebot senden');
+      $form['actions']['submit']['#type'] = 'button';
+      $form['actions']['submit']['#attributes']['type'] = 'submit';
+    }
+
+    if (isset($form['elements']['name'])) {
+      $form['elements']['name']['#required_error'] = t('Bitte geben Sie Ihren Namen ein.');
+    }
+    if (isset($form['elements']['email'])) {
+      $form['elements']['email']['#required_error'] = t('Bitte geben Sie Ihre E-Mail-Adresse ein.');
+    }
+    if (isset($form['elements']['phone'])) {
+      $form['elements']['phone']['#required_error'] = t('Bitte geben Sie Ihre Telefonnummer ein.');
+    }
+  }
+}
