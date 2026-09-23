@@ -64,7 +64,18 @@ body{
   color:var(--text);
   background:var(--bg);
   -webkit-font-smoothing:antialiased;
-  overflow-x:hidden;
+  /* NOT overflow-x:hidden — that creates a scroll container per the
+     CSS overflow spec, which breaks position:sticky on any descendant
+     (the header, most directly — .header{position:sticky} in
+     components.css is a child of <body> on every page). overflow:clip
+     clips the same accidental horizontal bleed without creating that
+     scroll container, so sticky positioning keeps working. Support:
+     Safari 16+, Chrome/Edge 90+, Firefox 101+ — safely universal at
+     this point. See the matching fix on .main-content/.page-main
+     below and html,body in responsive.css, which guarded the exact
+     same failure mode for the sticky search-filter bar and the sticky
+     sidebar card on the search-request detail page respectively. */
+  overflow-x:clip;
 }
 
 img{ max-width:100%; display:block; }
@@ -92,13 +103,17 @@ p{ margin:0; color:var(--muted); }
   padding:0 var(--container-padding);
 }
 
-.main-content{ overflow-x:hidden; }
+/* overflow:clip, not hidden — see the comment on body{} above for why.
+   .main-content wraps the homepage's sticky search-filter bar. */
+.main-content{ overflow-x:clip; }
 
 /* `.page-main` is the global inner-page <main> wrapper (page.html.twig).
    `.main-content` above is kept as-is for page--front.html.twig, which
    composes its own full-bleed sections and isn't part of this global
-   container system. */
-.page-main{ overflow-x:hidden; }
+   container system. Also overflow:clip, not hidden — .page-main wraps
+   the search-request detail page's sticky sidebar card
+   (.request-sidebar__card, search-request-detail.css). */
+.page-main{ overflow-x:clip; }
 
 /* The one global content container every inner page shares: `.container`
    for width/left-right alignment with the header and footer, plus this

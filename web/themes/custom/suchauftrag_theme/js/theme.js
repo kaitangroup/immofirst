@@ -7,7 +7,7 @@
  * Wrapped in a Drupal behavior so it re-attaches correctly after AJAX
  * (e.g. Views AJAX pager / "load more").
  */
-(function (Drupal) {
+(function (Drupal, once) {
   'use strict';
 
   Drupal.behaviors.suchauftragTheme = {
@@ -248,207 +248,182 @@
    */
   Drupal.behaviors.suchauftragStickyFilter = {
     attach: function (context) {
-      var section = context.querySelector ? context.querySelector('[data-search-filter]') : null;
-      if (!section || section.dataset.stickyBound) { return; }
-      section.dataset.stickyBound = 'true';
+      once('suchauftragStickyFilter', '[data-search-filter]', context).forEach(function (section) {
+        var sentinel = section.querySelector('[data-search-filter-sentinel]');
+        var spacer = section.querySelector('[data-search-filter-spacer]');
+        var bar = section.querySelector('[data-search-filter-bar]');
+        var stickyBar = section.querySelector('[data-sticky-bar]');
+        var toggleBtn = section.querySelector('[data-sticky-toggle]');
+        var summaryEl = section.querySelector('[data-filter-summary]');
+        var form = document.getElementById('search-filter-form');
 
-      var sentinel = section.querySelector('[data-search-filter-sentinel]');
-      var spacer = section.querySelector('[data-search-filter-spacer]');
-      var bar = section.querySelector('[data-search-filter-bar]');
-      var stickyBar = section.querySelector('[data-sticky-bar]');
-      var toggleBtn = section.querySelector('[data-sticky-toggle]');
-      var summaryEl = section.querySelector('[data-filter-summary]');
-      var form = document.getElementById('search-filter-form');
+        if (!sentinel || !bar) { return; }
 
-      if (!sentinel || !bar) { return; }
+        var mobileQuery = window.matchMedia('(max-width: 780px)');
+        var naturalHeight = null;
+        var sentinelY = null;
 
-      var mobileQuery = window.matchMedia('(max-width: 780px)');
+        function updateMeasurements() {
+          var wasStuck = section.classList.contains('is-stuck');
+          var wasCompact = section.classList.contains('is-compact');
+          var wasExpanded = section.classList.contains('is-expanded');
 
-      /*
-       * ROOT CAUSE of "Filter ändern jumps while scrolling" (Issue 1):
-       *
-       * syncSpacerHeight() used to size the spacer to match ONLY the
-       * newly-pinned element's own height (`pinned.getBoundingClientRect()
-       * .height`) — on mobile that's the ~56–60px compact bar. But
-       * `.search-filter.is-stuck{ padding-top:0; padding-bottom:0; }`
-       * (components.css) ALSO removes this section's own ~40px of
-       * padding the instant it becomes stuck, and the full mobile
-       * search form being replaced is ~350–450px tall (it's a single-
-       * column stack of 4 fields + an actions row on mobile — see
-       * .search-card__grid in responsive.css). So the section's actual
-       * in-flow height collapsed from roughly padding + ~400px down to
-       * just the ~56px spacer, losing ~350px+ of document height in a
-       * single frame — every bit of page content below (feature icons,
-       * "Aktuelle Suchaufträge", the cards) suddenly jumped upward by
-       * that amount the moment the user scrolled past the sentinel.
-       *
-       * Fix: measure the section's OWN full natural height (including
-       * its padding) while it is still in its normal, non-stuck state,
-       * and give the spacer that exact value once stuck — so the
-       * section keeps occupying precisely the same total document
-       * space it always did, and only the visible pinned bar/form
-       * changes, with nothing around it ever moving.
-       */
-      var naturalHeight = null;
+          section.classList.remove('is-stuck', 'is-compact', 'is-expanded');
+          if (spacer) { spacer.style.height = '0px'; }
 
-      function measureNaturalHeight() {
-        if (!section.classList.contains('is-stuck')) {
           naturalHeight = section.getBoundingClientRect().height;
-        }
-      }
+          sentinelY = sentinel.getBoundingClientRect().top + window.scrollY;
 
-      function headerHeight() {
-        var value = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height'));
-        return isNaN(value) ? 72 : value;
-      }
-
-      /** Keeps the spacer the exact height this section naturally occupies when NOT stuck (see the root-cause comment above), so page content never jumps. */
-      function syncSpacerHeight() {
-        if (!spacer || !section.classList.contains('is-stuck')) { return; }
-        if (naturalHeight !== null) {
-          spacer.style.height = naturalHeight + 'px';
-        }
-      }
-
-      /** Exposes the compact bar's own height as a CSS var, so the mobile "expanded panel" can position itself directly under it regardless of content changes. */
-      function syncStickyBarHeightVar() {
-        if (stickyBar) {
-          section.style.setProperty('--search-filter-sticky-bar-height', stickyBar.getBoundingClientRect().height + 'px');
-        }
-      }
-
-      function collapse() {
-        section.classList.remove('is-expanded');
-        if (toggleBtn) { toggleBtn.setAttribute('aria-expanded', 'false'); }
-      }
-
-      function setStuck(stuck) {
-        // Capture the section's natural (un-stuck) height BEFORE toggling
-        // the class that removes its padding — see the root-cause
-        // comment above measureNaturalHeight(). Only relevant on the
-        // false->true transition; on the true->false transition the
-        // section is simply returning to a layout we already know.
-        if (stuck && !section.classList.contains('is-stuck')) {
-          measureNaturalHeight();
-        }
-        section.classList.toggle('is-stuck', stuck);
-        // Compact bar (added): desktop/tablet only — mobile keeps its
-        // existing separate "Filter ändern" toggle-bar behavior
-        // entirely untouched (see the ≤780px rules in responsive.css,
-        // which hide .search-filter__bar outright while stuck, so
-        // .is-compact has nothing to affect there regardless; this
-        // check just keeps the class itself from ever appearing on
-        // mobile, for clarity).
-        section.classList.toggle('is-compact', stuck && !mobileQuery.matches);
-        if (!stuck) {
-          collapse();
-        } else {
-          syncStickyBarHeightVar();
-        }
-        syncSpacerHeight();
-      }
-
-      // Measure once up front too, so the very first scroll-triggered
-      // stick (before any resize event has had a chance to fire) still
-      // has a correct value rather than relying solely on the
-      // just-in-time measurement inside setStuck().
-      measureNaturalHeight();
-
-      // Re-measure on viewport size changes (rotation, browser chrome
-      // showing/hiding, resizing a desktop window) — but only capture
-      // while genuinely un-stuck, exactly like the initial measurement,
-      // since layout while stuck no longer reflects the natural height.
-      var resizeTimer;
-      window.addEventListener('resize', function () {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(measureNaturalHeight, 150);
-      });
-
-      if ('IntersectionObserver' in window) {
-        var observer = new IntersectionObserver(function (entries) {
-          entries.forEach(function (entry) {
-            // BUG FIX: `!entry.isIntersecting` alone is also true when
-            // the sentinel simply hasn't been scrolled to YET (e.g. on
-            // initial page load, if the hero is taller than the
-            // viewport, the sentinel starts off-screen BELOW the fold —
-            // which also reports isIntersecting:false). That falsely
-            // triggered "stuck" before the user had scrolled past the
-            // filter at all. Checking boundingClientRect.top confirms
-            // the sentinel is specifically ABOVE the (shrunk) viewport —
-            // i.e. genuinely scrolled past from above — which is the
-            // only case that should ever pin the bar.
-            var scrolledPast = !entry.isIntersecting && entry.boundingClientRect.top < 0;
-            setStuck(scrolledPast);
-          });
-        }, { rootMargin: '-' + headerHeight() + 'px 0px 0px 0px', threshold: 0 });
-        observer.observe(sentinel);
-      }
-
-      if (toggleBtn) {
-        toggleBtn.addEventListener('click', function () {
-          var expanded = section.classList.toggle('is-expanded');
-          toggleBtn.setAttribute('aria-expanded', String(expanded));
-        });
-      }
-
-      document.addEventListener('click', function (e) {
-        if (section.classList.contains('is-expanded') && !section.contains(e.target)) {
-          collapse();
-        }
-      });
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && section.classList.contains('is-expanded')) {
-          collapse();
-          if (toggleBtn) { toggleBtn.focus(); }
-        }
-      });
-
-      /** Builds the "Mieten · Wohnung · München · 25 km"-style summary from the form's own current values — never a separate source of truth. */
-      function updateSummary() {
-        if (!summaryEl || !form) { return; }
-
-        var parts = [];
-
-        var checkedArt = form.querySelector('input[name="art"]:checked');
-        if (checkedArt) {
-          var artLabel = form.querySelector('label[for="' + checkedArt.id + '"]');
-          if (artLabel) { parts.push(artLabel.textContent.trim()); }
-        }
-
-        form.querySelectorAll('[data-select]').forEach(function (select) {
-          var valueEl = select.querySelector('[data-select-value]');
-          var input = select.querySelector('[data-select-input]');
-          if (valueEl && input && input.value) {
-            parts.push(valueEl.textContent.trim());
+          if (wasStuck) {
+            section.classList.add('is-stuck');
+            if (wasCompact && !mobileQuery.matches) {
+              section.classList.add('is-compact');
+            }
+            if (wasExpanded) {
+              section.classList.add('is-expanded');
+            }
+            if (spacer && naturalHeight !== null) {
+              spacer.style.height = naturalHeight + 'px';
+            }
           }
-        });
-
-        var ortInput = form.querySelector('input[name="ort"]');
-        if (ortInput && ortInput.value.trim()) {
-          parts.push(ortInput.value.trim());
         }
 
-        summaryEl.textContent = parts.join(' · ');
-      }
+        function evaluateSticky() {
+          if (sentinelY === null || naturalHeight === null) {
+            updateMeasurements();
+          }
+          var stuck = window.scrollY >= sentinelY;
+          section.classList.toggle('is-stuck', stuck);
+          section.classList.toggle('is-compact', stuck && !mobileQuery.matches);
 
-      if (form) {
-        form.addEventListener('change', updateSummary);
-        form.addEventListener('input', function (e) {
-          if (e.target && e.target.name === 'ort') { updateSummary(); }
+          if (stuck) {
+            if (stickyBar) {
+              section.style.setProperty('--search-filter-sticky-bar-height', stickyBar.getBoundingClientRect().height + 'px');
+            }
+            if (spacer && naturalHeight !== null) {
+              spacer.style.height = naturalHeight + 'px';
+            }
+          } else {
+            section.classList.remove('is-expanded');
+            if (toggleBtn) { toggleBtn.setAttribute('aria-expanded', 'false'); }
+            if (spacer) { spacer.style.height = '0px'; }
+          }
+        }
+
+        // Remove old listeners before attaching new ones
+        if (section._stickyScrollHandler) {
+          window.removeEventListener('scroll', section._stickyScrollHandler);
+        }
+        if (section._stickyResizeHandler) {
+          window.removeEventListener('resize', section._stickyResizeHandler);
+        }
+        if (section._stickyOrientationHandler) {
+          window.removeEventListener('orientationchange', section._stickyOrientationHandler);
+        }
+
+        var onScroll = function () {
+          evaluateSticky();
+        };
+
+        var onResize = function () {
+          updateMeasurements();
+          evaluateSticky();
+        };
+
+        var onOrientationChange = function () {
+          updateMeasurements();
+          evaluateSticky();
+        };
+
+        section._stickyScrollHandler = onScroll;
+        section._stickyResizeHandler = onResize;
+        section._stickyOrientationHandler = onOrientationChange;
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onResize, { passive: true });
+        window.addEventListener('orientationchange', onOrientationChange, { passive: true });
+
+        // Initialize after layout using requestAnimationFrame
+        requestAnimationFrame(function () {
+          updateMeasurements();
+          evaluateSticky();
         });
-        form.addEventListener('submit', collapse);
-        updateSummary();
-      }
 
-      var resizeTimer = null;
-      window.addEventListener('resize', function () {
-        window.clearTimeout(resizeTimer);
-        resizeTimer = window.setTimeout(function () {
-          syncStickyBarHeightVar();
-          syncSpacerHeight();
-        }, 150);
+        if (toggleBtn) {
+          if (section._stickyToggleHandler) {
+            toggleBtn.removeEventListener('click', section._stickyToggleHandler);
+          }
+          var onToggle = function () {
+            var expanded = section.classList.toggle('is-expanded');
+            toggleBtn.setAttribute('aria-expanded', String(expanded));
+          };
+          section._stickyToggleHandler = onToggle;
+          toggleBtn.addEventListener('click', onToggle);
+        }
+
+        if (!window._suchauftragStickyDocBound) {
+          window._suchauftragStickyDocBound = true;
+          document.addEventListener('click', function (e) {
+            document.querySelectorAll('[data-search-filter]').forEach(function (sec) {
+              if (sec.classList.contains('is-expanded') && !sec.contains(e.target)) {
+                sec.classList.remove('is-expanded');
+                var tBtn = sec.querySelector('[data-sticky-toggle]');
+                if (tBtn) { tBtn.setAttribute('aria-expanded', 'false'); }
+              }
+            });
+          });
+          document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+              document.querySelectorAll('[data-search-filter]').forEach(function (sec) {
+                if (sec.classList.contains('is-expanded')) {
+                  sec.classList.remove('is-expanded');
+                  var tBtn = sec.querySelector('[data-sticky-toggle]');
+                  if (tBtn) {
+                    tBtn.setAttribute('aria-expanded', 'false');
+                    tBtn.focus();
+                  }
+                }
+              });
+            }
+          });
+        }
+
+        /** Builds summary */
+        function updateSummary() {
+          if (!summaryEl || !form) { return; }
+          var parts = [];
+          var checkedArt = form.querySelector('input[name="art"]:checked');
+          if (checkedArt) {
+            var artLabel = form.querySelector('label[for="' + checkedArt.id + '"]');
+            if (artLabel) { parts.push(artLabel.textContent.trim()); }
+          }
+          form.querySelectorAll('[data-select]').forEach(function (select) {
+            var valueEl = select.querySelector('[data-select-value]');
+            var input = select.querySelector('[data-select-input]');
+            if (valueEl && input && input.value) {
+              parts.push(valueEl.textContent.trim());
+            }
+          });
+          var ortInput = form.querySelector('input[name="ort"]');
+          if (ortInput && ortInput.value.trim()) {
+            parts.push(ortInput.value.trim());
+          }
+          summaryEl.textContent = parts.join(' · ');
+        }
+
+        if (form) {
+          form.addEventListener('change', updateSummary);
+          form.addEventListener('input', function (e) {
+            if (e.target && e.target.name === 'ort') { updateSummary(); }
+          });
+          form.addEventListener('submit', function () {
+            section.classList.remove('is-expanded');
+            if (toggleBtn) { toggleBtn.setAttribute('aria-expanded', 'false'); }
+          });
+          updateSummary();
+        }
       });
     }
   };
 
-})(Drupal);
+})(Drupal, once);
