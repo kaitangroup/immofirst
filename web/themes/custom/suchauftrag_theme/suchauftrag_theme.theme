@@ -171,7 +171,7 @@ function suchauftrag_theme_preprocess_views_view_unformatted(array &$variables) 
       '#stats' => _suchauftrag_theme_property_card_stats($node, $propertyType, $type, $get),
       '#description' => $get('field_notes'),
       '#details_url' => $node->toUrl()->toString(),
-      '#offer_url' => $node->toUrl()->toString() . '/angebot',
+      '#offer_url' => $node->toUrl()->toString(),
       '#reference_number' => $get('field_reference_number'),
     ];
   }
