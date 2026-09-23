@@ -460,4 +460,14 @@
 }
 
 /* Prevent any accidental horizontal overflow */
-html, body{ max-width:100%; overflow-x:hidden; }
+html, body{ max-width:100%; overflow-x:clip; }
+
+/* ==========================================
+   MOBILE: Fix hero touch scrolling
+   ========================================== */
+
+@media (max-width: 768px) {
+  .hero-band__bg {
+    position: static;
+  }
+}

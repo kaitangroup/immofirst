@@ -151,17 +151,28 @@
      HERO BAND — shared background for Hero + Search Card + Feature Icons
      (all three sit on ONE continuous gradient in the reference design)
      ========================================================== */
-   .hero-band{
-     position:relative;
-     background:linear-gradient(180deg, var(--hero-bg) 0%, #EEF1FF 100%);
-   }
-   .hero-band__bg{
-     position:absolute;
-     inset:0;
-     z-index:0;
-     pointer-events:none;
-     overflow:hidden;
-   }
+  /* Hero should never become the touch scrolling layer */
+.hero-band{
+  position: relative;
+  isolation: isolate;
+  touch-action: pan-y;
+}
+
+/* Background is purely decorative */
+.hero-band__bg{
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Sticky layer must not capture gestures except its controls */
+.search-filter{
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
   .hero-band__wave{ position:absolute; bottom:0; left:0; width:100%; height:auto; }
   
   .hero{
