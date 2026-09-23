@@ -328,6 +328,17 @@
   }
 }
 
+@media (max-width: 768px) {
+  .request-detail__similar,
+  .request-detail__howitworks,
+  .request-detail__how-it-works,
+  .request-detail__row--bottom {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
 @media (max-width: 640px) {
   .request-detail__title { font-size: 26px; }
   .request-detail__row .request-detail__card { padding: 20px; }
