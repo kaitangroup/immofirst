@@ -151,17 +151,17 @@
      HERO BAND — shared background for Hero + Search Card + Feature Icons
      (all three sit on ONE continuous gradient in the reference design)
      ========================================================== */
-  .hero-band{
-    position:relative;
-    overflow:hidden;
-    background:linear-gradient(180deg, var(--hero-bg) 0%, #EEF1FF 100%);
-  }
-  .hero-band__bg{
-    position:absolute;
-    inset:0;
-    z-index:0;
-    pointer-events:none;
-  }
+   .hero-band{
+     position:relative;
+     background:linear-gradient(180deg, var(--hero-bg) 0%, #EEF1FF 100%);
+   }
+   .hero-band__bg{
+     position:absolute;
+     inset:0;
+     z-index:0;
+     pointer-events:none;
+     overflow:hidden;
+   }
   .hero-band__wave{ position:absolute; bottom:0; left:0; width:100%; height:auto; }
   
   .hero{
