@@ -44,7 +44,9 @@
      columns. Own block, not .property-grid, so it can't drift out of
      sync with (or be broken by) future changes to the main search
      results grid above. */
-  .similar-cards{
+  .similar-cards,
+  .similar-searches,
+  .similar-searches__grid{
     grid-template-columns:repeat(2, minmax(0, 1fr));
   }
 
@@ -186,7 +188,7 @@
    this block is last in the file, its rules still correctly win over
    the ≤1024px block's for any width they both match — nothing in the
    ≤1024px block itself needed to change. */
-@media (max-width: 768px){
+@media (max-width: 780px){
   :root{
     --container-padding:16px;
     --space-header-to-content:28px;
@@ -329,7 +331,9 @@
      doesn't affect — and isn't affected by — the main search results
      grid's mobile layout directly below.
      ========================================================== */
-  .similar-cards{
+  .similar-cards,
+  .similar-searches,
+  .similar-searches__grid{
     display:flex;
     flex-wrap:nowrap;
     grid-template-columns:none;
@@ -344,14 +348,26 @@
     scrollbar-width:none;
     -ms-overflow-style:none;
   }
-  .similar-cards::-webkit-scrollbar{ display:none; }
+  .similar-cards::-webkit-scrollbar,
+  .similar-searches::-webkit-scrollbar,
+  .similar-searches__grid::-webkit-scrollbar{ display:none; }
 
-  .similar-cards__item{
-    flex:0 0 auto;
-    width:85vw;
-    max-width:300px;
-    min-width:280px;
+  .similar-cards__item,
+  .similar-search-card{
+    flex:0 0 88%;
+    max-width:none;
+    min-width:0;
     scroll-snap-align:start;
+  }
+
+  .request-detail__similar {
+    overflow: hidden;
+  }
+  .request-detail__similar .similar-cards,
+  .request-detail__similar .similar-searches,
+  .request-detail__similar .similar-searches__grid {
+    margin: 0 -20px;
+    padding: 0 20px 8px;
   }
 
   /* ==========================================================
@@ -466,7 +482,7 @@ html, body{ max-width:100%; overflow-x:clip; }
    MOBILE: Fix hero touch scrolling
    ========================================== */
 
-@media (max-width: 768px) {
+@media (max-width: 780px) {
   .hero-band__bg {
     position: static;
   }

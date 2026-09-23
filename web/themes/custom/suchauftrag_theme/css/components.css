@@ -1292,7 +1292,9 @@
    ========================================================== */
 .similar-requests{ width:100%; }
 
-.similar-cards{
+.similar-cards,
+.similar-searches,
+.similar-searches__grid{
   display:grid;
   grid-template-columns:repeat(3, minmax(0, 1fr));
   gap:24px;
@@ -1302,7 +1304,8 @@
   list-style:none;
 }
 
-.similar-cards__item{ min-width:0; }
+.similar-cards__item,
+.similar-search-card{ min-width:0; }
 
 /* Card */
 .similar-card{
