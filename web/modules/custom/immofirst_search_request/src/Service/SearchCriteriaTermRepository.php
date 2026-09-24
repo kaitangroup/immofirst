@@ -70,7 +70,6 @@ final class SearchCriteriaTermRepository {
       'Bonität & zusätzliche Angaben',
     ],
     'garage' => [
-      'Ausführungsart',
       'Nutzung',
       'Größe / Nutzung',
       'Bonität & zusätzliche Angaben',
@@ -133,6 +132,9 @@ final class SearchCriteriaTermRepository {
       }
 
       $groupLabel = (string) ($term->get('field_group')->value ?? '');
+      if ($propertyType === 'garage' && $groupLabel === 'Ausführungsart') {
+        continue;
+      }
       $groups[$groupLabel][(int) $id] = (string) $term->label();
     }
 

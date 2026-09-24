@@ -123,7 +123,7 @@ final class SearchRequestNodeCreator {
 
     return [
       'type' => 'search_request',
-      'title' => $this->generateTitle($propertyType, $step3, $location),
+      'title' => $this->generateTitle($propertyType, $step3),
       'status' => 1,
 
       // ---- Step 1: Gesuchsart / Objektart / Lage ------------------
@@ -194,18 +194,86 @@ final class SearchRequestNodeCreator {
    *
    * @param array<string, mixed> $step3
    */
-  private function generateTitle(string $propertyType, array $step3, string $location): string {
-    $meta = self::PROPERTY_TYPE_TITLES[$propertyType] ?? ['noun' => 'Immobilie', 'rooms_prefix' => FALSE];
-    $noun = $meta['noun'];
-
-    if (!empty($meta['rooms_prefix'])) {
-      $roomsMin = $step3['rooms']['min'] ?? NULL;
-      if (is_numeric($roomsMin) && (int) $roomsMin > 0) {
-        $noun = ((int) $roomsMin) . '-Zimmer ' . $noun;
+  private function generateTitle(string $propertyType, array $step3): string {
+    $format_number = static function (mixed $value): ?string {
+      if ($value === NULL || $value === '' || !is_numeric($value)) {
+        return NULL;
       }
-    }
+      $float = (float) $value;
+      return $float == (int) $float ? (string) (int) $float : rtrim(rtrim((string) $float, '0'), '.');
+    };
 
-    return trim($noun . ' gesucht');
+    switch ($propertyType) {
+      case 'apartment':
+      case 'house':
+        $noun = ($propertyType === 'apartment') ? 'Wohnung' : 'Haus';
+        $roomsMin = $step3['rooms']['min'] ?? NULL;
+        $roomsMax = $step3['rooms']['max'] ?? NULL;
+        $min_f = $format_number($roomsMin);
+        $max_f = $format_number($roomsMax);
+        if ($min_f !== NULL && $max_f !== NULL && $min_f !== $max_f) {
+          if ((float) $roomsMin > (float) $roomsMax) {
+            [$min_f, $max_f] = [$max_f, $min_f];
+          }
+          return $min_f . '–' . $max_f . ' Zimmer ' . $noun . ' gesucht';
+        }
+        $val = $min_f !== NULL ? $min_f : $max_f;
+        if ($val !== NULL) {
+          return $val . ' Zimmer ' . $noun . ' gesucht';
+        }
+        return $noun . ' gesucht';
+
+      case 'land':
+        $landMin = $step3['land_size']['min'] ?? NULL;
+        $landMax = $step3['land_size']['max'] ?? NULL;
+        $min_f = $format_number($landMin);
+        $max_f = $format_number($landMax);
+        if ($min_f !== NULL && $max_f !== NULL && $min_f !== $max_f) {
+          if ((float) $landMin > (float) $landMax) {
+            [$min_f, $max_f] = [$max_f, $min_f];
+          }
+          return $min_f . '–' . $max_f . ' m² Grundstück gesucht';
+        }
+        if ($min_f !== NULL) {
+          return 'ab ' . $min_f . ' m² Grundstück gesucht';
+        }
+        if ($max_f !== NULL) {
+          return 'bis ' . $max_f . ' m² Grundstück gesucht';
+        }
+        return 'Grundstück gesucht';
+
+      case 'garage':
+        $parkingType = $step3['parking_type'] ?? '';
+        if ($parkingType !== '') {
+          $parkingLabels = [
+            'tiefgarage' => 'Tiefgarage',
+            'aussenstellplatz' => 'Außenstellplatz',
+            'duplex' => 'Duplex',
+            'carport' => 'Carport',
+            'garage' => 'Garage',
+          ];
+          $label = $parkingLabels[$parkingType] ?? ucfirst(str_replace('_', ' ', $parkingType));
+          return $label . ' gesucht';
+        }
+        return 'Stellplatz gesucht';
+
+      case 'commercial':
+        $commercialType = $step3['commercial_type'] ?? '';
+        if ($commercialType !== '') {
+          $commercialLabels = [
+            'buero_praxis' => 'Büro & Praxis',
+            'lagerhalle' => 'Lagerhalle',
+            'einzelhandel' => 'Einzelhandel',
+            'gastronomie' => 'Gastronomie',
+          ];
+          $label = $commercialLabels[$commercialType] ?? ucfirst(str_replace('_', ' ', $commercialType));
+          return $label . ' gesucht';
+        }
+        return 'Gewerbeimmobilie gesucht';
+
+      default:
+        return 'Immobilie gesucht';
+    }
   }
 
   /**

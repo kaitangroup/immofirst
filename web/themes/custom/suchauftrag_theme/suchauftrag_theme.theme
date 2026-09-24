@@ -195,17 +195,25 @@ function _suchauftrag_theme_property_card_stats(\Drupal\node\NodeInterface $node
     ],
   ];
   $priceLabel = $priceLabels[$requestType][$propertyType] ?? $priceLabels['mieten'][$propertyType] ?? 'Preis';
-  $price = ['icon' => 'price', 'value' => $get('field_price_max'), 'label' => $priceLabel, 'empty' => FALSE];
+
+  $priceFieldMin = ($requestType === 'mieten' && $propertyType === 'land') ? 'field_lease_price_min' : 'field_price_min';
+  $priceFieldMax = ($requestType === 'mieten' && $propertyType === 'land') ? 'field_lease_price_max' : 'field_price_max';
+  $priceVal = _suchauftrag_theme_format_price($node->hasField($priceFieldMin) ? $node->get($priceFieldMin)->value : null, $node->hasField($priceFieldMax) ? $node->get($priceFieldMax)->value : null);
+
+  $price = ['icon' => 'price', 'value' => $priceVal, 'label' => $priceLabel, 'empty' => FALSE];
   $emptySlot = ['icon' => '', 'value' => '', 'label' => '', 'empty' => TRUE];
+
+  $areaVal = _suchauftrag_theme_format_range($node->hasField('field_area_min') ? $node->get('field_area_min')->value : null, $node->hasField('field_area_max') ? $node->get('field_area_max')->value : null, 'm²');
+  $landVal = _suchauftrag_theme_format_range($node->hasField('field_land_size_min') ? $node->get('field_land_size_min')->value : null, $node->hasField('field_land_size_max') ? $node->get('field_land_size_max')->value : null, 'm²');
 
   return match ($propertyType) {
     'house', 'apartment' => [
-      ['icon' => 'area', 'value' => $get('field_area_min'), 'label' => 'Wohnfläche', 'empty' => FALSE],
+      ['icon' => 'area', 'value' => $areaVal, 'label' => 'Wohnfläche', 'empty' => FALSE],
       $price,
       ['icon' => 'year', 'value' => _suchauftrag_theme_list_field_label($node, 'field_construction_year'), 'label' => 'Baujahr', 'empty' => FALSE],
     ],
     'land' => [
-      ['icon' => 'land', 'value' => $get('field_land_size_min'), 'label' => 'Grundstück', 'empty' => FALSE],
+      ['icon' => 'land', 'value' => $landVal, 'label' => 'Grundstück', 'empty' => FALSE],
       $emptySlot,
       $price,
     ],
@@ -214,8 +222,13 @@ function _suchauftrag_theme_property_card_stats(\Drupal\node\NodeInterface $node
       $emptySlot,
       $price,
     ],
+    'commercial' => [
+      ['icon' => 'area', 'value' => $areaVal, 'label' => 'Fläche', 'empty' => FALSE],
+      $emptySlot,
+      $price,
+    ],
     default => [
-      ['icon' => 'area', 'value' => $get('field_area_min'), 'label' => 'Fläche', 'empty' => FALSE],
+      ['icon' => 'area', 'value' => $areaVal, 'label' => 'Fläche', 'empty' => FALSE],
       $emptySlot,
       $price,
     ],
@@ -223,20 +236,7 @@ function _suchauftrag_theme_property_card_stats(\Drupal\node\NodeInterface $node
 }
 
 function _suchauftrag_theme_garage_art_label(\Drupal\node\NodeInterface $node): string {
-  if (!$node->hasField('field_criteria') || $node->get('field_criteria')->isEmpty()) {
-    return '';
-  }
-
-  $labels = [];
-  foreach ($node->get('field_criteria')->referencedEntities() as $term) {
-    if ($term instanceof \Drupal\taxonomy\TermInterface
-      && $term->hasField('field_group')
-      && $term->get('field_group')->value === 'Ausführungsart') {
-      $labels[] = $term->label();
-    }
-  }
-
-  return implode(', ', $labels);
+  return _suchauftrag_theme_list_field_label($node, 'field_parking_type');
 }
 
 function _suchauftrag_theme_list_field_label(\Drupal\node\NodeInterface $node, string $field): string {
