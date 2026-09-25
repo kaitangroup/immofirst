@@ -98,6 +98,15 @@ function suchauftrag_theme_preprocess_property_card(array &$variables) {
   else {
     $variables['badge_class'] = 'badge--rent';
   }
+
+  if (!empty($variables['stats']) && is_array($variables['stats'])) {
+    $variables['stats'] = array_values(array_filter($variables['stats'], function ($stat) {
+      return empty($stat['empty']);
+    }));
+  }
+
+  $count = count($variables['stats'] ?? []);
+  $variables['stats_modifier'] = $count === 2 ? 'stats--2' : ($count === 3 ? 'stats--3' : '');
 }
 
 /**

@@ -124,17 +124,27 @@
       </div>
     </div>
 
-    <div class="property-card__stats">
-      {% for stat in stats %}
-        {% if stat.empty %}
-          <div class="stat-item stat-item--empty" aria-hidden="true"></div>
-        {% else %}
-          {% include '@suchauftrag_theme/templates/components/stat-item.html.twig' with {
-            icon: stat.icon, value: stat.value, label: stat.label
-          } %}
-        {% endif %}
-      {% endfor %}
-    </div>
+{# Count only visible stats #}
+{% set stat_count = 0 %}
+{% for stat in stats %}
+  {% if not stat.empty %}
+    {% set stat_count = stat_count + 1 %}
+  {% endif %}
+{% endfor %}
+
+<div class="property-card__stats property-card__stats--{{ stat_count }}">
+  {% for stat in stats %}
+    {% if stat.empty %}
+      <div class="stat-item stat-item--empty" aria-hidden="true"></div>
+    {% else %}
+      {% include '@suchauftrag_theme/templates/components/stat-item.html.twig' with {
+        icon: stat.icon,
+        value: stat.value,
+        label: stat.label
+      } %}
+    {% endif %}
+  {% endfor %}
+</div>
 
     {% if description %}
       <p class="property-card__description">{{ description }}</p>
