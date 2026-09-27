@@ -309,6 +309,49 @@ final class SearchRequestWizardForm extends FormBase {
     $form['#theme'] = ['search_request_wizard'];
     $form['#attached']['library'][] = 'immofirst_search_request/wizard';
 
+    // ROOT CAUSE this check fixes: submitFinish() calls
+    // $this->session->clear() so a FUTURE fresh visit correctly starts
+    // over — but that same clear() also resets 'overview.started',
+    // which is exactly what the check just below (!$wizardStarted)
+    // uses to decide whether to show Step 0. Without this check first,
+    // the very next line to run on submitFinish()'s own rebuild would
+    // be that overview check, which — having JUST been reset by the
+    // clear() a moment earlier — would always be TRUE, sending a user
+    // who just successfully submitted straight back to the overview
+    // instead of a success page. Checking 'wizard_success' first (set
+    // by submitFinish(), read only from THIS request's $form_state —
+    // never persisted to TempStore, so it can't leak into a later,
+    // genuinely fresh visit) intercepts that rebuild before it ever
+    // reaches the overview check.
+    if ($form_state->get('wizard_success')) {
+      $form['#attributes']['class'][] = 'wizard--success';
+
+      // FIX (regression this reverses): this branch used to return
+      // before ever reaching the '#immofirst_step'/'#immofirst_total_steps'
+      // assignments below (they're set further down, after the Step 0
+      // check) — so the preprocess function that derives the twig's
+      // current_step/total_steps/progress_percent from those had
+      // nothing to read here, and the wizard shell's progress bar/
+      // stepper markup consequently had no correct step to render
+      // itself against. Success is Step 5 with different content, not
+      // a separate state: setting the same values Step 5 itself would
+      // set — before returning, exactly like the normal per-step path
+      // does — makes the preprocess function compute current_step=5,
+      // total_steps=5 and (5/5=100%) progress_percent=100 here too,
+      // same as any other Step 5 request. Only step_content differs
+      // (this branch sets 'success' instead), which the template now
+      // renders alongside the same stepper/progress bar rather than
+      // hiding them.
+      $form['#immofirst_step'] = self::TOTAL_STEPS;
+      $form['#immofirst_total_steps'] = self::TOTAL_STEPS;
+      $form['#immofirst_step_titles'] = self::STEP_TITLES;
+      $form['#immofirst_step_subtitles'] = self::STEP_SUBTITLES;
+
+      $form['success'] = $this->buildSuccessPage($form_state);
+
+      return $form;
+    }
+
     // Step 0: overview/landing page. Tracked via the existing generic
     // getStepData()/setStepData() API under an 'overview' key — no
     // service changes. Once started, this is permanently skipped until
@@ -1890,8 +1933,8 @@ HTML;
    *   Raw HTML for the success screen.
    */
   private function buildSuccessScreenMarkup(?string $referenceNumber): string {
-    $title = $this->t('Suchauftrag erstellt!');
-    $text = $this->t('Vielen Dank! Ihr Suchauftrag wurde erfolgreich gespeichert.');
+    $title = $this->t('Vielen Dank!');
+    $text = $this->t('Ihr Suchauftrag wurde erfolgreich erstellt.');
 
     $item1 = $this->t('Sie erhalten passende Angebote per E-Mail oder WhatsApp.');
     $item2 = $this->t('Sie können Ihren Suchauftrag jederzeit bearbeiten oder löschen.');
@@ -1915,6 +1958,9 @@ HTML;
 HTML;
     }
 
+    $viewRequestsLabel = $this->t('Suchaufträge ansehen');
+    $newRequestLabel = $this->t('Neuen Suchauftrag erstellen');
+
     return <<<HTML
 <div class="wizard-success">
   <span class="wizard-success__icon" aria-hidden="true">{$this->overviewIcon('check', 32)}</span>
@@ -1935,8 +1981,45 @@ HTML;
     </li>
   </ul>
   {$reference}
+  <div class="wizard-success__actions">
+    <a href="/suchauftraege" class="btn btn--primary wizard-success__cta">{$viewRequestsLabel}</a>
+    <a href="/suchauftrag-erstellen" class="btn btn--outline wizard-success__cta">{$newRequestLabel}</a>
+  </div>
 </div>
 HTML;
+  }
+
+  /**
+   * Builds the dedicated post-submit success page (top-level
+   * $form['success'] — see buildForm()'s 'wizard_success' check).
+   *
+   * Distinct from buildStep5(), which nests the same underlying
+   * markup (buildSuccessScreenMarkup()) inside $form['step_content'],
+   * still going through the normal wizard shell (stepper, progress
+   * bar). This method's result is meant to replace the ENTIRE form
+   * body — see search-request-wizard.html.twig's `form.success`
+   * branch — with the stepper/progress bar hidden entirely, per spec.
+   * buildStep5() is left as-is (now unreachable via the normal
+   * "Suchauftrag anlegen" flow, since buildForm() returns via the
+   * 'wizard_success' branch first — see its own comment there) rather
+   * than removed, since nothing in this task asked for it to go and
+   * self::STEP_TITLES/STEP_SUBTITLES still index a 5th entry that may
+   * be read elsewhere.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current form state — read for 'created_node_id' (set by
+   *   submitFinish()) to build the reference number.
+   *
+   * @return array
+   *   A render array for $form['success'].
+   */
+  private function buildSuccessPage(FormStateInterface $form_state): array {
+    $nodeId = $form_state->get('created_node_id');
+    $referenceNumber = is_numeric($nodeId) ? sprintf('SA-%s-%06d', date('Y'), (int) $nodeId) : NULL;
+
+    return [
+      '#markup' => Markup::create($this->buildSuccessScreenMarkup($referenceNumber)),
+    ];
   }
 
   /**
@@ -2074,10 +2157,13 @@ HTML;
     // correctly starts over at Step 1 rather than resuming on a
     // "success" step that no longer has any data behind it. The
     // in-flight $form_state, by contrast, is this one request's
-    // rebuild-and-render cycle — setting its step to 5 here is what
-    // makes THIS response show the success screen (Step 5) once,
-    // without persisting "5" as a resumable step in TempStore.
+    // rebuild-and-render cycle: 'wizard_success' (read by buildForm(),
+    // BEFORE its own overview check — see the comment there) is what
+    // makes THIS response show the success page once, entirely
+    // separate from the normal step/overview flow, without persisting
+    // anything about it in TempStore.
     $this->session->clear();
+    $form_state->set('wizard_success', TRUE);
     $form_state->set('step', 5);
     $form_state->setRebuild(TRUE);
   }

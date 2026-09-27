@@ -1514,3 +1514,39 @@
   margin:8px 0 0 32px; /* align under label */
   display:block;
 }
+
+.stat-item__value {
+  min-height: calc(1.25em * 2); /* Reserve two lines */
+  line-height: 1.25;
+  display: flex;
+  align-items: flex-start;
+}
+
+/* Objektart cards */
+.wizard-cards--objektart #edit-step-content-property-type-wrapper-property-type {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+/* Equal-height cards */
+.wizard-cards--objektart .form-item {
+  margin: 0;
+}
+
+.wizard-cards--objektart .option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 86px;
+  padding: 12px 10px;
+  text-align: center;
+}
+
+/* Reserve two lines for every label */
+.wizard-cards--objektart .option .label-text {
+  display: block;
+  line-height: 1.25;
+  min-height: 2.5em;
+}
+

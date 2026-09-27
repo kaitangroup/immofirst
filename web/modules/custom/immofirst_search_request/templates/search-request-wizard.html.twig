@@ -9,25 +9,92 @@
  *   total_steps        int, 5
  *   step_titles        array<int, string>, keyed 1-5
  *   progress_percent   int, 0-100
- *   form               the form render array (step_content + actions,
- *                       or — before the wizard has been started —
- *                       form.overview)
+ *   form               the form render array — form.success (the
+ *                       post-submit success page — see
+ *                       SearchRequestWizardForm::buildForm()'s
+ *                       'wizard_success' check), OR, before that,
+ *                       form.overview (Step 0), OR, once started,
+ *                       step_content + actions
  *
  * The theme provides the site's global header, navigation and footer.
- * When form.overview is present (Step 0, before "Jetzt kostenlos
- * starten" is clicked), this module's own topbar/trust-footer are
- * skipped so nothing is duplicated; the wizard shell below (progress
- * bar, topbar, trust footer) renders exactly as before once the
- * wizard has started.
+ * Step 0 (form.overview) is the only branch that does NOT render this
+ * module's progress bar/stepper — it comes before step 1, so there's
+ * no step to show progress against yet. The success page
+ * (form.success) DOES render them: success is Step 5 with different
+ * content, not a separate hidden state, and reuses the same
+ * current_step/total_steps/progress_percent (5/5/100) that a normal
+ * Step 5 request sets — see buildForm()'s 'wizard_success' branch.
  *
  * No business logic here — only structure, variables, and classes.
  */
 #}
-<div class="wizard-page{{ form.overview is not empty ? ' wizard-page--overview' : '' }}">
+<div class="wizard-page{{ form.overview is not empty ? ' wizard-page--overview' : '' }}{{ form.success is not empty ? ' wizard-page--success' : '' }}">
 
 
   <form{{ form_attributes }}>
-    {% if form.overview is not empty %}
+    {% if form.success is not empty %}
+
+      {# Post-submit success page (SearchRequestWizardForm::buildForm(),
+         the 'wizard_success' branch). Success = Step 5 with different
+         content, not a separate hidden state — it now reuses the exact
+         same current_step/total_steps/progress_percent (5/5/100, set
+         in that branch via the same '#immofirst_step' etc. properties
+         a normal Step 5 request sets) and the exact same progress bar/
+         stepper markup as the {% else %} branch below, just rendered
+         around form.success instead of form.step_content. The earlier
+         "fix" that made this branch skip that markup entirely (instead
+         of it reading the right step number) was the actual regression
+         — this restores it. #}
+
+      {# Mobile Progress Bar #}
+      <div class="wizard-progress wizard-progress--mobile" data-wizard-progress>
+        <p class="wizard-progress__label">
+          Schritt {{ current_step }} von {{ total_steps }}
+        </p>
+
+        <div class="wizard-progress__track">
+          <div class="wizard-progress__fill"
+               style="width: {{ progress_percent }}%"></div>
+        </div>
+      </div>
+
+      {# Desktop Stepper #}
+      <div class="wizard-stepper wizard-stepper--desktop">
+
+        {% set labels = {
+          1:'Suchen',
+          2:'Anforderungen',
+          3:'Kriterien',
+          4:'Kontakt',
+          5:'Bestätigung'
+        } %}
+
+        {% for i in 1..5 %}
+          <div class="wizard-stepper__item
+            {% if i < current_step %} is-complete{% elseif i == current_step %} is-active{% endif %}">
+
+            <div class="wizard-stepper__circle">
+              {{ i }}
+            </div>
+
+            <div class="wizard-stepper__label">
+              {{ labels[i] }}
+            </div>
+
+            {% if i != 5 %}
+              <div class="wizard-stepper__line"></div>
+            {% endif %}
+          </div>
+        {% endfor %}
+
+      </div>
+
+      <div class="wizard__inner wizard__inner--success">
+        {{ form.success }}
+      </div>
+      {{ form|without('success') }}
+
+    {% elseif form.overview is not empty %}
 
       {# Step 0: overview / landing page. No header/footer of our own —
          the theme already provides those; this starts directly with

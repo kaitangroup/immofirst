@@ -1108,7 +1108,6 @@ textarea.form-textarea:focus{
 }
 @media (max-width: 767px){
   .wizard-location-row{ grid-template-columns:1fr; }
-  .wizard-phone-group__row{ grid-template-columns:1fr; }
   .wizard-minmax__row{ grid-template-columns:1fr auto 1fr; min-width:0; }
   .wizard-minmax .js-form-item,
   .wizard-minmax .form-item{ min-width:0; }
@@ -1116,6 +1115,16 @@ textarea.form-textarea:focus{
   .wizard-page__trust{ grid-template-columns:1fr; }
   .wizard__actions{ flex-direction:column-reverse; }
   .wizard__actions .btn{ width:100%; margin-left:0; justify-content:center; }
+
+  /* WhatsApp-Nummer (country + number): stay on one row on mobile too —
+     only the fixed country-code column narrows a little, exactly like
+     desktop otherwise. Overrides the general "collapse paired rows to
+     one column" rule above, which this field is deliberately exempt
+     from. */
+  .wizard-phone-group__row{
+    grid-template-columns:84px 1fr;
+    gap:8px;
+  }
 }
 
 /* =========================================================================

@@ -512,3 +512,9 @@ html, body{ max-width:100%; overflow-x:clip; }
     position: static;
   }
 }
+
+@media (max-width: 768px) {
+  .wizard-cards--objektart #edit-step-content-property-type-wrapper-property-type {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
