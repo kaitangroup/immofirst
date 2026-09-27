@@ -433,6 +433,7 @@ textarea.form-textarea:focus{
 .wizard-cards .js-form-item,
 .wizard-cards .form-item{
   margin:0;
+  min-width:0;
   position:relative;
 }
 /* AFTER — standard visually-hidden input; label[for] still makes the
@@ -597,6 +598,7 @@ textarea.form-textarea:focus{
 .wizard-minmax .form-item label{
   display:block;
   font-size:13px;
+  line-height:16px;
   font-weight:500;
   color:var(--if-muted);
   margin-bottom:6px;
@@ -1097,7 +1099,7 @@ textarea.form-textarea:focus{
  * mobile mockup exactly. */
 @media (min-width:768px){
   .wizard-cards--objektart .fieldset-wrapper > div:has(.js-form-item){
-    grid-template-columns:repeat(2, 1fr);
+    grid-template-columns:repeat(3, 1fr);
   }
 }
 @media (min-width:1024px){
@@ -1789,11 +1791,31 @@ textarea.form-textarea:focus{
       gap:20px;
   }
 
-  /* Property cards (2×2 grid) */
+  /* Property cards (2x2 grid): REMOVED — this was a stale duplicate
+     of the SAME selector re-declared below in the second
+     "DESKTOP ONLY — STEP 1" block further down this file, scoped
+     there with an added [data-wizard-step="1"] attribute selector:
+       [data-wizard-step="1"] .wizard-cards--objektart
+         .fieldset-wrapper > div:has(.js-form-item)
+     That extra attribute selector gives the second block's rule
+     higher specificity (0,4,1) than this one's (0,3,1), so on paper
+     the 4-column version should always win regardless of source
+     order — but having the SAME selector shape declared twice, with
+     two different column counts, in two same-named blocks from two
+     separate edits that were never reconciled, is exactly the kind
+     of duplication that produces inconsistent results across
+     render paths (initial load vs. hard refresh vs. AJAX rebuild)
+     depending on exactly how/when each stylesheet revision got
+     cached. Deleting the redundant declaration removes the
+     ambiguity outright instead of relying on a specificity tie-break
+     to keep resolving the same way forever. See that later block
+     for the surviving (correct, 4-column) rule.
+
   .wizard-cards--objektart .fieldset-wrapper > div:has(.js-form-item){
       grid-template-columns:repeat(2, 1fr);
       gap:20px;
   }
+  */
 
   /* Location + Radius */
   .wizard-location-row{
@@ -1889,7 +1911,7 @@ textarea.form-textarea:focus{
      row), icon-top / label-bottom instead of the mobile icon-left
      layout. Scoped to Step 1 only. */
   [data-wizard-step="1"] .wizard-cards--objektart .fieldset-wrapper > div:has(.js-form-item){
-      grid-template-columns:repeat(4, 1fr);
+      grid-template-columns:repeat(3, 1fr);
       gap:16px;
   }
 
@@ -2012,6 +2034,31 @@ textarea.form-textarea:focus{
   .wizard__step-content[data-wizard-step="4"] > .js-form-item-consent,
   .wizard__step-content[data-wizard-step="4"] > .form-item-consent{
     grid-column:1 / -1;
+  }
+
+  /* Baseline-align every Step 2 field's INPUT BOX across a grid row.
+     buildMinMaxPair() (Wohnfläche, Zimmer, Kaufpreis/Kaltmiete,
+     Grundstück, Pachtpreis) shows a "Minimum"/"Maximum" label above
+     each input IN ADDITION to the field's own title — one full extra
+     line that plain single-value fields (Baujahr, Nutzung, Art des
+     Stellplatzes, Fahrzeugtyp, Art der Gewerbeimmobilie —
+     buildStep2Select()) don't have. When the two are paired in the
+     same grid row (e.g. Kaufpreis | Baujahr), the single-value
+     field's input therefore sits ~22px higher than its row partner's.
+     Reserving that exact same 22px here (16px line-height + 6px
+     margin-bottom, matching ".wizard-minmax .js-form-item label"
+     above precisely) — WITHOUT an equivalent visible "Minimum/
+     Maximum" line, since these fields only ever have one input —
+     realigns the input tops with no Twig/PHP change. Scoped to Step
+     2's own plain field wrappers only: .wizard-minmax fields use
+     '#type' => 'container' and never carry the .js-form-item/
+     .form-item classes this targets, so they're already unaffected;
+     this can't reach Steps 1/3/4/5 or any other page either way. */
+  .wizard__step-content[data-wizard-step="2"] > .js-form-item > label::after,
+  .wizard__step-content[data-wizard-step="2"] > .form-item > label::after{
+    content:"";
+    display:block;
+    height:22px;
   }
 }
 
