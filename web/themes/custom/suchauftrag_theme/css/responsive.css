@@ -26,6 +26,27 @@
     grid-template-columns:1fr;
   }
   .hero__title{ font-size:34px; }
+  /* Once stacked to a single column, the card is full-width below the
+     heading (not sharing a row with it) — the desktop-only narrowing/
+     right-alignment in components.css (max-width:360px;
+     margin-left:auto) was tuned for sitting beside the text in a
+     shared row, and would just leave it oddly floating narrow-and-
+     right below the now full-width heading here instead. Reverting
+     both for this stacked range. */
+  .hero__card{ max-width:none; margin-left:0; }
+  /* Client's mobile reference (a later message, actual phone mockup)
+     shows the pins ARE meant to be visible in this single-column
+     layout too — in the top-right whitespace beside the heading, not
+     hidden. So instead of hiding .hero__bg here, give it its own
+     stacked-layout-safe coordinates: the desktop values in
+     components.css (left:58–76%) are tuned for the two-column
+     card-gap composition and would land on the now full-width heading
+     if reused as-is here. These sit further up and further right,
+     in the gap the ragged (left-aligned) heading text leaves on its
+     right side once it's the only thing in a single-column row. */
+  .hero__path{ top:2%; left:64%; }
+  .hero__pin--1{ top:6%; left:82%; }
+  .hero__pin--2{ top:42%; left:64%; }
 
   .search-card__grid{
     grid-template-columns:1fr 1fr;
@@ -200,6 +221,10 @@
   .hero__title{ font-size:26px; }
   .hero__subtitle{ font-size:15px; }
   .hero__card{ display:none; }
+  /* .hero__bg's pins/path already got their stacked-layout positions
+     in the ≤1024px block above (this range is a subset of it) —
+     matches the client's phone mockup: pins visible in the top-right
+     whitespace beside the heading, nothing further needed here. */
   .feature-icons{ display:none; }
 
   .label-mobile, .btn-text-mobile { display: inline; }

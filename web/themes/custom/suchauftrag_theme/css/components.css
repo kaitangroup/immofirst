@@ -179,22 +179,47 @@
     position:relative;
     padding:80px 0 48px;
   }
+  /* FIX: now positioned relative to .hero__inner (the centered
+     `.container` box), not the full-bleed .hero section — see the
+     header comment in hero.html.twig for why that was the actual root
+     cause of the background overlapping the heading. */
   .hero__bg{
     position:absolute;
     inset:0;
     z-index:0;
     pointer-events:none;
   }
-  .hero__path{ position:absolute; top:35%; left:38%; opacity:.7; }
+  /* .hero__content and .hero__card are .hero__bg's siblings inside
+     .hero__inner now (previously they didn't need this — .hero__bg
+     used to live a level up, already fully behind .hero__inner's own
+     z-index:1). Explicit here so the pins/path always paint behind
+     both, never on top of the text or the card. */
+  .hero__content,
+  .hero__card{
+    position:relative;
+    z-index:1;
+  }
+  /* Path + both pins live in the gap between the text column and the
+     (now narrower — see .hero__card below) card, not above everything
+     in the top padding (an earlier, now-superseded fix for a card-top
+     overlap bug) and not hugging the card's left edge either (a later
+     regression: these had drifted to ~66%/61%, only a few percent
+     short of the card's own start at ~72% of .hero__inner's width —
+     visually reading as "attached to the card" rather than centered
+     in the whitespace). Recentered further into the gap (text column
+     ends ~46%, card starts ~72%) so the graphic occupies the space
+     between the two instead of hugging either side. Percentages, not
+     fixed pixels, so this holds up as the container's actual width
+     changes — left is what keeps this clear of both the text and the
+     card, not top, so it isn't thrown off by how tall either renders. */
+  .hero__path{ position:absolute; top:24%; left:50%; opacity:.7; }
   .hero__pin{
     position:absolute;
-    width:14px; height:14px;
-    border-radius:50% 50% 50% 0;
-    background:var(--primary);
-    opacity:.55;
+    display:flex;
+    color:var(--primary);
   }
-  .hero__pin--1{ top:30%; left:54%; transform:rotate(-45deg); }
-  .hero__pin--2{ top:52%; left:40%; transform:rotate(-45deg); width:10px; height:10px; }
+  .hero__pin--1{ top:6%; left:58%; }
+  .hero__pin--2{ top:60%; left:52%; opacity:.55; }
   
   .hero__inner{
     position:relative;
@@ -223,7 +248,21 @@
     background:var(--surface);
     border-radius:22px;
     box-shadow:var(--shadow-md);
-    padding:28px;
+    /* Slightly reduced from 28px — with the "Mehr erfahren" link gone
+       the card is now just an icon + 2 lines of text, and the old
+       padding (tuned for a taller 3-line card) started to look
+       oversized/loose around that shorter content. */
+    padding:24px;
+    /* Client feedback: narrower, so the description wraps to 3 lines
+       (matching the reference) instead of stretching across the
+       whole 1fr grid column. Right-aligned within that column via
+       margin-left:auto (the reference's card hugs the right edge,
+       same as the page's right padding) rather than centered, so the
+       freed-up space becomes the gap on the LEFT of the card — which
+       is also where the background pins now live (see .hero__pin
+       above). */
+    max-width:360px;
+    margin-left:auto;
     transition:transform var(--ease), box-shadow var(--ease);
   }
   .hero__card-icon{
@@ -238,16 +277,10 @@
   }
   .hero__card-content{ flex:1 1 auto; min-width:0; }
   .hero__card-title{ font-size:17px; margin-bottom:8px; }
+  /* Last element in the card now that the "Mehr erfahren" link is
+     removed — no margin-bottom needed, so the card's own padding is
+     what determines the gap to its bottom edge. */
   .hero__card-text{ font-size:14px; line-height:1.6; }
-  .hero__card-link{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    margin-top:14px;
-    font-size:14px;
-    font-weight:600;
-    color:var(--primary);
-  }
   
   /* generic hover-lift helper, used by hero card + search card + property card */
   [data-hover-lift]{ transition:transform var(--ease), box-shadow var(--ease); }
@@ -812,65 +845,70 @@
     color:var(--muted);
     margin:0;
   }
-  .property-card__stats{
-    display:grid;
-   
-    gap:12px;
-    margin:18px 0;
-    padding:14px 0;
-    border-top:1px solid var(--border);
-    border-bottom:1px solid var(--border);
-  }
-
-  .property-card__stats {
-  display: grid;
   
+.property-card__stats {
+    display: grid;
+    gap: 12px;
+    margin: 18px 0;
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.property-card__stats {
+    display: grid;
 }
 
 .property-card__stats--1 {
-  grid-template-columns: 1fr;
+    grid-template-columns: 1fr;
 }
 
 .property-card__stats--2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2,minmax(0,1fr));
 }
 
 .property-card__stats--3 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3,minmax(0,1fr));
 }
-  .stat-item{
-    display:grid;
-    grid-template-columns:18px 1fr;
-    grid-template-rows:auto auto;
-    column-gap:8px;
-    row-gap:2px;
-    align-items:start;
-  }
-  .stat-item__icon,
-  .stat-item svg,
-  .stat-item i{
-    grid-column:1;
-    grid-row:1 / span 2;
-    width:18px;
-    height:18px;
-  }
-  .stat-item__value{
-    grid-column:2;
-    grid-row:1;
-    font-size:13.5px;
-    font-weight:600;
-    color:var(--text);
-    line-height:1.2;
-    margin:0;
-  }
-  .stat-item__label{
-    grid-column:2;
-    grid-row:2;
-    font-size:11.5px;
-    color:var(--muted);
-    line-height:1.2;
-    margin:0;
-  }
+
+.stat-item {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 8px;
+    row-gap: 2px;
+    align-items: start;
+}
+
+.stat-item__icon,.stat-item svg,.stat-item i {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    width: 18px;
+    height: 18px;
+}
+
+.stat-item__value {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+    margin: 0;
+}
+
+.stat-item__label {
+    grid-column: 2;
+    grid-row: 2;
+    font-size: 11.5px;
+    color: var(--muted);
+    line-height: 1.2;
+    margin: 0;
+}
+
+.stat-item--empty {
+    visibility: hidden;
+}
   /* A property type with no metric for this column (see the
      KAUFEN/MIETEN x Objektart mapping table in
      _suchauftrag_theme_property_card_stats()) still gets a real grid

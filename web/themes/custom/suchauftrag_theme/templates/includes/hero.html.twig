@@ -3,18 +3,50 @@
  * @file
  * Hero section — headline, subtext, "What is a Suchauftrag" info card,
  * wave/pin background illustration.
+ *
+ * FIX (client feedback: "background partially overlaps the heading"):
+ * .hero__bg used to be a direct child of <section class="hero">, which
+ * is full-bleed (edge-to-edge) width. Its pins/path were positioned
+ * with percentages measured against THAT full section width — but the
+ * actual heading/card content lives inside the narrower, centered
+ * `.container` box (max-width, centered via margin). On any viewport
+ * wider than that max-width, "50% from the left of the full section"
+ * and "50% from the left of the actual centered content" are two
+ * different points, so the pins could land on top of the heading on
+ * some screens and not others. Moved .hero__bg to be the first child
+ * INSIDE .hero__inner (which already carries the "container" class)
+ * instead, so its coordinate system now matches the actual text/card
+ * layout everywhere, and the pins were also repositioned to sit in
+ * the gap above the card, clear of every heading line — see the
+ * .hero__pin/.hero__path rules in components.css for the reasoning
+ * on exact placement.
  */
 #}
 <section class="hero" aria-labelledby="hero-title">
-  <div class="hero__bg" aria-hidden="true">
-    <svg class="hero__path" width="220" height="120" viewBox="0 0 220 120" fill="none">
-      <path d="M10 100 Q 90 20 210 30" stroke="#C7CBFB" stroke-width="2" stroke-dasharray="4 6" fill="none"/>
-    </svg>
-    <span class="hero__pin hero__pin--1" aria-hidden="true"></span>
-    <span class="hero__pin hero__pin--2" aria-hidden="true"></span>
-  </div>
-
   <div class="container hero__inner">
+    <div class="hero__bg" aria-hidden="true">
+      <svg class="hero__path" width="150" height="90" viewBox="0 0 150 90" fill="none">
+        <path d="M8 78 Q 60 18 142 12" stroke="#C7CBFB" stroke-width="2" stroke-dasharray="4 6" fill="none"/>
+      </svg>
+      {# Reuses the exact same map-pin glyph already used for
+         .property-card__location elsewhere in this theme, just at a
+         larger scale — keeps the decorative graphic visually
+         consistent with the rest of the site instead of introducing
+         a one-off shape. #}
+      <span class="hero__pin hero__pin--1" aria-hidden="true">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+          <path d="M12 21.5s7.2-6.7 7.2-12A7.2 7.2 0 104.8 9.5c0 5.3 7.2 12 7.2 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.6"/>
+        </svg>
+      </span>
+      <span class="hero__pin hero__pin--2" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 21.5s7.2-6.7 7.2-12A7.2 7.2 0 104.8 9.5c0 5.3 7.2 12 7.2 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.6"/>
+        </svg>
+      </span>
+    </div>
+
     <div class="hero__content">
       <h1 id="hero-title" class="hero__title">
         Echte Menschen suchen Immobilien. Finden Sie Ihren passenden
@@ -39,12 +71,6 @@
         <p class="hero__card-text">
           Interessenten beschreiben hier ihre Wünsche. Sie haben eine passende Immobilie? Dann machen Sie ein Angebot.
         </p>
-        <a href="/so-funktionierts" class="hero__card-link">
-          Mehr erfahren
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </a>
       </div>
     </aside>
   </div>

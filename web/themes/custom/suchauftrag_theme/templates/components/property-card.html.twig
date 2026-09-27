@@ -79,9 +79,11 @@
     {% if icon == 'apartment' %}
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4.5" y="3" width="15" height="18" rx="1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.2 7.2h1.8M14 7.2h1.8M8.2 11h1.8M14 11h1.8M8.2 14.8h1.8M14 14.8h1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     {% elseif icon == 'plot' %}
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 20.5V9.2L12 4l8 5.2v11.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20.5h16M9 20.5v-5.7h6v5.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 5l9-2 9 2v14l-9 2-9-2V5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     {% elseif icon == 'garage' %}
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 10.3L12 4l9 6.3V20H3v-9.7z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 20v-6.3h11V20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 16.3h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    {% elseif icon == 'commercial' %}
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 22v-4h6v4M8 6h2M14 6h2M8 10h2M14 10h2M8 14h2M14 14h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     {% else %}
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 10.5L12 3.5l9 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9.5V19a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     {% endif %}
@@ -131,6 +133,7 @@
     {% set stat_count = stat_count + 1 %}
   {% endif %}
 {% endfor %}
+
 
 <div class="property-card__stats property-card__stats--{{ stat_count }}">
   {% for stat in stats %}

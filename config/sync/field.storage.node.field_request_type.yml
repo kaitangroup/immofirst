@@ -4,6 +4,7 @@ status: true
 dependencies:
   module:
     - node
+    - options
 id: node.field_request_type
 field_name: field_request_type
 entity_type: node
@@ -12,7 +13,7 @@ settings:
   allowed_values:
     -
       value: kaufen
-      label: Kaufen
+      label: Käufer
     -
       value: mieten
       label: Mieten

@@ -16,7 +16,7 @@ function suchauftrag_theme_preprocess_page(array &$variables) {
   // Primary navigation links used by includes/header.html.twig.
   $variables['main_nav_links'] = [
     ['title' => 'Suchaufträge', 'url' => '/', 'active' => TRUE],
-    ['title' => 'Suchauftrag erstellen', 'url' => '/suchauftrag-erstellen', 'active' => FALSE],
+   // ['title' => 'Suchauftrag erstellen', 'url' => '/suchauftrag-erstellen', 'active' => FALSE],
     // ['title' => "So funktioniert's", 'url' => '/so-funktionierts', 'active' => FALSE],
     // ['title' => 'Über uns', 'url' => '/ueber-uns', 'active' => FALSE],
     ['title' => 'FAQ', 'url' => '/faq', 'active' => FALSE],
@@ -264,6 +264,7 @@ function _suchauftrag_theme_property_type_to_card_icon(string $property_type): s
     'apartment' => 'apartment',
     'land' => 'plot',
     'garage' => 'garage',
+    'commercial' => 'commercial',
     default => 'house',
   };
 }
