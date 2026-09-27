@@ -298,6 +298,31 @@ if (wizardPage) {
       });
 
       /* ============================================
+         Integer validation: German message for decimals
+         in integer-only fields (Grundstück, Wohnfläche,
+         Kaufpreis, Kaltmiete, radius, etc.).
+         ============================================ */
+      once('immofirst-integer-validation', '.wizard-input--number', context).forEach(function (input) {
+        var name = input.getAttribute('name') || '';
+        if (name.indexOf('rooms') !== -1) {
+          return;
+        }
+
+        var updateValidity = function () {
+          var val = input.value;
+          if (val !== '' && !Number.isInteger(Number(val))) {
+            input.setCustomValidity('Nur ganze Zahlen eingeben');
+          } else {
+            input.setCustomValidity('');
+          }
+        };
+
+        input.addEventListener('input', updateValidity);
+        input.addEventListener('invalid', updateValidity);
+        input.addEventListener('blur', updateValidity);
+      });
+
+      /* ============================================
          Step 3: criteria card accordion.
 
          Every card, including the first one, now carries

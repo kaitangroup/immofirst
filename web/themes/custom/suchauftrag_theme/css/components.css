@@ -1487,3 +1487,30 @@
 }
 .similar-card__bookmark.is-active{ color:var(--primary); border-color:var(--primary); }
 .similar-card__bookmark.is-active svg{ fill:var(--primary); }
+
+/* Step 4 consent wrapper */
+.form-item-step-content-consent{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:flex-start;
+  gap:12px;
+}
+
+.form-item-step-content-consent input[type="checkbox"]{
+  flex:0 0 auto;
+  margin-top:3px;
+}
+
+.form-item-step-content-consent label{
+  flex:1;
+  margin:0;
+  line-height:1.5;
+}
+
+/* Error message on its own row */
+.form-item-step-content-consent .form-item--error-message{
+  flex:0 0 100%;
+  width:100%;
+  margin:8px 0 0 32px; /* align under label */
+  display:block;
+}

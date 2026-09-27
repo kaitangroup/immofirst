@@ -1603,7 +1603,7 @@ SVG,
     $form['step_content']['consent'] = [
       '#type' => 'checkbox',
       '#title' => Markup::create($this->consentLabelMarkup()),
-      // '#required' => TRUE, // TEMP: button validation disabled for now — not shown in the reference validation screenshot, left as-is
+     '#required' => TRUE, // TEMP: button validation disabled for now — not shown in the reference validation screenshot, left as-is
       '#default_value' => $stored['consent'] ?? FALSE,
       '#attributes' => ['class' => ['wizard-checkbox']],
     ];
