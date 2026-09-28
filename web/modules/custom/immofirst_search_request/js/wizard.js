@@ -300,14 +300,9 @@ if (wizardPage) {
       /* ============================================
          Integer validation: German message for decimals
          in integer-only fields (Grundstück, Wohnfläche,
-         Kaufpreis, Kaltmiete, radius, etc.).
+         Anzahl der Zimmer, Kaufpreis, Kaltmiete, etc.).
          ============================================ */
       once('immofirst-integer-validation', '.wizard-input--number', context).forEach(function (input) {
-        var name = input.getAttribute('name') || '';
-        if (name.indexOf('rooms') !== -1) {
-          return;
-        }
-
         var updateValidity = function () {
           var val = input.value;
           if (val !== '' && !Number.isInteger(Number(val))) {

@@ -1323,6 +1323,36 @@ SVG,
   ];
 
   /**
+   * Tab.2.1 (corrected): where each restricted criterion may render.
+   *
+   * [term label => [property type => allowed request types]].
+   * A restricted label is kept only if the current property type is listed
+   * AND the current request type is in that list; otherwise it is dropped
+   * from the render array (never CSS-hidden, so it cannot be submitted).
+   * Labels not listed here (e.g. "Flexible Übergabe / Einzug", the Bonität
+   * fields, "Möbliert") are never touched by this rule.
+   *
+   * @var array<string, array<string, string[]>>
+   */
+  private const CRITERIA_VISIBILITY_RULES = [
+    'Langfristiges Interesse' => [
+      'apartment'  => ['mieten'],
+      'house'      => ['mieten'],
+      'garage'     => ['mieten'],
+      'land'       => ['mieten'],
+      'commercial' => ['mieten'],
+    ],
+    'Nichtraucher' => [
+      'apartment' => ['mieten'],
+      'house'     => ['mieten'],
+    ],
+    'Keine Haustiere' => [
+      'apartment' => ['mieten'],
+      'house'     => ['mieten'],
+    ],
+  ];
+
+  /**
    * Step 3: "Zusätzliche Kriterien" chip groups + notes.
    *
    * Groups/options are loaded from the search_criteria taxonomy
@@ -1366,7 +1396,7 @@ SVG,
       // shape '#options' needs — no extra machineKey()'d array to
       // build here (unlike the old label-string version), since the
       // taxonomy term id itself is a stable, unique option key.
-      $options = $this->filterCriteriaOptionsForRequestType($termOptions, $requestType);
+      $options = $this->filterCriteriaOptionsForRequestType($termOptions, $requestType, $propertyType);
 
       if (!$options) {
         continue;
@@ -1438,31 +1468,33 @@ SVG,
   }
 
   /**
-   * Applies Tab.2.1's request-type conditions to one criteria group's
-   * term options.
+   * Applies Tab.2.1's request-type / property-type conditions to one
+   * criteria group's term options.
    *
-   * Two conditions, in opposite directions:
-   * - PURCHASE_ONLY_CRITERIA ("Beim Kauf") options are only kept for
-   *   Kaufen; absent from the render array for Mieten.
-   * - MIETEN_ONLY_CRITERIA ("Haustiere erlaubt") is only kept for
-   *   Mieten; absent from the render array for Kaufen.
+   * - PURCHASE_ONLY_CRITERIA: kept only for Kaufen (unchanged).
+   * - MIETEN_ONLY_CRITERIA: kept only for Mieten (unchanged).
+   * - CRITERIA_VISIBILITY_RULES: Langfristiges Interesse, Nichtraucher and
+   *   Keine Haustiere are kept only for the property type / request type
+   *   combinations listed there (e.g. Nichtraucher: Wohnung/Haus + Mieten
+   *   only; never for Garage, Grundstück or Gewerbe).
    *
-   * Either way the option is simply missing from the render array
-   * (not CSS-hidden), so it can never be checked, submitted, or
-   * persisted for the request type it doesn't apply to. A no-op for
-   * any group that contains neither of these labels.
+   * Options are removed from the render array, so they cannot be checked,
+   * submitted or persisted for a combination they don't apply to.
+   * Taxonomy terms and previously stored values are not modified.
    *
    * @param array<int, string> $options
    *   One group's [term id => term label] pairs, as loaded from
    *   SearchCriteriaTermRepository::groupsForPropertyType().
    * @param string $requestType
    *   The session's step1 request_type ('kaufen' or 'mieten').
+   * @param string $propertyType
+   *   'apartment', 'house', 'land', 'garage' or 'commercial'.
    *
    * @return array<int, string>
-   *   The same [term id => term label] pairs, with whichever
-   *   condition doesn't match $requestType removed.
+   *   The same [term id => term label] pairs, minus any option whose
+   *   condition doesn't match the current selection.
    */
-  private function filterCriteriaOptionsForRequestType(array $options, string $requestType): array {
+  private function filterCriteriaOptionsForRequestType(array $options, string $requestType, string $propertyType): array {
     if ($requestType !== 'kaufen') {
       $options = array_diff($options, self::PURCHASE_ONLY_CRITERIA);
     }
@@ -1471,7 +1503,20 @@ SVG,
       $options = array_diff($options, self::MIETEN_ONLY_CRITERIA);
     }
 
-    return $options;
+    // Case/whitespace-insensitive lookup so minor label differences in the
+    // taxonomy ("Nichtraucher " / "nichtraucher") still match.
+    $rules = [];
+    foreach (self::CRITERIA_VISIBILITY_RULES as $label => $byProperty) {
+      $rules[mb_strtolower(trim($label))] = $byProperty;
+    }
+
+    return array_filter($options, static function ($label) use ($rules, $requestType, $propertyType): bool {
+      $key = mb_strtolower(trim((string) $label));
+      if (!isset($rules[$key])) {
+        return TRUE;
+      }
+      return in_array($requestType, $rules[$key][$propertyType] ?? [], TRUE);
+    });
   }
 
   /**
@@ -2045,6 +2090,7 @@ HTML;
           '#default_value' => $stored['min'] ?? NULL,
           '#min' => 0,
           '#step' => 1,
+          '#element_validate' => [[self::class, 'validateWholeNumber']],
           '#attributes' => ['class' => ['wizard-input', 'wizard-input--number']],
         ],
         'separator' => [
@@ -2060,6 +2106,7 @@ HTML;
           '#default_value' => $stored['max'] ?? NULL,
           '#min' => 0,
           '#step' => 1,
+          '#element_validate' => [[self::class, 'validateWholeNumber']],
           '#attributes' => ['class' => ['wizard-input', 'wizard-input--number']],
         ],
         'unit' => [
@@ -2070,6 +2117,36 @@ HTML;
         ],
       ],
     ];
+  }
+
+  /**
+   * '#element_validate' callback for the Min/Max number inputs.
+   *
+   * Replaces core's Number::validateNumber() (set on the element via
+   * '#element_validate', which overrides the element-info default), so a
+   * decimal such as 4.5 produces the German "Nur ganze Zahlen eingeben"
+   * instead of core's English "... is not a valid number." message.
+   * Empty values stay valid (the fields are optional: placeholder "Egal").
+   *
+   * @param array<string, mixed> $element
+   * @param array<string, mixed> $complete_form
+   */
+  public static function validateWholeNumber(array &$element, FormStateInterface $form_state, array &$complete_form): void {
+    $value = $element['#value'] ?? '';
+    if (!is_scalar($value) || trim((string) $value) === '') {
+      return;
+    }
+
+    $value = trim((string) $value);
+
+    if (!is_numeric($value) || fmod((float) $value, 1.0) !== 0.0) {
+      $form_state->setError($element, new TranslatableMarkup('Nur ganze Zahlen eingeben'));
+      return;
+    }
+
+    if ((float) $value < 0) {
+      $form_state->setError($element, new TranslatableMarkup('Der Wert darf nicht negativ sein.'));
+    }
   }
 
   /* ==========================================================
