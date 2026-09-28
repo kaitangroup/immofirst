@@ -356,6 +356,8 @@
           var onToggle = function () {
             var expanded = section.classList.toggle('is-expanded');
             toggleBtn.setAttribute('aria-expanded', String(expanded));
+            updateMeasurements();
+            evaluateSticky();
           };
           section._stickyToggleHandler = onToggle;
           toggleBtn.addEventListener('click', onToggle);

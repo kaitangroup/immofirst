@@ -962,19 +962,40 @@
     margin-top:2px;
   }
   .property-card__bottom{
-    display:flex;
+    /* 3-column grid so the Details button sits in the true center
+       column while the bookmark stays right-aligned in the third. */
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
     align-items:center;
-    justify-content:space-between;
     gap:12px;
     padding-top:4px;
     margin-top:auto;
   }
+  /* Primary blue button look (same tokens as .btn--primary). Keeps the
+     .property-card__details class — search-ajax.js reads its href. */
   .property-card__details{
-    font-size:13.5px;
+    grid-column:2;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:11px 32px;
+    border-radius:var(--radius-sm);
+    background:var(--gradient);
+    color:#fff;
+    font-size:14px;
     font-weight:600;
-    color:var(--primary);
+    white-space:nowrap;
+    box-shadow:var(--shadow-sm);
+    transition:transform .25s ease, box-shadow .25s ease, background .25s ease;
+  }
+  .property-card__details:hover{
+    transform:translateY(-2px);
+    box-shadow:var(--shadow-md);
+    background:linear-gradient(90deg,#4A56E0,#4A42D6);
   }
   .property-card__actions{
+    grid-column:3;
+    justify-self:end;
     display:flex;
     align-items:center;
     gap:8px;

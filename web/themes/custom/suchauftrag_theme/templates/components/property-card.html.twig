@@ -154,14 +154,15 @@
     {% endif %}
 
     <div class="property-card__bottom">
+      {# Client feedback (item 11): only the blue "Details ansehen"
+         button, centered. "Angebot senden" is intentionally no longer
+         on the card — the offer form lives on the detail page. The
+         bookmark stays (separate function), pinned to the right of
+         the row so the button remains truly centered. offer_url is
+         still passed in by the preprocess but unused here. #}
       <a href="{{ details_url }}" class="property-card__details">Details ansehen</a>
 
       <div class="property-card__actions">
-        {% include '@suchauftrag_theme/templates/components/button.html.twig' with {
-          text: 'Angebot senden',
-          url: offer_url,
-          variant: 'primary'
-        } %}
         {{ bookmark_markup }}
       </div>
     </div>
