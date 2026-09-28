@@ -774,6 +774,31 @@ textarea.form-textarea:focus{
   outline-offset:2px;
 }
 
+/* Step 3 criteria options — MOBILE ONLY (<768px), per client request:
+   one full-width option per row instead of two narrow columns, where
+   longer labels ("Fußbodenheizung", "Barrierefrei / barrierearm",
+   "Smart-Home-System", "Penthouse / Dachgeschoss") overflowed their
+   boxes. Only the grid track count changes; height, border, hover,
+   selected (:checked + label) and focus styles above are untouched,
+   and there is no checkmark to preserve (already removed, see the
+   :checked comment above). Text may now wrap to several lines and is
+   vertically centered by the label's existing align-items:center — no
+   ellipsis or clipping. Desktop/tablet (>=768px) rules are unchanged. */
+@media (max-width:767px){
+  .wizard-checkbox-grid > div{
+    grid-template-columns:minmax(0, 1fr);
+  }
+  .wizard-checkbox-grid label{
+    box-sizing:border-box;
+    min-width:0;
+    height:auto;
+    white-space:normal;
+    overflow-wrap:anywhere;
+    text-overflow:clip;
+    overflow:visible;
+  }
+}
+
 @media (min-width:1024px){
   .wizard-checkbox-grid > div{
     grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));
