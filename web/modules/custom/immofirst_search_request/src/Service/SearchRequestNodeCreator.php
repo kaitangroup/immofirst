@@ -45,6 +45,13 @@ final class SearchRequestNodeCreator {
    */
   private const REFERENCE_NUMBER_FORMAT = 'SA-%s-%06d';
 
+  /**
+   * Per-request cache of list-field allowed_values, keyed by field name.
+   *
+   * @var array<string, array<string, string>>
+   */
+  private array $allowedValuesCache = [];
+
   public function __construct(
     private readonly EntityTypeManagerInterface $entityTypeManager,
   ) {}
@@ -243,37 +250,47 @@ final class SearchRequestNodeCreator {
         return 'Grundstück gesucht';
 
       case 'garage':
-        $parkingType = $step3['parking_type'] ?? '';
+        $parkingType = (string) ($step3['parking_type'] ?? '');
         if ($parkingType !== '') {
-          $parkingLabels = [
-            'tiefgarage' => 'Tiefgarage',
-            'aussenstellplatz' => 'Außenstellplatz',
-            'duplex' => 'Duplex',
-            'carport' => 'Carport',
-            'garage' => 'Garage',
-          ];
-          $label = $parkingLabels[$parkingType] ?? ucfirst(str_replace('_', ' ', $parkingType));
-          return $label . ' gesucht';
+          return $this->optionLabel('field_parking_type', $parkingType) . ' gesucht';
         }
         return 'Stellplatz gesucht';
 
       case 'commercial':
-        $commercialType = $step3['commercial_type'] ?? '';
+        $commercialType = (string) ($step3['commercial_type'] ?? '');
         if ($commercialType !== '') {
-          $commercialLabels = [
-            'buero_praxis' => 'Büro & Praxis',
-            'lagerhalle' => 'Lagerhalle',
-            'einzelhandel' => 'Einzelhandel',
-            'gastronomie' => 'Gastronomie',
-          ];
-          $label = $commercialLabels[$commercialType] ?? ucfirst(str_replace('_', ' ', $commercialType));
-          return $label . ' gesucht';
+          return $this->optionLabel('field_commercial_type', $commercialType) . ' gesucht';
         }
         return 'Gewerbeimmobilie gesucht';
 
       default:
         return 'Immobilie gesucht';
     }
+  }
+
+  /**
+   * Returns the human-readable label for a list field's stored key.
+   *
+   * Reads the field's own allowed_values (the single source of truth,
+   * the same labels the node page shows), so titles can never drift
+   * from the field options the way a hardcoded map did
+   * ("grundstuecke_flaechen" -> "Grundstücke & Flächen"). Uses the
+   * already-injected entity type manager (field_storage_config
+   * storage), so no service definition change is needed. Falls back to
+   * a humanized key only if the option is missing.
+   */
+  private function optionLabel(string $field, string $key): string {
+    if (!isset($this->allowedValuesCache[$field])) {
+      $storage = $this->entityTypeManager
+        ->getStorage('field_storage_config')
+        ->load('node.' . $field);
+      $this->allowedValuesCache[$field] = $storage
+        ? (array) $storage->getSetting('allowed_values')
+        : [];
+    }
+
+    $label = $this->allowedValuesCache[$field][$key] ?? '';
+    return $label !== '' ? (string) $label : ucfirst(str_replace('_', ' ', $key));
   }
 
   /**
