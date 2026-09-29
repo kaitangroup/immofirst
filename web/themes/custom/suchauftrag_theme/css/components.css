@@ -1537,7 +1537,7 @@
 }
 
 .stat-item__value {
-  min-height: calc(1.25em * 2); /* Reserve two lines */
+  /* min-height: calc(1.25em * 2); Reserve two lines */
   line-height: 1.25;
   display: flex;
   align-items: flex-start;
