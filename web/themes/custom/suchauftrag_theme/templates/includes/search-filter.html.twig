@@ -11,11 +11,13 @@
  * "suchauftragStickyFilter" behavior):
  *
  *   - [data-search-filter-sentinel]: a static, zero-height marker that
- *     never moves. theme.js observes it with an IntersectionObserver;
- *     when it scrolls out of view below the header, the section gets
- *     `.is-stuck`. It exists purely so the observer has something
- *     fixed to watch — observing the form itself would break once the
- *     form starts being repositioned.
+ *     never moves. theme.js compares its page position (measured once
+ *     via getBoundingClientRect(), not re-measured on every scroll)
+ *     against window.scrollY on each scroll event; once the user has
+ *     scrolled past it, the section gets `.is-stuck`. It exists
+ *     purely so there is something fixed to measure against —
+ *     measuring the form itself would break once the form starts
+ *     being repositioned.
  *
  *   - [data-search-filter-spacer]: hidden by default. Once `.is-stuck`
  *     is active, theme.js gives this the exact height of whichever

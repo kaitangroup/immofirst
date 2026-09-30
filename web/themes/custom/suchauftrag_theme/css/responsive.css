@@ -101,18 +101,32 @@
   .search-filter.is-stuck .search-filter__bar{
     display:none;
   }
+  /* NOTE: this previously reset position to `relative` (with
+     top/left/right:auto), which put the form back at its natural
+     in-flow position — i.e. up near the top of the page, inside
+     .hero-band, well above wherever the user has actually scrolled to
+     in order for .is-stuck to be true at all. In practice this meant
+     tapping "Filter ändern" produced no visible panel at the user's
+     current scroll position at all.
+     Fixed instead: keep it `position:fixed`, anchored directly below
+     the visible compact bar using the same
+     --search-filter-sticky-bar-height custom property theme.js
+     already measures (previously set but never actually consumed by
+     any CSS). max-height/overflow-y keep a long form scrollable
+     within the viewport on short screens instead of running off the
+     bottom edge. */
   .search-filter.is-stuck.is-expanded .search-filter__bar{
     display:block;
-    position:relative;
-    top:auto;
-    left:auto;
-    right:auto;
-    z-index:auto;
-    max-height:none;
-    overflow-y:visible;
+    position:fixed;
+    top:calc(var(--header-height) + var(--search-filter-sticky-bar-height, 60px));
+    left:0;
+    right:0;
+    z-index:90;
+    max-height:calc(100vh - var(--header-height) - var(--search-filter-sticky-bar-height, 60px));
+    overflow-y:auto;
     background:var(--surface);
-    box-shadow:none;
-    padding:16px 0 0 0;
+    box-shadow:var(--shadow-lg);
+    padding:16px 0;
   }
   .search-filter.is-stuck .search-filter__sticky-bar{
     display:block;

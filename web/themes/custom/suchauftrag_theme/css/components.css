@@ -151,10 +151,22 @@
      HERO BAND — shared background for Hero + Search Card + Feature Icons
      (all three sit on ONE continuous gradient in the reference design)
      ========================================================== */
-  /* Hero should never become the touch scrolling layer */
+  /* Hero should never become the touch scrolling layer.
+     NOTE: this previously also had `isolation: isolate;`. That forces
+     .hero-band to establish its own stacking context — and since the
+     sticky .search-filter__bar / .search-filter__sticky-bar
+     (position:fixed) are DESCENDANTS of .hero-band, they were being
+     painted INSIDE that local context instead of the page's root
+     context. .hero-band itself has no explicit z-index, so it simply
+     painted in DOM order relative to the later <section
+     class="search-requests"> sibling — meaning the results/cards
+     section rendered on top of the "fixed" filter whenever they
+     overlapped on screen, regardless of the filter's own z-index:90.
+     `position:relative` alone is enough to contain the absolutely
+     positioned .hero-band__bg decorative background below, so the
+     isolation was removed rather than raising any z-index value. */
 .hero-band{
   position: relative;
-  isolation: isolate;
   touch-action: pan-y;
 }
 
@@ -475,8 +487,9 @@
   /* ==========================================================
      STICKY SEARCH FILTER (added)
      Shared base rules for both desktop and mobile. theme.js toggles
-     `.is-stuck` on `.search-filter` via an IntersectionObserver watching
-     the static sentinel below, and `.is-expanded` when the mobile
+     `.is-stuck` on `.search-filter` by comparing window.scrollY against
+     the static sentinel's page position on scroll (no
+     IntersectionObserver involved), and `.is-expanded` when the mobile
      compact bar is clicked. See responsive.css (≤780px) for what these
      two classes mean on mobile — on desktop/tablet `.is-expanded` has
      no effect and the full form is always shown once stuck.
@@ -950,6 +963,17 @@
   }
   .back-to-top[hidden]{
     display:none !important;
+  }
+  /* The mobile expanded search-filter panel now renders as a fixed
+     overlay (see responsive.css) rather than off-screen, so on a
+     short/landscape viewport a tall form could reach the same
+     bottom-right corner as this always-on-top (z-index:999) button.
+     theme.js toggles this class on <body> whenever any
+     [data-search-filter] is expanded — the button's own position and
+     behavior are untouched, it's just stepped out of the way. */
+  body.has-expanded-search-filter .back-to-top{
+    opacity:0;
+    pointer-events:none;
   }
   .back-to-top__icon{
     font-size:18px;

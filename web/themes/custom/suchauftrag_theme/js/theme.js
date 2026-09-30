@@ -10,6 +10,21 @@
 (function (Drupal, once) {
   'use strict';
 
+  /* ============================================
+     Keep the fixed "Nach oben" button (owned by
+     search-ajax.js) from visually overlapping the
+     mobile expanded search-filter panel now that
+     the panel actually renders as a fixed overlay
+     in the viewport (see the sticky-filter fix
+     below). Purely a visibility coordination —
+     the button's own position/behavior is
+     untouched.
+     ============================================ */
+  function syncBackToTopVisibility() {
+    var anyExpanded = !!document.querySelector('[data-search-filter].is-expanded');
+    document.body.classList.toggle('has-expanded-search-filter', anyExpanded);
+  }
+
   Drupal.behaviors.suchauftragTheme = {
     attach: function (context) {
 
@@ -260,37 +275,42 @@
         if (!sentinel || !bar) { return; }
 
         var mobileQuery = window.matchMedia('(max-width: 780px)');
-        var naturalHeight = null;
         var sentinelY = null;
 
-        function updateMeasurements() {
-          var wasStuck = section.classList.contains('is-stuck');
-          var wasCompact = section.classList.contains('is-compact');
-          var wasExpanded = section.classList.contains('is-expanded');
+        // The sentinel is position:static, zero-height, and the very
+        // first child of this section, so its page position depends
+        // only on content ABOVE the section — never on whether
+        // .search-filter__bar/.search-filter__sticky-bar are
+        // currently fixed, compact, or expanded. No class stripping
+        // (and the reflow-forcing measure/restore cycle that used to
+        // come with it) is needed just to read this.
+        function measureSentinelY() {
+          return sentinel.getBoundingClientRect().top + window.scrollY;
+        }
 
-          section.classList.remove('is-stuck', 'is-compact', 'is-expanded');
-          if (spacer) { spacer.style.height = '0px'; }
-
-          naturalHeight = section.getBoundingClientRect().height;
-          sentinelY = sentinel.getBoundingClientRect().top + window.scrollY;
-
-          if (wasStuck) {
-            section.classList.add('is-stuck');
-            if (wasCompact && !mobileQuery.matches) {
-              section.classList.add('is-compact');
-            }
-            if (wasExpanded) {
-              section.classList.add('is-expanded');
-            }
-            if (spacer && naturalHeight !== null) {
-              spacer.style.height = naturalHeight + 'px';
-            }
+        // Reserve exactly as much space as is really being taken out
+        // of normal flow right now. getBoundingClientRect() already
+        // reports 0 for a display:none element, so simply summing the
+        // two real elements' current boxes is correct for every
+        // combination of is-stuck / is-compact / is-expanded — the
+        // desktop compact bar, the mobile compact "Filter ändern" bar,
+        // or (once expanded) both together — with no branching needed
+        // and no separate "natural height" guess that can drift out
+        // of sync with what's actually on screen.
+        function updateSpacer() {
+          if (!spacer) { return; }
+          if (!section.classList.contains('is-stuck')) {
+            spacer.style.height = '0px';
+            return;
           }
+          var barHeight = bar.getBoundingClientRect().height;
+          var stickyBarHeight = stickyBar ? stickyBar.getBoundingClientRect().height : 0;
+          spacer.style.height = (barHeight + stickyBarHeight) + 'px';
         }
 
         function evaluateSticky() {
-          if (sentinelY === null || naturalHeight === null) {
-            updateMeasurements();
+          if (sentinelY === null) {
+            sentinelY = measureSentinelY();
           }
           var stuck = window.scrollY >= sentinelY;
           section.classList.toggle('is-stuck', stuck);
@@ -300,14 +320,11 @@
             if (stickyBar) {
               section.style.setProperty('--search-filter-sticky-bar-height', stickyBar.getBoundingClientRect().height + 'px');
             }
-            if (spacer && naturalHeight !== null) {
-              spacer.style.height = naturalHeight + 'px';
-            }
           } else {
             section.classList.remove('is-expanded');
             if (toggleBtn) { toggleBtn.setAttribute('aria-expanded', 'false'); }
-            if (spacer) { spacer.style.height = '0px'; }
           }
+          updateSpacer();
         }
 
         // Remove old listeners before attaching new ones
@@ -326,18 +343,36 @@
         };
 
         var onResize = function () {
-          updateMeasurements();
+          // is-compact is already dropped on resize-into-mobile inside
+          // evaluateSticky() itself (via the mobileQuery check below).
+          // is-expanded has no such guard and is a mobile-only concept
+          // that desktop CSS ignores today — but resizing into desktop
+          // while it's set would otherwise leave it sitting on the
+          // section indefinitely. Drop it explicitly here instead of
+          // relying on that being harmless by coincidence.
+          if (section.classList.contains('is-expanded') && !mobileQuery.matches) {
+            section.classList.remove('is-expanded');
+            if (toggleBtn) { toggleBtn.setAttribute('aria-expanded', 'false'); }
+            syncBackToTopVisibility();
+          }
+          sentinelY = measureSentinelY();
           evaluateSticky();
         };
 
         var onOrientationChange = function () {
-          updateMeasurements();
+          sentinelY = measureSentinelY();
           evaluateSticky();
         };
 
         section._stickyScrollHandler = onScroll;
         section._stickyResizeHandler = onResize;
         section._stickyOrientationHandler = onOrientationChange;
+        // Cross-section handlers below (outside-click/Escape) live at
+        // document level and loop over every [data-search-filter] on
+        // the page, so they don't have closure access to this
+        // section's own updateSpacer(). Expose it the same way the
+        // scroll/resize/orientation handlers are already exposed.
+        section._stickyUpdateSpacer = updateSpacer;
 
         window.addEventListener('scroll', onScroll, { passive: true });
         window.addEventListener('resize', onResize, { passive: true });
@@ -345,7 +380,7 @@
 
         // Initialize after layout using requestAnimationFrame
         requestAnimationFrame(function () {
-          updateMeasurements();
+          sentinelY = measureSentinelY();
           evaluateSticky();
         });
 
@@ -356,8 +391,13 @@
           var onToggle = function () {
             var expanded = section.classList.toggle('is-expanded');
             toggleBtn.setAttribute('aria-expanded', String(expanded));
-            updateMeasurements();
-            evaluateSticky();
+            // sentinelY is unaffected by expand/collapse (see
+            // measureSentinelY() above), so there's no need to
+            // recompute it — or to force the old strip-all-classes
+            // reflow — on every toggle. Just bring the spacer in line
+            // with whatever is now actually on screen.
+            updateSpacer();
+            syncBackToTopVisibility();
           };
           section._stickyToggleHandler = onToggle;
           toggleBtn.addEventListener('click', onToggle);
@@ -371,6 +411,8 @@
                 sec.classList.remove('is-expanded');
                 var tBtn = sec.querySelector('[data-sticky-toggle]');
                 if (tBtn) { tBtn.setAttribute('aria-expanded', 'false'); }
+                if (sec._stickyUpdateSpacer) { sec._stickyUpdateSpacer(); }
+                syncBackToTopVisibility();
               }
             });
           });
@@ -384,6 +426,8 @@
                     tBtn.setAttribute('aria-expanded', 'false');
                     tBtn.focus();
                   }
+                  if (sec._stickyUpdateSpacer) { sec._stickyUpdateSpacer(); }
+                  syncBackToTopVisibility();
                 }
               });
             }
@@ -421,6 +465,8 @@
           form.addEventListener('submit', function () {
             section.classList.remove('is-expanded');
             if (toggleBtn) { toggleBtn.setAttribute('aria-expanded', 'false'); }
+            updateSpacer();
+            syncBackToTopVisibility();
           });
           updateSummary();
         }
