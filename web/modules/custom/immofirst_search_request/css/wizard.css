@@ -739,7 +739,13 @@ textarea.form-textarea:focus{
   align-items:center;
   gap:8px;
   width:100%;
+  box-sizing:border-box;
+  min-width:0;
+  /* min-height (not height) — a long, hyphenated label is allowed to
+     grow to 2 lines instead of being forced back to 42px and clipped;
+     a single-line label still renders at exactly 42px as before. */
   min-height:42px;
+  height:auto;
   padding:9px 14px;
   border:1px solid #D9E4F6;
   border-radius:10px;
@@ -752,6 +758,29 @@ textarea.form-textarea:focus{
   text-align:left;
   line-height:1.25;
   transition:border-color .18s ease, border-width .18s ease, color .18s ease;
+  /* Column layout and box widths are unchanged at every breakpoint
+     (client: "we don't need to change the whole layout") — this is
+     the actual fix for long words like "Fußbodenheizung" or
+     "Gemeinschaftsgarten" overflowing their box:
+     hyphens:auto breaks long words at real German syllable points
+     ("Fußboden-heizung"), the same place a person would hand-place a
+     hyphen — not an arbitrary character split. It needs the page (or
+     an ancestor) to declare `lang="de"`, which this Drupal site's
+     <html> tag already does for German-interface pages; if a specific
+     word ever still doesn't break where expected, the fix is a
+     &shy; (soft hyphen) inserted into that option's label text at the
+     exact intended point, which always wins over the automatic
+     dictionary — send the list of words/positions and it can be
+     added to the option labels directly.
+     overflow-wrap:break-word is only a fallback for the rare case a
+     word has no valid hyphenation point at all (e.g. one already
+     containing a "/", such as "Barrierefrei / barrierearm" — that
+     breaks at the existing space/slash before this ever applies). */
+  hyphens:auto;
+  -webkit-hyphens:auto;
+  -ms-hyphens:auto;
+  overflow-wrap:break-word;
+  word-break:normal;
 }
 /* Selected chip: indicated by border + text color + background only.
    (The circular checkmark that used to sit here via a ::after
@@ -772,31 +801,6 @@ textarea.form-textarea:focus{
 .wizard-checkbox-grid input[type="checkbox"]:focus-visible + label{
   outline:2px solid #2563FF;
   outline-offset:2px;
-}
-
-/* Step 3 criteria options — MOBILE ONLY (<768px), per client request:
-   one full-width option per row instead of two narrow columns, where
-   longer labels ("Fußbodenheizung", "Barrierefrei / barrierearm",
-   "Smart-Home-System", "Penthouse / Dachgeschoss") overflowed their
-   boxes. Only the grid track count changes; height, border, hover,
-   selected (:checked + label) and focus styles above are untouched,
-   and there is no checkmark to preserve (already removed, see the
-   :checked comment above). Text may now wrap to several lines and is
-   vertically centered by the label's existing align-items:center — no
-   ellipsis or clipping. Desktop/tablet (>=768px) rules are unchanged. */
-@media (max-width:767px){
-  .wizard-checkbox-grid > div{
-    grid-template-columns:minmax(0, 1fr);
-  }
-  .wizard-checkbox-grid label{
-    box-sizing:border-box;
-    min-width:0;
-    height:auto;
-    white-space:normal;
-    overflow-wrap:anywhere;
-    text-overflow:clip;
-    overflow:visible;
-  }
 }
 
 @media (min-width:1024px){
