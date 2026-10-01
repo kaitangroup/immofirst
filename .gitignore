@@ -7,6 +7,7 @@
 # Drupal generated files
 /web/sites/default/files/
 /web/sites/default/settings.local.php
+/web/modules/custom/immo_faq/
 
 # Private files
 /private/
