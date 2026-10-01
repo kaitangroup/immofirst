@@ -52,15 +52,49 @@
       if (toggle && !toggle.dataset.bound) {
         toggle.dataset.bound = 'true';
         var menu = document.getElementById(toggle.getAttribute('aria-controls'));
+        var backdrop = document.querySelector('[data-mobile-menu-backdrop]');
+
+        var closeMenu = function () {
+          toggle.setAttribute('aria-expanded', 'false');
+          if (menu) {
+            menu.hidden = true;
+            menu.classList.remove('is-open');
+          }
+          if (backdrop) {
+            backdrop.hidden = true;
+            backdrop.classList.remove('is-open');
+          }
+          document.body.classList.remove('u-no-scroll');
+        };
 
         toggle.addEventListener('click', function () {
           var isOpen = toggle.getAttribute('aria-expanded') === 'true';
-          toggle.setAttribute('aria-expanded', String(!isOpen));
-          if (menu) {
-            menu.hidden = isOpen;
-            menu.classList.toggle('is-open', !isOpen);
+          if (isOpen) {
+            closeMenu();
+            return;
           }
-          document.body.classList.toggle('u-no-scroll', !isOpen);
+          toggle.setAttribute('aria-expanded', 'true');
+          if (menu) {
+            menu.hidden = false;
+            menu.classList.add('is-open');
+          }
+          if (backdrop) {
+            backdrop.hidden = false;
+            backdrop.classList.add('is-open');
+          }
+          document.body.classList.add('u-no-scroll');
+        });
+
+        if (backdrop && !backdrop.dataset.bound) {
+          backdrop.dataset.bound = 'true';
+          backdrop.addEventListener('click', closeMenu);
+        }
+
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+            closeMenu();
+            toggle.focus();
+          }
         });
       }
 
@@ -441,7 +475,13 @@
           var checkedArt = form.querySelector('input[name="art"]:checked');
           if (checkedArt) {
             var artLabel = form.querySelector('label[for="' + checkedArt.id + '"]');
-            if (artLabel) { parts.push(artLabel.textContent.trim()); }
+            // The label holds two responsive text spans (.btn-text-desktop /
+            // .btn-text-mobile) that swap via CSS at different widths —
+            // reading the whole label's textContent picked up BOTH
+            // regardless of which is visually hidden, producing
+            // "Mieter Mieter". Read just one of them instead.
+            var artText = artLabel ? artLabel.querySelector('.btn-text-desktop') : null;
+            if (artText) { parts.push(artText.textContent.trim()); }
           }
           form.querySelectorAll('[data-select]').forEach(function (select) {
             var valueEl = select.querySelector('[data-select-value]');

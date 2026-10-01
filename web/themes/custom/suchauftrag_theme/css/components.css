@@ -133,10 +133,30 @@
   .header__hamburger[aria-expanded="true"] span:nth-child(2){ opacity:0; }
   .header__hamburger[aria-expanded="true"] span:nth-child(3){ transform:translateY(-7px) rotate(-45deg); }
   
+  /* .header__mobile-menu used to be `display:none/block` in normal
+     flow, nested inside .header. .header is position:sticky, so
+     opening the menu grew the STICKY HEADER'S OWN BOX to the full
+     height of the nav list — the header didn't look like a header
+     with a menu open under it, the menu effectively WAS the header at
+     that point, with no visual separation (background, shadow, slide
+     motion) from the page — which read as "not recognizable as a
+     menu". It's now a fixed overlay panel instead: same content, but
+     it no longer affects the header's own height, and it looks like
+     an actual menu (card-style panel + backdrop), closer to the
+     earlier design mentioned as clearer. */
   .header__mobile-menu{
     display:none;
-    border-top:1px solid var(--border);
+    position:fixed;
+    top:var(--header-height);
+    left:0;
+    right:0;
+    z-index:110;
     background:var(--surface);
+    box-shadow:var(--shadow-lg);
+    border-top:1px solid var(--border);
+    border-radius:0 0 var(--radius-md) var(--radius-md);
+    max-height:calc(100vh - var(--header-height));
+    overflow-y:auto;
   }
   .header__mobile-menu.is-open{ display:block; }
   .header__mobile-menu ul{
@@ -146,45 +166,84 @@
     gap:16px;
   }
   .header__mobile-menu a{ font-size:15px; font-weight:500; }
+
+  /* Backdrop dims the page behind the open menu — the same cue a
+     typical mobile nav drawer uses to read clearly as a menu rather
+     than page content. Sits under the menu (lower z-index) but above
+     the sticky header/filter so it can't be mistaken for part of
+     either. Tapping it closes the menu (see theme.js). */
+  .header__mobile-menu-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    top:var(--header-height);
+    z-index:105;
+    background:rgba(15, 23, 42, .4);
+  }
+  .header__mobile-menu-backdrop.is-open{ display:block; }
   
   /* ==========================================================
      HERO BAND — shared background for Hero + Search Card + Feature Icons
      (all three sit on ONE continuous gradient in the reference design)
      ========================================================== */
-  /* Hero should never become the touch scrolling layer.
-     NOTE: this previously also had `isolation: isolate;`. That forces
-     .hero-band to establish its own stacking context — and since the
-     sticky .search-filter__bar / .search-filter__sticky-bar
-     (position:fixed) are DESCENDANTS of .hero-band, they were being
-     painted INSIDE that local context instead of the page's root
-     context. .hero-band itself has no explicit z-index, so it simply
-     painted in DOM order relative to the later <section
-     class="search-requests"> sibling — meaning the results/cards
-     section rendered on top of the "fixed" filter whenever they
-     overlapped on screen, regardless of the filter's own z-index:90.
-     `position:relative` alone is enough to contain the absolutely
-     positioned .hero-band__bg decorative background below, so the
-     isolation was removed rather than raising any z-index value. */
-.hero-band{
-  position: relative;
-  touch-action: pan-y;
-}
+  /* IMPORTANT — do not give .hero-band a `position` value again.
+     A previous revision set `position:relative` here (to contain
+     .hero-band__bg's `position:absolute`, after removing an unrelated
+     `isolation:isolate` that was fixing a real z-index bug — see the
+     stacking-order paragraph below). That reintroduced a *different*,
+     worse bug: .search-filter__bar / .search-filter__sticky-bar
+     (position:fixed) are DESCENDANTS of .hero-band once they're
+     nested inside .hero-band__content below. A position:relative (or
+     any non-static) ancestor sitting near a position:fixed descendant
+     is a known mobile WebKit/Chromium bug that corrupts touch-scroll —
+     this is what caused the "abrupt jump" scrolling bug.
+     Grid-cell stacking replaces position:relative/absolute entirely:
+     .hero-band__bg and .hero-band__content both sit in the same single
+     grid cell (grid-column/row:1), which layers the decorative
+     background behind the real content exactly like position:absolute
+     did, but .hero-band itself never gets a position value — so there
+     is no non-static ancestor left for that bug to trigger on.
 
-/* Background is purely decorative */
-.hero-band__bg{
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-select: none;
-}
+     Stacking order (the problem the position:relative regression was
+     actually trying to solve): .hero-band must NOT establish its own
+     stacking context (e.g. via `isolation:isolate` or a z-index), or
+     its position:fixed descendants (the sticky filter) get painted
+     inside that local context instead of the page's root one — the
+     later <section class="search-requests"> sibling has no z-index
+     either, so it would then win on DOM order alone and render over
+     the "fixed" filter. Grid stacking doesn't create a stacking
+     context by itself, so this is naturally avoided without isolation
+     and without position:relative. */
+  .hero-band{
+    display:grid;
+    touch-action:pan-y;
+  }
+  .hero-band__bg,
+  .hero-band__content{
+    grid-column:1;
+    grid-row:1;
+  }
+  .hero-band__bg{
+    /* Safe here (unlike on .hero-band itself): only the decorative,
+       pointer-events:none wave SVG lives inside this element's own
+       subtree — the sticky filter is a sibling, inside
+       .hero-band__content instead, never a descendant of this
+       positioned element. */
+    position:relative;
+    overflow:hidden;
+    pointer-events:none;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+  .hero-band__content{
+    min-width:0;
+  }
 
-/* Sticky layer must not capture gestures except its controls */
-.search-filter{
-  touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
-}
+  /* Sticky layer must not capture gestures except its controls */
+  .search-filter{
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
   .hero-band__wave{ position:absolute; bottom:0; left:0; width:100%; height:auto; }
   
   .hero{
