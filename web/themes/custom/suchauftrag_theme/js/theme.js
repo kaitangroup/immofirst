@@ -311,15 +311,28 @@
         var mobileQuery = window.matchMedia('(max-width: 780px)');
         var sentinelY = null;
 
-        // The sentinel is position:static, zero-height, and the very
-        // first child of this section, so its page position depends
-        // only on content ABOVE the section — never on whether
+        function headerHeight() {
+          var value = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height'));
+          return isNaN(value) ? 0 : value;
+        }
+
+        // The sentinel is position:static, zero-height, and placed
+        // right after [data-search-filter-bar] (the full form) — see
+        // the Twig comment — so its page position is the full form's
+        // own bottom edge, regardless of whether
         // .search-filter__bar/.search-filter__sticky-bar are
         // currently fixed, compact, or expanded. No class stripping
         // (and the reflow-forcing measure/restore cycle that used to
         // come with it) is needed just to read this.
+        //
+        // Subtracting the header's height gives the scrollY at which
+        // the form's bottom edge reaches the BOTTOM of the sticky
+        // header — i.e. exactly where the compact bar will sit once
+        // .is-stuck engages — rather than where it reaches the raw
+        // viewport top (which would still leave the header overlapping
+        // the last ~headerHeight px of the full form for a moment).
         function measureSentinelY() {
-          return sentinel.getBoundingClientRect().top + window.scrollY;
+          return sentinel.getBoundingClientRect().top + window.scrollY - headerHeight();
         }
 
         // Reserve exactly as much space as is really being taken out

@@ -12,12 +12,23 @@
  *
  *   - [data-search-filter-sentinel]: a static, zero-height marker that
  *     never moves. theme.js compares its page position (measured once
- *     via getBoundingClientRect(), not re-measured on every scroll)
- *     against window.scrollY on each scroll event; once the user has
- *     scrolled past it, the section gets `.is-stuck`. It exists
- *     purely so there is something fixed to measure against —
- *     measuring the form itself would break once the form starts
- *     being repositioned.
+ *     via getBoundingClientRect(), not re-measured on every scroll),
+ *     minus the header's own height, against window.scrollY on each
+ *     scroll event; once the user has scrolled past that point, the
+ *     section gets `.is-stuck`. It exists purely so there is something
+ *     fixed to measure against — measuring the form itself would
+ *     break once the form starts being repositioned.
+ *
+ *     Placed AFTER [data-search-filter-bar] (the full expanded form),
+ *     not before it — its page position is therefore the full form's
+ *     own BOTTOM edge. This is deliberate: it means .is-stuck only
+ *     engages once the user has scrolled past the entire filter, not
+ *     after just a few pixels into it, and — because that's exactly
+ *     where the compact bar visually continues from — swapping to the
+ *     compact bar at that instant causes no jump: the content that
+ *     follows was already sitting exactly where the compact bar now
+ *     appears, instead of several hundred pixels of full-form height
+ *     suddenly collapsing out of the middle of the page.
  *
  *   - [data-search-filter-spacer]: hidden by default. Once `.is-stuck`
  *     is active, theme.js gives this the exact height of whichever
@@ -43,7 +54,6 @@
  */
 #}
 <section class="search-filter" data-search-filter aria-label="Suchaufträge filtern">
-  <div class="search-filter__sentinel" data-search-filter-sentinel aria-hidden="true"></div>
   <div class="search-filter__spacer" data-search-filter-spacer aria-hidden="true"></div>
 
   <div class="search-filter__bar" data-search-filter-bar>
@@ -51,6 +61,10 @@
       {% include '@suchauftrag_theme/templates/components/search-form.html.twig' %}
     </div>
   </div>
+
+  {# Position matters — see the file header comment: this must stay
+     directly after [data-search-filter-bar], not before it. #}
+  <div class="search-filter__sentinel" data-search-filter-sentinel aria-hidden="true"></div>
 
   {# Compact bar — mobile only, see responsive.css. Summary text is
      filled in and kept in sync by theme.js from the (single) form's

@@ -97,9 +97,37 @@
      replaced by the compact "Filter ändern" bar. Clicking that bar
      adds .is-expanded, which brings the SAME form back as a floating
      panel underneath it — never a duplicate form, never a full page
-     navigation. */
+     navigation.
+
+     THE JUMP FIX: this used to be `display:none`. display can't be
+     transitioned — it flips in a single frame — so the ~400px+ of
+     page height the full form had been occupying vanished instantly,
+     and (per the .search-filter__spacer rule in components.css, also
+     just a few dozen px once collapsed) didn't get replaced with
+     anything close to equivalent space. Since window.scrollY doesn't
+     change when the DOCUMENT shrinks above/at the current scroll
+     position, the same scrollY afterwards lands much further into the
+     page than before — which is exactly what read as an abrupt jump
+     in the first search result's position.
+     max-height + opacity CAN be transitioned, at the same --ease this
+     theme already uses for the desktop/tablet compact transition
+     below — so this now collapses smoothly over the same ~250ms
+     instead of in one frame. visibility is delayed with its own
+     zero-duration, --ease-long transition so the (still technically
+     present, now invisible) form's fields drop out of tab order only
+     once the collapse animation has actually finished, instead of
+     the instant form.hidden=false their max-height:0 alone would
+     otherwise be. pointer-events:none keeps it untappable while
+     collapsed regardless. */
   .search-filter.is-stuck .search-filter__bar{
-    display:none;
+    max-height:0;
+    padding-top:0;
+    padding-bottom:0;
+    overflow:hidden;
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transition:max-height var(--ease), opacity var(--ease), padding var(--ease), visibility 0s linear .25s;
   }
   /* NOTE: this previously reset position to `relative` (with
      top/left/right:auto), which put the form back at its natural
@@ -127,6 +155,10 @@
     background:var(--surface);
     box-shadow:var(--shadow-lg);
     padding:16px 0;
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transition:max-height var(--ease), opacity var(--ease), padding var(--ease);
   }
   .search-filter.is-stuck .search-filter__sticky-bar{
     display:block;

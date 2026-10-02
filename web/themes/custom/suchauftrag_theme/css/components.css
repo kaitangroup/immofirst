@@ -568,7 +568,10 @@
     height:0;
     pointer-events:none;
   }
-  .search-filter__spacer{ display:none; }
+  .search-filter__spacer{
+    display:none;
+    transition:height var(--ease);
+  }
   .search-filter.is-stuck .search-filter__spacer{ display:block; }
   
   .search-filter__bar{
@@ -1625,6 +1628,3 @@
   display: flex;
   align-items: flex-start;
 }
-
-
-
