@@ -1353,6 +1353,48 @@ SVG,
   ];
 
   /**
+   * Client-approved word breaks for Step 3 chip labels (ImmoFirst_261001.xlsx,
+   * Tab.2.1 — the blue-highlighted cells, written with a "-" at the only
+   * point the client wants each word split; issue 18).
+   *
+   * [taxonomy term label => Excel spelling]. Presentation only: the "-" is
+   * rendered as a soft hyphen (U+00AD) by criteriaOptionDisplayLabels(), so
+   * the browser shows "Fußbodenheizung" when it fits and "Fußboden-" /
+   * "heizung" only when it has to wrap there. Term labels, the repository
+   * and stored values are never changed.
+   *
+   * @var array<string, string>
+   */
+  private const STEP3_LABEL_BREAKS = [
+    'Fußbodenheizung' => 'Fußboden-heizung',
+    'Denkmalgeschützt' => 'Denkmal-geschützt',
+    'Gemeinschaftsgarten' => 'Gemeinschafts-garten',
+    'Einkommensnachweise vorhanden' => 'Einkommens-nachweise vorhanden',
+    'Mit Stromanschluss' => 'Mit Strom-anschluss',
+    'Etagenwohnung' => 'Etagen-wohnung',
+    'Seniorengerecht' => 'Senioren-gerecht',
+    'Außenstellplätze' => 'Außen-stellplätze',
+    'Flexible Übergabe / Einzug' => 'Flexible Über-gabe / Einzug',
+    'Einfamilienhaus' => 'Einfamilien-haus',
+    'Doppelhaushälfte' => 'Doppelhaus-hälfte',
+    'Mehrfamilienhaus' => 'Mehrfamilien-haus',
+    'Renovierungsbedürftig' => 'Renovierungs-bedürftig',
+    'Einliegerwohnung vorhanden' => 'Einlieger-wohnung vorhanden',
+    'Mehrgenerationenhaus geeignet' => 'Mehrgenera-tionenhaus geeignet',
+    'Baugrundstück' => 'Bau-grundstück',
+    'Bauerwartungsland' => 'Bauer-wartungsland',
+    'Landwirtschaftliche Fläche' => 'Land-wirtschaftliche Fläche',
+    'Freizeitgrundstück' => 'Freizeitgrund-stück',
+    'Gewerbegrundstück' => 'Gewerbe-grundstück',
+    'Mit Baugenehmigung' => 'Mit Bau-genehmigung',
+    'Teilerschlossen' => 'Teil-erschlossen',
+    'Einfamilienhaus möglich' => 'Einfamilien-haus möglich',
+    'Mehrfamilienhaus möglich' => 'Mehrfamilien-haus möglich',
+    'Gewerbebebauung möglich' => 'Gewerbebe-bauung möglich',
+    'Extra Stauraum vorhand' => 'Extra Stau-raum vorhand',
+  ];
+
+  /**
    * Step 3: "Zusätzliche Kriterien" chip groups + notes.
    *
    * Groups/options are loaded from the search_criteria taxonomy
@@ -1401,6 +1443,10 @@ SVG,
       if (!$options) {
         continue;
       }
+
+      // Display labels only — after the label-based filtering above, and
+      // keyed by the same term ids, so submitted/stored values are unchanged.
+      $options = $this->criteriaOptionDisplayLabels($options);
 
       $groupKey = SearchCriteriaData::machineKey($groupLabel);
 
@@ -1517,6 +1563,26 @@ SVG,
       }
       return in_array($requestType, $rules[$key][$propertyType] ?? [], TRUE);
     });
+  }
+
+  /**
+   * Adds the client-approved break points to Step 3 chip labels.
+   *
+   * @param array<int, string> $options
+   *   [term id => term label].
+   *
+   * @return array<int, string>
+   *   The same keys, with each STEP3_LABEL_BREAKS label's "-" turned into a
+   *   soft hyphen (U+00AD). Other labels are returned unchanged.
+   */
+  private function criteriaOptionDisplayLabels(array $options): array {
+    foreach ($options as $tid => $label) {
+      $broken = self::STEP3_LABEL_BREAKS[trim((string) $label)] ?? NULL;
+      if ($broken !== NULL) {
+        $options[$tid] = str_replace('-', "\u{00AD}", $broken);
+      }
+    }
+    return $options;
   }
 
   /**

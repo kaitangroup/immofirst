@@ -1156,6 +1156,24 @@ textarea.form-textarea:focus{
     grid-template-columns:84px 1fr;
     gap:8px;
   }
+
+  /* Step 3 chips (issue 18): break long words only at the client's
+     soft hyphens (STEP3_LABEL_BREAKS in SearchRequestWizardForm.php),
+     shown as "Fußboden-" / "heizung". hyphens:auto above can't do
+     this — the site's <html lang="en"> gives it no German dictionary,
+     and the label's flex text item could then never shrink below its
+     longest word, so it overflowed the box.
+     Font/side padding step down slightly because some unbreakable
+     pieces are still wider than the 94px text area of a 375px-wide
+     two-column chip at 14px/14px ("Gemeinschafts-" 108px,
+     "Gartennutzung"/"Selbstauskunft" 102px). */
+  .wizard__step-content[data-wizard-step="3"] .wizard-checkbox-grid label{
+    hyphens:manual;
+    -webkit-hyphens:manual;
+    font-size:13px;
+    padding-left:10px;
+    padding-right:10px;
+  }
 }
 
 /* =========================================================================
