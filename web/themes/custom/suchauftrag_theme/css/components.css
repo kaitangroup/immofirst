@@ -593,6 +593,13 @@
   .search-filter.is-stuck{
     padding-top:0;
     padding-bottom:0;
+    /* .search-filter's own z-index:2 (above) is the stacking context
+       its position:fixed bars paint inside, so their z-index:90 only
+       counts within it. Lift the whole section while stuck so the
+       pinned filter stays above any positioned page content (sort
+       dropdown, cards) — still below the header (100) and mobile
+       menu (105/110). */
+    z-index:90;
   }
   
   /* Compact "Filter ändern" bar — hidden entirely outside mobile, see

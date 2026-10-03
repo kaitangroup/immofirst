@@ -335,24 +335,37 @@
           return sentinel.getBoundingClientRect().top + window.scrollY - headerHeight();
         }
 
-        // Reserve exactly as much space as is really being taken out
-        // of normal flow right now. getBoundingClientRect() already
-        // reports 0 for a display:none element, so simply summing the
-        // two real elements' current boxes is correct for every
-        // combination of is-stuck / is-compact / is-expanded — the
-        // desktop compact bar, the mobile compact "Filter ändern" bar,
-        // or (once expanded) both together — with no branching needed
-        // and no separate "natural height" guess that can drift out
-        // of sync with what's actually on screen.
+        // Reserve exactly the in-flow space .is-stuck takes away: the
+        // section's own padding plus the full form, both of which drop
+        // out of normal flow the instant .search-filter__bar becomes
+        // position:fixed. Measured while NOT stuck as the distance from
+        // the section's top to the sentinel (the form's bottom edge),
+        // so it includes the section padding AND any child margin that
+        // collapses through the form wrapper (the section's own height
+        // misses that margin on mobile), and always reflects the real
+        // rendered form at the current viewport width.
+        //
+        // Previously this reserved only the height of whatever was
+        // currently fixed (i.e. just the compact bar on mobile). The
+        // ~400px difference then collapsed out of the page above the
+        // viewport, pulling the results — cards included — straight up
+        // underneath the compact bar. Chromium's scroll anchoring hid
+        // that in desktop emulation; iOS Safari has no scroll
+        // anchoring, so on a real phone the cards visibly slid under
+        // the bar. Since .is-stuck only engages once the full form has
+        // scrolled behind the header (see measureSentinelY()), this
+        // reserved block always sits above the visible area and never
+        // shows up as an empty gap. The fixed compact bar / expanded
+        // panel are overlays (z-index above the page content) and no
+        // longer change the document height when toggled.
+        var naturalHeight = 0;
+
         function updateSpacer() {
           if (!spacer) { return; }
           if (!section.classList.contains('is-stuck')) {
-            spacer.style.height = '0px';
-            return;
+            naturalHeight = sentinel.getBoundingClientRect().top - section.getBoundingClientRect().top;
           }
-          var barHeight = bar.getBoundingClientRect().height;
-          var stickyBarHeight = stickyBar ? stickyBar.getBoundingClientRect().height : 0;
-          spacer.style.height = (barHeight + stickyBarHeight) + 'px';
+          spacer.style.height = naturalHeight + 'px';
         }
 
         function evaluateSticky() {
@@ -360,6 +373,11 @@
             sentinelY = measureSentinelY();
           }
           var stuck = window.scrollY >= sentinelY;
+          // Capture the unstuck footprint right before the classes
+          // flip, so the spacer is correct in the same frame.
+          if (stuck && !section.classList.contains('is-stuck')) {
+            updateSpacer();
+          }
           section.classList.toggle('is-stuck', stuck);
           section.classList.toggle('is-compact', stuck && !mobileQuery.matches);
 
