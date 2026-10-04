@@ -58,8 +58,28 @@
     getAll: readSavedIds,
     isFilterActive: function () {
       return filterActive;
+    },
+    // Sets the "Nur gemerkte anzeigen" state without fetching results —
+    // used by search-ajax.js to put the toggle back the way it was when
+    // the visitor returns to the results with the browser's Back button.
+    setFilterActive: function (active) {
+      filterActive = !!active;
+      document.querySelectorAll('[data-saved-filter-toggle]').forEach(function (btn) {
+        btn.classList.toggle('is-active', filterActive);
+        btn.setAttribute('aria-pressed', String(filterActive));
+      });
+    },
+    showEmptyState: function () {
+      showEmptyBookmarksState();
     }
   };
+
+  function scrollToResultsStart() {
+    var searchAjax = window.Drupal && Drupal.suchauftragSearchAjax;
+    if (searchAjax && searchAjax.scrollToResultsStart) {
+      searchAjax.scrollToResultsStart();
+    }
+  }
 
   function showEmptyBookmarksState() {
     var resultsRegion = document.getElementById('search-results-region');
@@ -107,12 +127,13 @@
 
         if (filterActive && readSavedIds().length === 0) {
           showEmptyBookmarksState();
+          scrollToResultsStart();
           return;
         }
 
         var searchAjax = window.Drupal && Drupal.suchauftragSearchAjax;
         if (searchAjax && searchAjax.refresh) {
-          searchAjax.refresh();
+          searchAjax.refresh({ scrollToResults: true });
         }
         else {
           console.warn('saved-searches: Drupal.suchauftragSearchAjax is not available — is suchauftrag_theme/search-ajax attached on this page?');

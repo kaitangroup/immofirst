@@ -53,6 +53,15 @@
         toggle.dataset.bound = 'true';
         var menu = document.getElementById(toggle.getAttribute('aria-controls'));
         var backdrop = document.querySelector('[data-mobile-menu-backdrop]');
+        // The scroll lock goes on <html>, not <body>: html/body both have
+        // overflow-x:clip (responsive.css), so overflow:hidden on <body>
+        // is not propagated to the viewport — <body> becomes its own
+        // scroll container instead, and the sticky header (with this
+        // close toggle in it) then sticks to the top of <body>, i.e. the
+        // top of the page, out of view once scrolled down. Locking
+        // <html> keeps the viewport the scroll container, so the header
+        // stays on screen and the scroll position stays where it was.
+        var scrollLockRoot = document.documentElement;
 
         var closeMenu = function () {
           toggle.setAttribute('aria-expanded', 'false');
@@ -64,7 +73,7 @@
             backdrop.hidden = true;
             backdrop.classList.remove('is-open');
           }
-          document.body.classList.remove('u-no-scroll');
+          scrollLockRoot.classList.remove('u-no-scroll');
         };
 
         toggle.addEventListener('click', function () {
@@ -82,7 +91,7 @@
             backdrop.hidden = false;
             backdrop.classList.add('is-open');
           }
-          document.body.classList.add('u-no-scroll');
+          scrollLockRoot.classList.add('u-no-scroll');
         });
 
         if (backdrop && !backdrop.dataset.bound) {
@@ -276,6 +285,36 @@
           if (target) {
             e.preventDefault();
             target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+    }
+  };
+
+  /**
+   * "Zurück zur Ergebnisliste" on the search request detail page.
+   *
+   * Acts like the browser's Back button when the previous page in this
+   * tab was the results list (same site, same path as the link's own
+   * fallback href) — so filters, sorting, loaded pages and scroll
+   * position come back exactly as with Back. Otherwise (detail page
+   * opened from a bookmark, e-mail or another page) the link just
+   * follows its href to the results list.
+   */
+  Drupal.behaviors.suchauftragBackToResults = {
+    attach: function (context) {
+      once('suchauftragBackToResults', '[data-back-to-results]', context).forEach(function (link) {
+        link.addEventListener('click', function (event) {
+          var previous;
+          try {
+            previous = document.referrer ? new URL(document.referrer) : null;
+          }
+          catch (e) {
+            previous = null;
+          }
+          if (previous && previous.origin === window.location.origin && previous.pathname === link.pathname && window.history.length > 1) {
+            event.preventDefault();
+            window.history.back();
           }
         });
       });

@@ -132,6 +132,44 @@
     return hasNextLink;
   }
 
+  // Same mobile breakpoint as the mobile nav / compact cards / sticky
+  // filter collapse (theme.js, responsive.css). The two scroll fixes
+  // below only apply there; desktop keeps the browser's own behavior.
+  var mobileQuery = window.matchMedia('(max-width: 780px)');
+
+  // sessionStorage (this tab only) entry for returning to the results
+  // with Back — see rememberPosition()/restorePosition() below.
+  var POSITION_KEY = 'suchauftrag:resultsPosition';
+
+  // Bottom edge of whatever is pinned over the top of the viewport: the
+  // sticky header, plus the compact "Filter ändern" bar once the search
+  // filter is stuck.
+  function pinnedTopHeight() {
+    var bottom = 0;
+    document.querySelectorAll('[data-header], [data-search-filter].is-stuck [data-sticky-bar]').forEach(function (el) {
+      var rect = el.getBoundingClientRect();
+      if (rect.height > 0 && rect.top >= 0 && rect.top < window.innerHeight / 2) {
+        bottom = Math.max(bottom, rect.bottom);
+      }
+    });
+    return bottom;
+  }
+
+  // Mobile: after the result list was replaced (new filter / "Nur gemerkte
+  // anzeigen"), bring the visitor back to the start of the list if they
+  // were further down — otherwise the new list would be shown from
+  // wherever the old one had been scrolled to.
+  function scrollToResultsStart() {
+    var head = document.querySelector('.search-requests__head');
+    if (!head || !mobileQuery.matches) {
+      return;
+    }
+    var target = Math.max(0, head.getBoundingClientRect().top + window.scrollY - pinnedTopHeight() - 12);
+    if (window.scrollY > target) {
+      window.scrollTo({ top: target, behavior: 'instant' });
+    }
+  }
+
   Drupal.behaviors.searchAjax = {
     attach: function () {
       var form = document.getElementById('search-filter-form');
@@ -152,6 +190,9 @@
       var currentFilters = {};
       var currentSort = DEFAULT_SORT;
       var loadMorePage = 1;
+      // Whether the list on screen came from an AJAX search (rather than
+      // the server-rendered page) — see restorePosition().
+      var listFromAjax = false;
 
       function fetchViewCommands(filterValues, sortValue, extra) {
         var viewSettings = getAjaxViewSettings();
@@ -287,6 +328,7 @@
 
             resultsRegion.innerHTML = '';
             resultsRegion.appendChild(grid);
+            listFromAjax = true;
             var rows = grid.querySelector('.property-grid__rows');
             var itemCount = rows ? rows.querySelectorAll('.property-grid__item').length : 0;
             var total = readTotalFromGrid(grid);
@@ -294,6 +336,10 @@
             setLoadMoreVisible(itemCount > 0 && pagerHasNext(grid));
 
             Drupal.attachBehaviors(resultsRegion, drupalSettings);
+
+            if (options.scrollToResults) {
+              scrollToResultsStart();
+            }
 
             if (options.pushHistory !== false) {
               history.pushState({ params: withoutEmpty(values) }, '', currentUrlFor(values));
@@ -309,11 +355,11 @@
 
       function loadMore() {
         if (!loadMoreBtn || loadMoreBtn.getAttribute('aria-busy') === 'true') {
-          return;
+          return Promise.resolve();
         }
         var rowsContainer = resultsRegion.querySelector('.property-grid__rows');
         if (!rowsContainer) {
-          return;
+          return Promise.resolve();
         }
         loadMoreBtn.setAttribute('aria-busy', 'true');
         var viewSettingsForThisRequest = getAjaxViewSettings();
@@ -326,7 +372,7 @@
           delete loadMoreFilters.bookmarked;
         }
 
-        fetchViewCommands(loadMoreFilters, currentSort, { page: String(loadMorePage) })
+        return fetchViewCommands(loadMoreFilters, currentSort, { page: String(loadMorePage) })
           .then(function (commands) {
             var grid = findViewMarkup(commands, viewSettingsForThisRequest);
             var newItems = grid ? grid.querySelectorAll('.property-grid__rows .property-grid__item') : [];
@@ -365,7 +411,7 @@
 
       form.addEventListener('submit', function (event) {
         event.preventDefault();
-        performSearch(Object.assign({}, readFormValues(), { sort: currentSort }), { pushHistory: true });
+        performSearch(Object.assign({}, readFormValues(), { sort: currentSort }), { pushHistory: true, scrollToResults: true });
       });
 
       var sortSelectTrigger = document.getElementById('sort-select');
@@ -379,7 +425,9 @@
       }
 
       if (loadMoreBtn) {
-        loadMoreBtn.addEventListener('click', loadMore);
+        loadMoreBtn.addEventListener('click', function () {
+          loadMore();
+        });
       }
 
       window.addEventListener('popstate', function (event) {
@@ -396,10 +444,157 @@
       setLoadMoreVisible(pagerHasNext(resultsRegion));
 
       Drupal.suchauftragSearchAjax = {
-        refresh: function () {
-          performSearch(currentFilters, { pushHistory: false });
-        }
+        refresh: function (options) {
+          return performSearch(currentFilters, Object.assign({}, options, { pushHistory: false }));
+        },
+        scrollToResultsStart: scrollToResultsStart
       };
+
+      /* ============================================
+         Mobile: back to the same place in the results.
+
+         Opening a search request and coming back with the browser's
+         Back button should show the same part of the list. When the
+         browser keeps the page in its back/forward cache, it already
+         does — nothing to do then. But when the page is loaded again,
+         only the first page of results comes back from the server:
+         "Weitere Suchaufträge laden" pages and "Nur gemerkte anzeigen"
+         (both client-side only) are gone, so the browser's own scroll
+         restore lands somewhere else, or at the top.
+
+         So on leaving, the topmost visible card (node id + its offset)
+         is remembered for this exact results URL, in sessionStorage
+         (this tab only, one entry, removed again once used). On a Back
+         load of that URL the same list is rebuilt first — saved-only
+         filter, then the same number of "load more" pages — and only
+         then is that card scrolled back into its old position. Browser
+         scroll restoration is switched to manual meanwhile, so it can't
+         jump in between, and back to auto afterwards.
+         ============================================ */
+      function resultsUrl() {
+        return location.pathname + location.search;
+      }
+
+      function rememberPosition() {
+        if (!mobileQuery.matches) {
+          return;
+        }
+        var limit = pinnedTopHeight();
+        var anchor = null;
+        resultsRegion.querySelectorAll('.property-card[data-node-id]').forEach(function (card) {
+          var rect = card.getBoundingClientRect();
+          if (!anchor && rect.bottom > limit) {
+            anchor = { nid: card.getAttribute('data-node-id'), offset: rect.top };
+          }
+        });
+        try {
+          sessionStorage.setItem(POSITION_KEY, JSON.stringify({
+            url: resultsUrl(),
+            scrollY: window.scrollY,
+            pages: loadMorePage,
+            ajax: listFromAjax,
+            saved: !!(window.Drupal && Drupal.suchauftragSavedSearches && Drupal.suchauftragSavedSearches.isFilterActive()),
+            nid: anchor ? anchor.nid : null,
+            offset: anchor ? anchor.offset : 0
+          }));
+        }
+        catch (e) {
+        }
+      }
+
+      function takeRememberedPosition() {
+        var data = null;
+        try {
+          data = JSON.parse(sessionStorage.getItem(POSITION_KEY) || 'null');
+          sessionStorage.removeItem(POSITION_KEY);
+        }
+        catch (e) {
+          return null;
+        }
+        var navigation = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
+        if (!data || !navigation || navigation.type !== 'back_forward' || data.url !== resultsUrl() || !mobileQuery.matches) {
+          return null;
+        }
+        return data;
+      }
+
+      function scrollToRemembered(data) {
+        var card = data.nid ? resultsRegion.querySelector('.property-card[data-node-id="' + CSS.escape(String(data.nid)) + '"]') : null;
+        var top = card ? window.scrollY + card.getBoundingClientRect().top - data.offset : data.scrollY;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'instant' });
+      }
+
+      function restorePosition(data) {
+        var savedSearches = window.Drupal && Drupal.suchauftragSavedSearches;
+        var ready = Promise.resolve();
+        var pagesToLoad = data.pages;
+        // A list that came from an AJAX search is rebuilt the same way,
+        // not taken from the server-rendered page: the two aren't
+        // guaranteed to match for the same URL.
+        var rebuild = data.ajax;
+
+        if (data.saved && savedSearches && savedSearches.setFilterActive) {
+          savedSearches.setFilterActive(true);
+          if (savedSearches.getAll().length === 0) {
+            savedSearches.showEmptyState();
+            pagesToLoad = 1;
+            rebuild = false;
+          }
+          else {
+            rebuild = true;
+          }
+        }
+        if (rebuild) {
+          ready = performSearch(Object.assign({}, currentFilters, { sort: currentSort }), { pushHistory: false });
+        }
+        for (var page = 1; page < pagesToLoad; page++) {
+          ready = ready.then(loadMore);
+        }
+
+        ready
+          .then(function () {
+            // Wait for the full page (images, fonts) so nothing above the
+            // remembered card can still change height afterwards.
+            if (document.readyState === 'complete') {
+              return null;
+            }
+            return new Promise(function (resolve) {
+              window.addEventListener('load', resolve, { once: true });
+            });
+          })
+          .then(function () {
+            scrollToRemembered(data);
+            // Second pass: the first scroll may have engaged the sticky
+            // filter; its spacer keeps the layout stable, but correct
+            // any rounding before handing scrolling back to the browser.
+            requestAnimationFrame(function () {
+              scrollToRemembered(data);
+              history.scrollRestoration = 'auto';
+            });
+          })
+          .catch(function () {
+            history.scrollRestoration = 'auto';
+          });
+      }
+
+      window.addEventListener('pagehide', rememberPosition);
+      window.addEventListener('pageshow', function (event) {
+        // Restored from the back/forward cache: list and scroll position
+        // are still intact, the remembered entry isn't needed.
+        if (event.persisted) {
+          try {
+            sessionStorage.removeItem(POSITION_KEY);
+          }
+          catch (e) {
+          }
+        }
+      });
+
+      var remembered = takeRememberedPosition();
+      if (remembered && 'scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+        restorePosition(remembered);
+      }
 
       var backToTopBtn = document.querySelector('[data-back-to-top]');
       if (backToTopBtn && !backToTopBtn.dataset.bound) {

@@ -1147,13 +1147,14 @@ textarea.form-textarea:focus{
   .wizard__actions{ flex-direction:column-reverse; }
   .wizard__actions .btn{ width:100%; margin-left:0; justify-content:center; }
 
-  /* WhatsApp-Nummer (country + number): stay on one row on mobile too —
-     only the fixed country-code column narrows a little, exactly like
-     desktop otherwise. Overrides the general "collapse paired rows to
-     one column" rule above, which this field is deliberately exempt
-     from. */
+  /* WhatsApp-Nummer (country + number): stay on one row on mobile too.
+     Overrides the general "collapse paired rows to one column" rule
+     above, which this field is deliberately exempt from. The country
+     column keeps the desktop width (110px): at the previous 84px the
+     select's padding (room for the chevron) left only ~32px for
+     "🇩🇪 +49", which needs ~51px, so "+49" was cut off. */
   .wizard-phone-group__row{
-    grid-template-columns:84px 1fr;
+    grid-template-columns:110px 1fr;
     gap:8px;
   }
 
@@ -1173,6 +1174,39 @@ textarea.form-textarea:focus{
     font-size:13px;
     padding-left:10px;
     padding-right:10px;
+  }
+
+  /* Step 1 property cards (Issue 24): the 2-column mobile grid makes a
+     card only ~133–168px wide, but the label kept its desktop sizing
+     (20px side padding, 26px icon, 14px gap, 16px text) — "Grundstück"
+     alone needs ~170px that way and ran past the right border. Tighter
+     padding/gap and a slightly smaller icon and text keep the whole
+     word comfortably inside the card. */
+  .wizard-cards--objektart label{
+    padding:0 12px;
+    gap:10px;
+    font-size:15px;
+  }
+  .wizard-cards--objektart label::before{
+    width:22px;
+    height:22px;
+  }
+
+  /* Success page: the two action buttons wrapped onto two lines with no
+     space between them. Keep them stacked and centred as before, with a
+     gap. */
+  .wizard-success__actions{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+  }
+}
+@media (max-width:380px){
+  /* Narrowest phones (360–380px, cards ~133–141px): one more step. */
+  .wizard-cards--objektart label{
+    gap:8px;
+    font-size:14px;
   }
 }
 

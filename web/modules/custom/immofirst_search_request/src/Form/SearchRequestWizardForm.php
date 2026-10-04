@@ -11,6 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Url;
 use Drupal\immofirst_search_request\Service\SearchCriteriaData;
 use Drupal\immofirst_search_request\Service\SearchCriteriaTermRepository;
 use Drupal\immofirst_search_request\Service\SearchRequestNodeCreator;
@@ -1758,6 +1759,9 @@ SVG,
       '#type' => 'checkbox',
       '#title' => Markup::create($this->consentLabelMarkup()),
      '#required' => TRUE, // TEMP: button validation disabled for now — not shown in the reference validation screenshot, left as-is
+      // German version of core's "@name field is required." — same label
+      // (links included) as @name, only the English suffix replaced.
+      '#required_error' => $this->t('@name Dieses Feld ist erforderlich.', ['@name' => Markup::create($this->consentLabelMarkup())]),
       '#default_value' => $stored['consent'] ?? FALSE,
       '#attributes' => ['class' => ['wizard-checkbox']],
     ];
@@ -2028,7 +2032,7 @@ HTML;
     $referenceNumber = is_numeric($nodeId) ? sprintf('SA-%s-%06d', date('Y'), (int) $nodeId) : NULL;
 
     $form['step_content']['success'] = [
-      '#markup' => Markup::create($this->buildSuccessScreenMarkup($referenceNumber)),
+      '#markup' => Markup::create($this->buildSuccessScreenMarkup($referenceNumber, is_numeric($nodeId) ? (int) $nodeId : NULL)),
     ];
   }
 
@@ -2039,11 +2043,15 @@ HTML;
    *   The generated "SA-2026-000123"-style reference number, or NULL
    *   if no node id was available (defensive fallback — the reference
    *   card is simply omitted in that case).
+   * @param int|null $nodeId
+   *   The id of the search_request node submitFinish() just created
+   *   (form state 'created_node_id') — "Suchaufträge ansehen" links to
+   *   that node's detail page. NULL keeps the previous overview link.
    *
    * @return string
    *   Raw HTML for the success screen.
    */
-  private function buildSuccessScreenMarkup(?string $referenceNumber): string {
+  private function buildSuccessScreenMarkup(?string $referenceNumber, ?int $nodeId = NULL): string {
     $title = $this->t('Vielen Dank!');
     $text = $this->t('Ihr Suchauftrag wurde erfolgreich erstellt.');
 
@@ -2071,6 +2079,9 @@ HTML;
 
     $viewRequestsLabel = $this->t('Suchaufträge ansehen');
     $newRequestLabel = $this->t('Neuen Suchauftrag erstellen');
+    $viewRequestsUrl = $nodeId !== NULL
+      ? Url::fromRoute('entity.node.canonical', ['node' => $nodeId])->toString()
+      : '/suchauftraege';
 
     return <<<HTML
 <div class="wizard-success">
@@ -2093,7 +2104,7 @@ HTML;
   </ul>
   {$reference}
   <div class="wizard-success__actions">
-    <a href="/suchauftraege" class="btn btn--primary wizard-success__cta">{$viewRequestsLabel}</a>
+    <a href="{$viewRequestsUrl}" class="btn btn--primary wizard-success__cta">{$viewRequestsLabel}</a>
     <a href="/suchauftrag-erstellen" class="btn btn--outline wizard-success__cta">{$newRequestLabel}</a>
   </div>
 </div>
@@ -2129,7 +2140,7 @@ HTML;
     $referenceNumber = is_numeric($nodeId) ? sprintf('SA-%s-%06d', date('Y'), (int) $nodeId) : NULL;
 
     return [
-      '#markup' => Markup::create($this->buildSuccessScreenMarkup($referenceNumber)),
+      '#markup' => Markup::create($this->buildSuccessScreenMarkup($referenceNumber, is_numeric($nodeId) ? (int) $nodeId : NULL)),
     ];
   }
 

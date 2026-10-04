@@ -167,6 +167,29 @@
   }
   .header__mobile-menu a{ font-size:15px; font-weight:500; }
 
+  /* Issue 23: set the open menu apart from the header — a subtle light
+     grey-blue (--hero-bg) to white fade down the panel, small secondary
+     icons beside the items, and "Suchauftrag erstellen" as a plain blue
+     outlined button instead of the neutral grey one. */
+  .header__mobile-menu{
+    background:linear-gradient(180deg, var(--hero-bg) 0%, var(--surface) 100%);
+  }
+  .header__mobile-menu-link{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .header__mobile-menu-icon{
+    flex-shrink:0;
+    color:var(--muted);
+  }
+  .header__mobile-menu .header__mobile-menu-cta{
+    background:var(--surface);
+    border:1.5px solid var(--primary);
+    color:var(--primary);
+    font-weight:600;
+  }
+
   /* Backdrop dims the page behind the open menu — the same cue a
      typical mobile nav drawer uses to read clearly as a menu rather
      than page content. Sits under the menu (lower z-index) but above

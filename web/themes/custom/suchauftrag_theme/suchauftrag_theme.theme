@@ -427,16 +427,18 @@ function suchauftrag_theme_preprocess_node__search_request(array &$variables) {
         $requirements[] = ['icon' => 'price', 'value' => $price_range, 'label' => $price_label];
       }
       if ($usage = $get('field_usage')) {
-        $requirements[] = ['icon' => 'usage', 'value' => $usage, 'label' => 'Nutzung'];
+        // Display label ("Einfamilienhaus"), not the stored key — same as
+        // field_commercial_type below.
+        $requirements[] = ['icon' => 'usage', 'value' => _suchauftrag_theme_list_field_label($node, 'field_usage'), 'label' => 'Nutzung'];
       }
       break;
 
     case 'garage':
       if ($parking = $get('field_parking_type')) {
-        $requirements[] = ['icon' => 'parking', 'value' => $parking, 'label' => 'Stellplatzart'];
+        $requirements[] = ['icon' => 'parking', 'value' => _suchauftrag_theme_list_field_label($node, 'field_parking_type'), 'label' => 'Stellplatzart'];
       }
       if ($vehicle = $get('field_vehicle_type')) {
-        $requirements[] = ['icon' => 'vehicle', 'value' => $vehicle, 'label' => 'Fahrzeugtyp'];
+        $requirements[] = ['icon' => 'vehicle', 'value' => _suchauftrag_theme_list_field_label($node, 'field_vehicle_type'), 'label' => 'Fahrzeugtyp'];
       }
       if ($price_range) {
         $requirements[] = ['icon' => 'price', 'value' => $price_range, 'label' => $price_label];
