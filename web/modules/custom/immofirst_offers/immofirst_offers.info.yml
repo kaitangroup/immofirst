@@ -1,0 +1,10 @@
+name: ImmoFirst Offers & Emails
+type: module
+description: 'Milestone 2: Pending → Approve → Send workflow for offer_to_search_request Webform submissions, and the four Tab.4 emails (4.1–4.4).'
+package: ImmoFirst
+core_version_requirement: ^11
+configure: immofirst_offers.settings
+dependencies:
+  - drupal:node
+  - webform:webform
+  - immofirst_search_request:immofirst_search_request

@@ -1,0 +1,31 @@
+services:
+  immofirst_geosearch.location_geocoder:
+    class: Drupal\immofirst_geosearch\LocationGeocoder
+    arguments:
+      - '@geocoder'
+      - '@entity_type.manager'
+      - '@entity_field.manager'
+      - '@geofield.wkt_generator'
+      - '@cache.default'
+      - '@datetime.time'
+      - '@logger.channel.immofirst_geosearch'
+  Drupal\immofirst_geosearch\LocationGeocoder: '@immofirst_geosearch.location_geocoder'
+
+  immofirst_geosearch.proximity_filter:
+    class: Drupal\immofirst_geosearch\SearchRequestProximityFilter
+    arguments:
+      - '@immofirst_geosearch.location_geocoder'
+      - '@config.factory'
+      - '@plugin.manager.views.filter'
+
+  immofirst_geosearch.backfill:
+    class: Drupal\immofirst_geosearch\SearchRequestCoordinatesBackfill
+    arguments:
+      - '@immofirst_geosearch.location_geocoder'
+      - '@entity_type.manager'
+      - '@logger.channel.immofirst_geosearch'
+  Drupal\immofirst_geosearch\SearchRequestCoordinatesBackfill: '@immofirst_geosearch.backfill'
+
+  logger.channel.immofirst_geosearch:
+    parent: logger.channel_base
+    arguments: ['immofirst_geosearch']

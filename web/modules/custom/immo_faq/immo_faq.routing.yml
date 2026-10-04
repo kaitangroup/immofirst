@@ -1,0 +1,7 @@
+immo_faq.page:
+  path: '/faq'
+  defaults:
+    _controller: '\Drupal\immo_faq\Controller\FaqController::content'
+    _title: 'Häufige Fragen'
+  requirements:
+    _access: 'TRUE'

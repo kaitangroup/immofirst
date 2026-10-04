@@ -1,0 +1,132 @@
+{% include '@suchauftrag_theme/templates/includes/header.html.twig' %}
+
+<main id="main-content" class="main-content immo-faq-main" role="main">
+
+  {# Hero Band with background gradient wave #}
+  <div class="hero-band immo-faq-hero-band">
+    <div class="hero-band__bg" aria-hidden="true">
+      <svg class="hero-band__wave" viewBox="0 0 1440 500" preserveAspectRatio="none" fill="none">
+        <path d="M0 260 C 300 160, 500 340, 820 240 S 1300 120, 1440 220 V500H0Z" fill="url(#faqWaveGrad)" opacity="0.5"/>
+        <defs>
+          <linearGradient id="faqWaveGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#E9EBFF"/>
+            <stop offset="1" stop-color="#F6F8FF"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+
+    <section class="hero immo-faq-hero" aria-labelledby="faq-hero-title">
+      <div class="container hero__inner immo-faq-hero__inner">
+        <div class="hero__content immo-faq-hero__content">
+          <h1 id="faq-hero-title" class="hero__title immo-faq-title">
+            Häufige Fragen
+          </h1>
+          <p class="hero__subtitle immo-faq-subtitle">
+            Hier finden Sie Antworten auf die häufigsten Fragen – einfach und verständlich erklärt.
+          </p>
+        </div>
+
+        <div class="immo-faq-hero__illustration" aria-hidden="true">
+          <svg width="220" height="150" viewBox="0 0 220 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Question bubble -->
+            <g transform="translate(130, 10)">
+              <rect x="0" y="0" width="70" height="55" rx="27.5" fill="#5664FF"/>
+              <path d="M25 45 L15 55 L25 50 Z" fill="#5664FF"/>
+              <text x="35" y="38" fill="white" font-size="32" font-weight="bold" text-anchor="middle" font-family="sans-serif">?</text>
+            </g>
+            <!-- Chat lines bubble -->
+            <g transform="translate(10, 45)">
+              <rect x="0" y="0" width="120" height="75" rx="16" fill="white" stroke="#E2E8F0" stroke-width="2"/>
+              <path d="M110 65 L120 75 L110 70 Z" fill="white" stroke="#E2E8F0" stroke-width="2"/>
+              <line x1="20" y1="22" x2="80" y2="22" stroke="#5664FF" stroke-width="4" stroke-linecap="round"/>
+              <line x1="20" y1="38" x2="100" y2="38" stroke="#CBD5E1" stroke-width="4" stroke-linecap="round"/>
+              <line x1="20" y1="54" x2="70" y2="54" stroke="#CBD5E1" stroke-width="4" stroke-linecap="round"/>
+            </g>
+            <!-- Sparkles / accents -->
+            <path d="M125 15 L128 22 L135 25 L128 28 L125 35 L122 28 L115 25 L122 22 Z" fill="#5664FF" opacity="0.6"/>
+            <path d="M30 15 L32 18 L35 20 L32 22 L30 25 L28 22 L25 20 L28 18 Z" fill="#5664FF" opacity="0.4"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  {# FAQ Categories Section #}
+  <section class="immo-faq-section" aria-label="FAQ Kategorien">
+    <div class="container immo-faq-container">
+      {% for category in categories %}
+        <div class="immo-faq-card">
+          <div class="immo-faq-card__header">
+            <div class="immo-faq-card__icon immo-faq-card__icon--{{ category.icon }}">
+              {% if category.icon == 'question' %}
+                <img src="{{ module_path }}/images/question.svg" alt="" width="24" height="24" />
+              {% elseif category.icon == 'house' %}
+                <img src="{{ module_path }}/images/house.svg" alt="" width="24" height="24" />
+              {% else %}
+                <img src="{{ module_path }}/images/building.svg" alt="" width="24" height="24" />
+              {% endif %}
+            </div>
+            <div class="immo-faq-card__titles">
+              <h2 class="immo-faq-card__title">{{ category.title }}</h2>
+              {% if category.description %}
+                <p class="immo-faq-card__desc">{{ category.description }}</p>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="immo-faq-accordion">
+            {% for item in category.items %}
+              <div class="immo-faq-item" data-faq-item>
+                <button type="button"
+                        class="immo-faq-question"
+                        data-faq-toggle
+                        aria-expanded="false"
+                        aria-controls="{{ item.id }}">
+                  <span class="immo-faq-question__text">{{ item.question }}</span>
+                  <svg class="immo-faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div id="{{ item.id }}" class="immo-faq-answer" hidden>
+                  <div class="immo-faq-answer__inner">
+                    {{ item.answer|raw }}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+
+      {# CTA Banner #}
+      <div class="immo-faq-cta">
+        <div class="immo-faq-cta__left">
+          <div class="immo-faq-cta__icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" fill="white"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" stroke="#5664FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="12" y1="17" x2="12.01" y2="17" stroke="#5664FF" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="immo-faq-cta__title">Ihre Frage ist nicht dabei?</h3>
+            <p class="immo-faq-cta__text">Kein Problem! Wir helfen Ihnen gerne persönlich weiter.</p>
+          </div>
+        </div>
+        <div class="immo-faq-cta__right">
+          <a href="/kontakt" class="btn btn--primary immo-faq-cta__btn">
+            Kontakt aufnehmen
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+{% include '@suchauftrag_theme/templates/includes/footer.html.twig' %}

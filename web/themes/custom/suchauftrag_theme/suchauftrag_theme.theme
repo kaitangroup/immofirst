@@ -40,7 +40,8 @@ function suchauftrag_theme_preprocess_page__front(array &$variables) {
 
   $request = \Drupal::request();
   $exposed_input = [];
-  foreach (['art', 'immobilienart', 'ort',  'bookmarked'] as $filter_identifier) {
+  // 'radius' only takes effect together with 'ort' (immofirst_geosearch).
+  foreach (['art', 'immobilienart', 'ort', 'radius', 'bookmarked'] as $filter_identifier) {
     $value = $request->query->get($filter_identifier);
     if ($value !== NULL && $value !== '') {
       $exposed_input[$filter_identifier] = $value;
@@ -670,9 +671,9 @@ function suchauftrag_theme_theme($existing, $type, $theme, $path) {
 function suchauftrag_theme_form_alter(array &$form, \Drupal\Core\Form\FormStateInterface $form_state, string $form_id) {
   if (str_starts_with($form_id, 'webform_submission_offer_to_search_request')) {
     if (isset($form['actions']['submit'])) {
+      // Keep Webform's '#type' => 'submit': a '#type' => 'button' element
+      // never runs submit handlers, so the submission was never saved.
       $form['actions']['submit']['#value'] = t('Angebot senden');
-      $form['actions']['submit']['#type'] = 'button';
-      $form['actions']['submit']['#attributes']['type'] = 'submit';
     }
 
     if (isset($form['elements']['name'])) {

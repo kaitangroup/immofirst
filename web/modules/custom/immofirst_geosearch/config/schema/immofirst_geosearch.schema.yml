@@ -1,0 +1,16 @@
+immofirst_geosearch.settings:
+  type: config_object
+  label: 'ImmoFirst geosearch settings'
+  mapping:
+    default_radius:
+      type: integer
+      label: 'Radius (km) used when a location is given without a valid radius'
+    allowed_radii:
+      type: sequence
+      label: 'Accepted radius values (km)'
+      sequence:
+        type: integer
+        label: 'Radius (km)'
+    batch_size:
+      type: integer
+      label: 'Nodes per batch step for the coordinate backfill'

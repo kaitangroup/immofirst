@@ -1,0 +1,7 @@
+langcode: de
+status: true
+dependencies: {  }
+name: 'FAQ Category'
+vid: faq_category
+description: 'Categories for frequently asked questions.'
+weight: 0

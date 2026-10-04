@@ -1,0 +1,9 @@
+name: 'Immo FAQ'
+type: module
+description: 'Provides FAQ content type, taxonomy, importer, and responsive FAQ page.'
+package: ImmoFirst
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:node
+  - drupal:taxonomy
+  - drupal:text

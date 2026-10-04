@@ -1,0 +1,9 @@
+default_radius: 25
+allowed_radii:
+  - 5
+  - 10
+  - 15
+  - 25
+  - 50
+  - 100
+batch_size: 25

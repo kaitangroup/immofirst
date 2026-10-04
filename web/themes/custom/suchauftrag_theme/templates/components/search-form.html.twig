@@ -19,11 +19,12 @@
  * Field name <-> View filter identifier map (views.view.search_requests.yml):
  *   art            <-> field_request_type_value (Kaufen/Mieten)
  *   immobilienart  <-> field_property_type_value (Immobilienart)
- *   ort            <-> field_location_value (Ort oder PLZ, contains)
- *   radius         <-> field_radius_value (Umkreis, equality match against
- *                      field_radius — a plain list_integer field, no
- *                      geolocation/lat-lon involved; NOT a proximity
- *                      search, just "= this exact radius value")
+ *   ort + radius   <-> distance filter on field_location_coordinates
+ *                      (immofirst_geosearch): ort is geocoded to the
+ *                      search centre, radius is the distance in km. No
+ *                      ort = no radius filtering. If ort can't be
+ *                      geocoded, ort falls back to the text match on
+ *                      field_location_value (contains) without a radius.
  *
  * All four fields below read their current value from the URL query
  * string so a submitted search stays reflected in the form after the

@@ -97,7 +97,15 @@
         <p class="request-sidebar__text">Machen Sie dem Suchenden ein passendes Angebot. Ihre Kontaktdaten werden erst nach Annahme sichtbar.</p>
       </div>
 
-      {{ children }}
+      {# This overrides Webform's "webform" template, which is the one that
+         renders the <form> element itself — so it must keep it (as
+         webform.html.twig does); without it the fields render outside any
+         form and the offer can't be submitted. #}
+      <form{{ attributes }}>
+        {{ title_prefix }}
+        {{ children }}
+        {{ title_suffix }}
+      </form>
 
       {# Hidden source markup for js/offer-webform.js's submit-button
          icon enhancement (design item 2). Per spec, the icon is

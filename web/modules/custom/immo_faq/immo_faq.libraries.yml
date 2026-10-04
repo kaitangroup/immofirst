@@ -1,0 +1,9 @@
+faq:
+  css:
+    theme:
+      css/faq.css: {}
+  js:
+    js/faq.js: {}
+  dependencies:
+    - core/drupal
+    - core/once

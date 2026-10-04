@@ -1,0 +1,13 @@
+name: ImmoFirst Geosearch
+type: module
+description: 'Geocodes Search Request locations into a Geofield and filters the homepage Search Request list by real distance (Umkreis).'
+package: ImmoFirst
+core_version_requirement: ^11
+dependencies:
+  - drupal:node
+  - drupal:views
+  - geofield:geofield
+  - geocoder:geocoder
+  - geocoder:geocoder_field
+  - geocoder:geocoder_geofield
+  - immofirst_search_request:immofirst_search_request

@@ -12,7 +12,8 @@
 
   var VIEW_NAME = 'search_requests';
   var VIEW_DISPLAY_ID = 'block_1';
-  var FILTER_IDENTIFIERS = ['art', 'immobilienart', 'ort', 'bookmarked'];
+  // 'radius' only takes effect together with 'ort' (immofirst_geosearch).
+  var FILTER_IDENTIFIERS = ['art', 'immobilienart', 'ort', 'radius', 'bookmarked'];
   var SORT_IDENTIFIER = 'sort';
   var DEFAULT_SORT = 'newest';
 

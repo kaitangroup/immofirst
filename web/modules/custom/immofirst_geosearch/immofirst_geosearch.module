@@ -1,0 +1,20 @@
+<?php
+
+/**
+ * @file
+ * Hook implementations for the ImmoFirst geosearch.
+ */
+
+declare(strict_types=1);
+
+use Drupal\views\ViewExecutable;
+
+/**
+ * Implements hook_views_pre_build().
+ *
+ * Turns the homepage "ort" + "radius" into a distance filter on
+ * search_requests:block_1; see SearchRequestProximityFilter.
+ */
+function immofirst_geosearch_views_pre_build(ViewExecutable $view): void {
+  \Drupal::service('immofirst_geosearch.proximity_filter')->apply($view);
+}

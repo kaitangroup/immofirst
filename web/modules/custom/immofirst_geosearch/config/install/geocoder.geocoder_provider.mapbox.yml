@@ -1,0 +1,17 @@
+langcode: en
+status: true
+dependencies: {  }
+id: mapbox
+label: Mapbox
+plugin: mapbox
+configuration:
+  throttle:
+    period: null
+    limit: null
+  geocoder:
+    locale: de
+  accessToken: ''
+  country: de
+  geocodingMode: mapbox.places
+  location_type: 'postcode,place,locality,district,neighborhood,address'
+  fuzzy_match: false

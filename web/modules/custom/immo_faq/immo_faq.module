@@ -1,0 +1,21 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for Immo FAQ.
+ */
+
+/**
+ * Implements hook_theme().
+ */
+function immo_faq_theme($existing, $type, $theme, $path) {
+  return [
+    'immo_faq_page' => [
+      'variables' => [
+        'categories' => [],
+        'module_path' => '',
+      ],
+      'template' => 'immo-faq-page',
+    ],
+  ];
+}

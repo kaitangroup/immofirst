@@ -1,0 +1,155 @@
+<?php
+
+/**
+ * @file
+ * Milestone 2: provider offer workflow and the Tab.4 e-mails 4.1–4.4.
+ *
+ * Search Request lifecycle → e-mail (all sent after the DB commit):
+ *   - 4.1 created:    the wizard's SearchRequestNodeCreator saves twice; the
+ *                     second save sets field_reference_number. That update
+ *                     is the "fully created" moment — see node_update below.
+ *   - 4.2 terminated: hook_cron() ends requests whose term has run out.
+ *   - 4.3 deleted:    hook_node_delete() for search_request nodes.
+ *
+ * Provider offer (offer_to_search_request submission):
+ *   Pending (on submit) → Approve → Send (forward + 4.4) — OfferWorkflow.
+ */
+
+declare(strict_types=1);
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\immofirst_offers\OfferWorkflow;
+use Drupal\node\NodeInterface;
+use Drupal\webform\WebformSubmissionInterface;
+
+/**
+ * Implements hook_entity_base_field_info().
+ *
+ * Workflow state for provider offers. A base field (schema, installed with
+ * the module) rather than a Webform element, so it can't be edited or
+ * removed through the Webform UI and isn't shown to providers.
+ */
+function immofirst_offers_entity_base_field_info(EntityTypeInterface $entity_type): array {
+  if ($entity_type->id() !== 'webform_submission') {
+    return [];
+  }
+  $fields['offer_status'] = BaseFieldDefinition::create('list_string')
+    ->setLabel(t('Angebotsstatus'))
+    ->setDescription(t('Pending → Approved → Sent (only used for offer_to_search_request).'))
+    ->setSetting('allowed_values', array_map('strval', OfferWorkflow::statusLabels()));
+  return $fields;
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_presave() for webform_submission.
+ */
+function immofirst_offers_webform_submission_presave(WebformSubmissionInterface $submission): void {
+  if ($submission->isNew() && OfferWorkflow::isOffer($submission) && $submission->get('offer_status')->isEmpty()) {
+    $submission->set('offer_status', OfferWorkflow::STATUS_PENDING);
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_access() for webform_submission.
+ *
+ * Lets offer managers view offer submissions (and so download their
+ * private uploads) without full Webform admin rights. View only.
+ */
+function immofirst_offers_webform_submission_access(WebformSubmissionInterface $submission, string $operation, AccountInterface $account): AccessResult {
+  if ($operation === 'view' && OfferWorkflow::isOffer($submission)) {
+    return AccessResult::allowedIfHasPermission($account, 'manage provider offers');
+  }
+  return AccessResult::neutral();
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_update() for node — e-mail 4.1.
+ */
+function immofirst_offers_node_update(NodeInterface $node): void {
+  if ($node->bundle() !== 'search_request') {
+    return;
+  }
+  $original = $node->getOriginal();
+  $before = $original ? (string) $original->get('field_reference_number')->value : '';
+  $after = (string) $node->get('field_reference_number')->value;
+  // The reference number is assigned exactly once, right after the
+  // wizard's first save — so this fires once per created search request.
+  if ($before === '' && $after !== '') {
+    \Drupal::service('immofirst_offers.mailer')->searchRequestCreated($node);
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete() for node — e-mail 4.3.
+ */
+function immofirst_offers_node_delete(NodeInterface $node): void {
+  if ($node->bundle() === 'search_request') {
+    \Drupal::service('immofirst_offers.mailer')->searchRequestDeleted($node, \Drupal::time()->getRequestTime());
+  }
+}
+
+/**
+ * Implements hook_cron() — e-mail 4.2.
+ *
+ * Ends published search requests whose term (immofirst_offers.settings:
+ * search_request_term_months) has run out: field_status → closed,
+ * unpublished (removed from the public list), then 4.2. Already closed or
+ * archived requests are skipped, so each request is ended — and mailed —
+ * only once.
+ */
+function immofirst_offers_cron(): void {
+  $months = max(1, (int) \Drupal::config('immofirst_offers.settings')->get('search_request_term_months'));
+  $cutoff = (new \DateTimeImmutable('@' . \Drupal::time()->getRequestTime()))->modify("-{$months} months")->getTimestamp();
+
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
+  $query = $storage->getQuery()
+    ->accessCheck(FALSE)
+    ->condition('type', 'search_request')
+    ->condition('status', 1)
+    ->condition('created', $cutoff, '<=')
+    ->sort('created')
+    ->range(0, 50);
+  $open = $query->orConditionGroup()
+    ->condition('field_status', ['closed', 'archived'], 'NOT IN')
+    ->notExists('field_status');
+  $ids = $query->condition($open)->execute();
+
+  /** @var \Drupal\immofirst_offers\NotificationMailer $mailer */
+  $mailer = \Drupal::service('immofirst_offers.mailer');
+  foreach ($storage->loadMultiple($ids) as $node) {
+    /** @var \Drupal\node\NodeInterface $node */
+    $node->set('field_status', 'closed');
+    $node->setUnpublished();
+    $node->save();
+    $mailer->searchRequestTerminated($node);
+    \Drupal::logger('immofirst_offers')->notice('Search request @nid ended after its term.', ['@nid' => $node->id()]);
+  }
+}
+
+/**
+ * Implements hook_mail().
+ */
+function immofirst_offers_mail(string $key, array &$message, array $params): void {
+  \Drupal::service('immofirst_offers.mailer')->buildMessage($key, $message, $params);
+}
+
+/**
+ * Implements hook_theme().
+ */
+function immofirst_offers_theme(): array {
+  return [
+    'immofirst_offers_email' => [
+      'variables' => [
+        'email_key' => '',
+        'texts' => [],
+        'rows' => [],
+        'button_url' => '',
+        'offer' => NULL,
+        'site' => [],
+      ],
+    ],
+  ];
+}

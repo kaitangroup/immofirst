@@ -1,0 +1,146 @@
+[
+  {
+    "category": "allgemeine-fragen",
+    "category_label": "Allgemeine Fragen",
+    "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
+    "question": "Was ist ein Suchauftrag?",
+    "answer": "Ein Suchauftrag beschreibt, welche Immobilie Sie suchen. Sie können dabei unter anderem Ort, Wohnfläche, Zimmer, Preis und weitere Wünsche angeben. Ihr Suchauftrag wird anschließend für passende Anbieter sichtbar.",
+    "weight": 0
+  },
+  {
+    "category": "allgemeine-fragen",
+    "category_label": "Allgemeine Fragen",
+    "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
+    "question": "Wie funktioniert Suchauftrag.de?",
+    "answer": "Suchauftrag.de verbindet Immobiliensuchende mit passenden Anbietern, Maklern und Verkäufern. Erstellen Sie einfach Ihren Suchauftrag und erhalten Sie maßgeschneiderte Angebote direkt.",
+    "weight": 1
+  },
+  {
+    "category": "allgemeine-fragen",
+    "category_label": "Allgemeine Fragen",
+    "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
+    "question": "Ist die Nutzung von Suchauftrag.de kostenlos?",
+    "answer": "Ja, die Erstellung eines Suchauftrags und die Nutzung von Suchauftrag.de sind für Suchende komplett kostenlos.",
+    "weight": 2
+  },
+  {
+    "category": "allgemeine-fragen",
+    "category_label": "Allgemeine Fragen",
+    "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
+    "question": "Wie lange ist ein Suchauftrag aktiv?",
+    "answer": "Standardmäßig bleibt Ihr Suchauftrag 30 Tage aktiv und kann jederzeit verlängert oder vorzeitig beendet werden.",
+    "weight": 3
+  },
+  {
+    "category": "allgemeine-fragen",
+    "category_label": "Allgemeine Fragen",
+    "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
+    "question": "Wie werden meine Daten geschützt?",
+    "answer": "Ihre Daten werden streng nach DSGVO geschützt. Kontaktdaten werden erst dann an Anbieter weitergegeben, wenn Sie einem Angebot aktiv zustimmen.",
+    "weight": 4
+  },
+  {
+    "category": "allgemeine-fragen",
+    "category_label": "Allgemeine Fragen",
+    "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
+    "question": "Wann werden Kontaktdaten weitergegeben?",
+    "answer": "Kontaktdaten werden erst nach Ihrer ausdrücklichen Zustimmung im Rahmen eines konkreten Angebots oder einer Kontaktaufnahme übermittelt.",
+    "weight": 5
+  },
+  {
+    "category": "ich-suche-eine-immobilie",
+    "category_label": "Ich suche eine Immobilie",
+    "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
+    "question": "Wie erstelle ich einen Suchauftrag?",
+    "answer": "Klicken Sie auf „Suchauftrag erstellen“ und geben Sie Ihre gewünschten Kriterien ein. Dazu gehören z. B. Immobilientyp, Kauf oder Miete, Ort, Wohnfläche, Zimmer, Preis und weitere Wünsche. Nach dem Absenden wird Ihr Suchauftrag auf der Plattform veröffentlicht.",
+    "weight": 0
+  },
+  {
+    "category": "ich-suche-eine-immobilie",
+    "category_label": "Ich suche eine Immobilie",
+    "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
+    "question": "Wie erhalte ich Angebote?",
+    "answer": "Sobald ein passender Anbieter oder Makler Ihren Suchauftrag sieht und eine passende Immobilie hat, erhalten Sie direkt Angebote in Ihrem Postfach oder per Benachrichtigung.",
+    "weight": 1
+  },
+  {
+    "category": "ich-suche-eine-immobilie",
+    "category_label": "Ich suche eine Immobilie",
+    "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
+    "question": "Wie lange bleibt mein Suchauftrag online?",
+    "answer": "Ihr Suchauftrag bleibt für den gewählten Zeitraum online und kann jederzeit im Account verwaltet oder verlängert werden.",
+    "weight": 2
+  },
+  {
+    "category": "ich-suche-eine-immobilie",
+    "category_label": "Ich suche eine Immobilie",
+    "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
+    "question": "Kann ich meinen Suchauftrag löschen?",
+    "answer": "Ja, Sie können Ihren Suchauftrag jederzeit mit wenigen Klicks in Ihrem Benutzerbereich deaktivieren oder löschen.",
+    "weight": 3
+  },
+  {
+    "category": "ich-suche-eine-immobilie",
+    "category_label": "Ich suche eine Immobilie",
+    "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
+    "question": "Was passiert, wenn ein Anbieter Interesse an meiner Suche hat?",
+    "answer": "Der Anbieter sendet Ihnen ein unverbindliches Angebot mit Exposé oder Kontaktdaten, welches Sie prüfen und annehmen können.",
+    "weight": 4
+  },
+  {
+    "category": "ich-suche-eine-immobilie",
+    "category_label": "Ich suche eine Immobilie",
+    "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
+    "question": "Werden meine Kontaktdaten veröffentlicht?",
+    "answer": "Nein, Ihre Kontaktdaten sind öffentlich nicht sichtbar und werden erst bei explizitem Interesse und Ihrer Freigabe geteilt.",
+    "weight": 5
+  },
+  {
+    "category": "ich-biete-eine-immobilie-an",
+    "category_label": "Ich biete eine Immobilie an",
+    "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
+    "question": "Wie finde ich passende Suchaufträge?",
+    "answer": "Unter „Suchaufträge“ können Sie nach passenden Gesuchen suchen. Sie können die Suchaufträge anhand der angegebenen Kriterien prüfen und z. B. nach Ort, Immobilientyp, Wohnfläche oder Preis passende Anfragen finden.",
+    "weight": 0
+  },
+  {
+    "category": "ich-biete-eine-immobilie-an",
+    "category_label": "Ich biete eine Immobilie an",
+    "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
+    "question": "Wie kann ich einem Suchenden ein Angebot senden?",
+    "answer": "Klicken Sie auf der Detailseite eines Suchauftrags auf „Angebot senden“ und füllen Sie das kurze Formular mit den Immobiliendetails aus.",
+    "weight": 1
+  },
+  {
+    "category": "ich-biete-eine-immobilie-an",
+    "category_label": "Ich biete eine Immobilie an",
+    "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
+    "question": "Welche Daten muss ich beim Angebot angeben?",
+    "answer": "Geben Sie die wichtigsten Eckdaten der Immobilie (z. B. Adresse, Preis, Wohnfläche, Zimmer) sowie eine kurze Beschreibung und Kontaktdaten an.",
+    "weight": 2
+  },
+  {
+    "category": "ich-biete-eine-immobilie-an",
+    "category_label": "Ich biete eine Immobilie an",
+    "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
+    "question": "Was passiert, nachdem ich ein Angebot gesendet habe?",
+    "answer": "Der Suchende erhält Ihre Nachricht und kann direkt mit Ihnen in Kontakt treten, sofern Interesse besteht.",
+    "weight": 3
+  },
+  {
+    "category": "ich-biete-eine-immobilie-an",
+    "category_label": "Ich biete eine Immobilie an",
+    "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
+    "question": "Ist das Einstellen eines Angebots kostenlos?",
+    "answer": "Die Kontaktaufnahme und das Senden von Angeboten auf Suchaufträge sind für Anbieter transparent und flexibel gestaltet.",
+    "weight": 4
+  },
+  {
+    "category": "ich-biete-eine-immobilie-an",
+    "category_label": "Ich biete eine Immobilie an",
+    "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
+    "question": "Kann ich mehrere Suchaufträge kontaktieren?",
+    "answer": "Ja, Sie können beliebig viele passende Suchaufträge durchsuchen und für entsprechende Immobilien passende Angebote versenden.",
+    "weight": 5
+  }
+]

@@ -65,23 +65,8 @@ function immofirst_search_request_views_query_alter(ViewExecutable $view, Sql $q
     $query->addWhere(0, 'node_field_data.nid', $ids, 'IN');
   }
 
-  /**
-   * ------------------------------------------------------------------
-   * Radius filter
-   * ------------------------------------------------------------------
-   */
-  $radius = (int) $request->query->get('radius');
-
-  if ($radius > 0) {
-    $table = $query->ensureTable('node__field_radius');
-
-    $query->addWhere(
-      0,
-      "$table.field_radius_value",
-      $radius,
-      '<='
-    );
-  }
+  // The "radius" (Umkreis) filter is a real distance filter now, owned by
+  // immofirst_geosearch (see SearchRequestProximityFilter).
 }
 
 

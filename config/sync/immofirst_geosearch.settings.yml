@@ -1,0 +1,11 @@
+_core:
+  default_config_hash: S8eVq6B-S_RmlFHvyTecoHyTAR3VlnNdoe_G8Ue9QLA
+default_radius: 25
+allowed_radii:
+  - 5
+  - 10
+  - 15
+  - 25
+  - 50
+  - 100
+batch_size: 25

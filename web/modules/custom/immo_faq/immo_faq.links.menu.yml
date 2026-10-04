@@ -1,0 +1,6 @@
+immo_faq.page:
+  title: 'FAQ'
+  route_name: immo_faq.page
+  description: 'Häufige Fragen'
+  weight: 10
+  menu_name: main

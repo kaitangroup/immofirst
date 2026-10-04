@@ -1,0 +1,29 @@
+immofirst_offers.list:
+  path: '/admin/content/angebote'
+  defaults:
+    _controller: '\Drupal\immofirst_offers\Controller\OfferListController::list'
+    _title: 'Angebote'
+  requirements:
+    _permission: 'manage provider offers'
+
+immofirst_offers.review:
+  path: '/admin/content/angebote/{webform_submission}'
+  defaults:
+    _form: '\Drupal\immofirst_offers\Form\OfferReviewForm'
+    _title: 'Angebot prüfen'
+  requirements:
+    _permission: 'manage provider offers'
+    _custom_access: '\Drupal\immofirst_offers\Form\OfferReviewForm::access'
+    webform_submission: \d+
+  options:
+    parameters:
+      webform_submission:
+        type: entity:webform_submission
+
+immofirst_offers.settings:
+  path: '/admin/config/system/immofirst-emails'
+  defaults:
+    _form: '\Drupal\immofirst_offers\Form\SettingsForm'
+    _title: 'ImmoFirst E-Mails'
+  requirements:
+    _permission: 'administer site configuration'

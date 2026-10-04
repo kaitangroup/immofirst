@@ -1,0 +1,25 @@
+services:
+  immofirst_offers.mailer:
+    class: Drupal\immofirst_offers\NotificationMailer
+    arguments:
+      - '@plugin.manager.mail'
+      - '@config.factory'
+      - '@date.formatter'
+      - '@database'
+      - '@logger.channel.immofirst_offers'
+      - '@language_manager'
+      - '@renderer'
+      - '@email.validator'
+      - '@webform.token_manager'
+
+  immofirst_offers.workflow:
+    class: Drupal\immofirst_offers\OfferWorkflow
+    arguments:
+      - '@immofirst_offers.mailer'
+      - '@entity_type.manager'
+      - '@lock'
+      - '@logger.channel.immofirst_offers'
+
+  logger.channel.immofirst_offers:
+    parent: logger.channel_base
+    arguments: ['immofirst_offers']

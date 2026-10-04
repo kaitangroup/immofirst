@@ -1,0 +1,85 @@
+immofirst_offers.settings:
+  type: config_object
+  label: 'ImmoFirst offers & emails settings'
+  mapping:
+    search_request_term_months:
+      type: integer
+      label: 'Search request term (months)'
+    provider_email_element:
+      type: string
+      label: 'Provider e-mail element key in offer_to_search_request'
+    brand_name:
+      type: label
+      label: 'Brand name'
+    tagline:
+      type: label
+      label: 'Tagline'
+    footer_note:
+      type: text
+      label: 'Footer note'
+    footer_company:
+      type: text
+      label: 'Footer company line'
+    contact_url:
+      type: string
+      label: 'Contact URL'
+    imprint_url:
+      type: string
+      label: 'Imprint URL'
+    privacy_url:
+      type: string
+      label: 'Privacy URL'
+    emails:
+      type: mapping
+      label: 'E-mails'
+      mapping:
+        search_request_created:
+          type: immofirst_offers.email
+          label: '4.1 Search request created'
+        search_request_terminated:
+          type: immofirst_offers.email
+          label: '4.2 Search request terminated'
+        search_request_deleted:
+          type: immofirst_offers.email
+          label: '4.3 Search request deleted'
+        offer_sent:
+          type: immofirst_offers.email
+          label: '4.4 Offer sent'
+        offer_forward:
+          type: immofirst_offers.email
+          label: 'Offer forwarded to requester'
+
+immofirst_offers.email:
+  type: mapping
+  label: 'E-mail texts'
+  mapping:
+    subject:
+      type: label
+      label: 'Subject'
+    heading:
+      type: label
+      label: 'Heading'
+    intro:
+      type: text
+      label: 'Intro'
+    summary_heading:
+      type: label
+      label: 'Summary heading'
+    next_heading:
+      type: label
+      label: 'Next steps heading'
+    next_text:
+      type: text
+      label: 'Next steps text'
+    button_label:
+      type: label
+      label: 'Button label'
+    button_caption:
+      type: label
+      label: 'Button caption'
+    extra_heading:
+      type: label
+      label: 'Extra box heading'
+    extra_text:
+      type: text
+      label: 'Extra box text'

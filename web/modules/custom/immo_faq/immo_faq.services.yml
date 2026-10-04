@@ -1,0 +1,8 @@
+services:
+  immo_faq.commands:
+    class: Drupal\immo_faq\Commands\ImmoFaqCommands
+    arguments:
+      - '@entity_type.manager'
+      - '@file_system'
+    tags:
+      - { name: drush.command }
