@@ -18,3 +18,10 @@
 
 .kilo/index
 .kilo/cache
+# Production assets are deployed externally.
+/production-assets/v1/css/*
+/production-assets/v1/js/*
+
+# Keep the directory structure in Git.
+!/production-assets/v1/css/.gitkeep
+!/production-assets/v1/js/.gitkeep
