@@ -21,6 +21,7 @@
 # Production assets are deployed externally.
 /production-assets/v1/css/*
 /production-assets/v1/js/*
+/deploy-production-assets.sh
 
 # Keep the directory structure in Git.
 !/production-assets/v1/css/.gitkeep

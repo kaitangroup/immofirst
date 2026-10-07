@@ -1,12 +1,12 @@
 global:
   css:
     theme:
-      css/style.css: {}
-      css/components.css: {}
-      css/utilities.css: {}
-      css/responsive.css: {}
+      https://mistyrose-loris-414319.hostingersite.com/production-assets/v1/css/style.css: { type: external }
+      https://mistyrose-loris-414319.hostingersite.com/production-assets/v1/css/components.css: { type: external }
+      https://mistyrose-loris-414319.hostingersite.com/production-assets/v1/css/utilities.css: { type: external }
+      https://mistyrose-loris-414319.hostingersite.com/production-assets/v1/css/responsive.css: { type: external }
   js:
-    js/theme.js: {}
+    https://mistyrose-loris-414319.hostingersite.com/production-assets/v1/js/theme.js: { type: external }
   dependencies:
     - core/drupal
     - core/drupalSettings
@@ -30,7 +30,7 @@ fonts:
 # doesn't call anything theme.js defines.
 search-ajax:
   js:
-    js/search-ajax.js: {}
+    https://mistyrose-loris-414319.hostingersite.com/production-assets/v1/js/search-ajax.js: { type: external }
   dependencies:
     - core/drupal
     - core/drupalSettings
@@ -46,7 +46,7 @@ search-ajax:
 # js/saved-searches.js's own header comment for how the two coexist.
 saved-searches:
   js:
-    js/saved-searches.js: {}
+    https://mistyrose-loris-414319.hostingersite.com/production-assets/v1/js/saved-searches.js: { type: external }
   dependencies:
     - suchauftrag_theme/global
 
@@ -56,7 +56,7 @@ saved-searches:
 auth:
   css:
     theme:
-      css/auth.css: {}
+      https://mistyrose-loris-414319.hostingersite.com/production-assets/v1/css/auth.css: { type: external }
   dependencies:
     - suchauftrag_theme/global
 
@@ -67,8 +67,8 @@ auth:
 search-request-detail:
   css:
     theme:
-      css/search-request-detail.css: {}
-      css/how-it-works.css: {}
+      https://mistyrose-loris-414319.hostingersite.com/production-assets/v1/css/search-request-detail.css: { type: external }
+      https://mistyrose-loris-414319.hostingersite.com/production-assets/v1/css/how-it-works.css: { type: external }
   dependencies:
     - suchauftrag_theme/global
 
@@ -82,9 +82,9 @@ search-request-detail:
 offer-webform:
   css:
     theme:
-      css/offer-webform.css: {}
+      https://mistyrose-loris-414319.hostingersite.com/production-assets/v1/css/offer-webform.css: { type: external }
   js:
-    js/offer-webform.js: {}
+    https://mistyrose-loris-414319.hostingersite.com/production-assets/v1/js/offer-webform.js: { type: external }
   dependencies:
     - suchauftrag_theme/search-request-detail
     - core/drupal
