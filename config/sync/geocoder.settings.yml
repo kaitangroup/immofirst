@@ -1,6 +1,0 @@
-_core:
-  default_config_hash: aK5KGqdbQSYJYwqU0DOQIF-QCIVkyRoJEWBuI3Bw5VY
-geocoder_presave_disabled: false
-cache: true
-queue: false
-geocode_country_only_address: true

@@ -27,17 +27,12 @@ module:
   field_ui: 0
   file: 0
   filter: 0
-  geocoder: 0
-  geocoder_field: 0
-  geocoder_geofield: 0
   geofield: 0
   gin_toolbar: 0
   help: 0
   image: 0
   imce: 0
   immofirst_api: 0
-  immofirst_geosearch: 0
-  immofirst_offers: 0
   immofirst_search_request: 0
   inline_form_errors: 0
   jquery_ui: 0

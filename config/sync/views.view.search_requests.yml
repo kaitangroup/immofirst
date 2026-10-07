@@ -624,6 +624,46 @@ display:
             default_group: All
             default_group_multiple: {  }
             group_items: {  }
+        field_radius_value:
+          id: field_radius_value
+          table: node__field_radius
+          field: field_radius_value
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: list_field
+          operator: or
+          value: {  }
+          group: 1
+          exposed: true
+          expose:
+            operator_id: field_radius_value_op
+            label: 'Umkreis (field_radius)'
+            description: ''
+            use_operator: false
+            operator: field_radius_value_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: radius
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+            reduce: false
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+          reduce_duplicates: false
       style:
         type: default
       row:
