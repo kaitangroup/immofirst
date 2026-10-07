@@ -1,0 +1,4 @@
+use immofirst api:
+  title: 'Use the ImmoFirst entity API'
+  description: 'Grant only to the dedicated API service account configured in settings.php ($settings[''immofirst_api_uid'']). Every request is additionally checked against normal entity and field access for that account.'
+  restrict access: true

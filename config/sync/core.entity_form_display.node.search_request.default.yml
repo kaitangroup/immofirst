@@ -17,6 +17,7 @@ dependencies:
     - field.field.node.search_request.field_lease_price_max
     - field.field.node.search_request.field_lease_price_min
     - field.field.node.search_request.field_location
+    - field.field.node.search_request.field_location_coordinates
     - field.field.node.search_request.field_notes
     - field.field.node.search_request.field_parking_type
     - field.field.node.search_request.field_phone
@@ -294,6 +295,7 @@ content:
 hidden:
   field_lease_price_max: true
   field_lease_price_min: true
+  field_location_coordinates: true
   field_views: true
   promote: true
   sticky: true

@@ -904,6 +904,13 @@ $settings['migrate_node_migrate_type_classic'] = FALSE;
 
 
 
+/**
+ * ImmoFirst API (immofirst_api module) — values come from the environment
+ * only, never from Git or exported config. The API stays disabled (every
+ * request 401) unless both are set and the token has >= 32 characters.
+ */
+
+
  if (file_exists($app_root . '/' . $site_path . '/settings.local.php')) {
    include $app_root . '/' . $site_path . '/settings.local.php';
  }

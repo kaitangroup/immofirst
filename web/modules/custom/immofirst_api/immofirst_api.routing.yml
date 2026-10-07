@@ -1,0 +1,67 @@
+# Every route: token authentication only (_auth), never page-cached
+# (no_cache), and access only for requests authenticated by the
+# immofirst_api_token provider with the "use immofirst api" permission
+# (_immofirst_api_access, see ApiAccessCheck). Entity-level access is
+# checked again per entity in EntityApiManager.
+
+immofirst_api.entity_types:
+  path: '/api/v1/entity-types'
+  defaults:
+    _controller: '\Drupal\immofirst_api\Controller\ApiController::entityTypes'
+  methods: [GET]
+  requirements:
+    _immofirst_api_access: 'TRUE'
+  options:
+    _auth: ['immofirst_api_token']
+    no_cache: TRUE
+
+immofirst_api.entity_type:
+  path: '/api/v1/entity-types/{entity_type}'
+  defaults:
+    _controller: '\Drupal\immofirst_api\Controller\ApiController::entityType'
+  methods: [GET]
+  requirements:
+    entity_type: '[a-z0-9_]{1,32}'
+    _immofirst_api_access: 'TRUE'
+  options:
+    _auth: ['immofirst_api_token']
+    no_cache: TRUE
+
+immofirst_api.collection:
+  path: '/api/v1/entity/{entity_type}'
+  defaults:
+    _controller: '\Drupal\immofirst_api\Controller\ApiController::collection'
+  methods: [GET, POST]
+  requirements:
+    entity_type: '[a-z0-9_]{1,32}'
+    _immofirst_api_access: 'TRUE'
+  options:
+    _auth: ['immofirst_api_token']
+    no_cache: TRUE
+
+# Has one more static path part than immofirst_api.item, so the router
+# always prefers it for .../bulk.
+immofirst_api.bulk:
+  path: '/api/v1/entity/{entity_type}/bulk'
+  defaults:
+    _controller: '\Drupal\immofirst_api\Controller\ApiController::bulk'
+  methods: [POST, PATCH, DELETE]
+  requirements:
+    entity_type: '[a-z0-9_]{1,32}'
+    _immofirst_api_access: 'TRUE'
+  options:
+    _auth: ['immofirst_api_token']
+    no_cache: TRUE
+
+immofirst_api.item:
+  path: '/api/v1/entity/{entity_type}/{entity_id}'
+  defaults:
+    _controller: '\Drupal\immofirst_api\Controller\ApiController::item'
+  methods: [GET, PATCH, DELETE]
+  requirements:
+    entity_type: '[a-z0-9_]{1,32}'
+    entity_id: '[A-Za-z0-9_.:-]{1,128}'
+    _immofirst_api_access: 'TRUE'
+  options:
+    _auth: ['immofirst_api_token']
+    no_cache: TRUE

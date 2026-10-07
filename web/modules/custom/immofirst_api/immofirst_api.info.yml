@@ -1,0 +1,7 @@
+name: ImmoFirst API
+type: module
+description: 'Generic, token-authenticated JSON API (/api/v1/) for CRUD and bulk operations on Drupal content entities via the Entity API.'
+package: ImmoFirst
+core_version_requirement: ^11
+dependencies:
+  - drupal:user
