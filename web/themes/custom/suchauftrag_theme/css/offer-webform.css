@@ -101,6 +101,38 @@
   margin-top: 6px;
 }
 
+/* Inline field error under each field (Drupal core / Inline Form Errors
+   markup: <div class="form-item--error-message">). Same look as the
+   5-step wizard's inline errors (immofirst_search_request/css/wizard.css,
+   which isn't loaded on this page): red, 12.5px, semi-bold, small red
+   "!" badge in front. */
+.offer-webform .form-item--error-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: #E02424;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 6px;
+}
+.offer-webform .form-item--error-message::before {
+  content: "!";
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: #E02424;
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 /* ==========================================================
    Upload dropzone
    Base dashed-box look applies everywhere (desktop + mobile); the
@@ -267,7 +299,11 @@
   width: 100%;
 }
 
-.offer-webform__submit-input.offer-webform__submit-input {
+/* Scoped under .offer-webform so it outranks components.css's
+   `.request-sidebar__card input[type="submit"]` (0,2,1), which otherwise
+   keeps the input's own white "Angebot senden" text visible underneath
+   the overlay's identical label — the button text then shows twice. */
+.offer-webform .offer-webform__submit-input.offer-webform__submit-input {
   display: block;
   width: 100%;
   height: 52px;
@@ -309,8 +345,23 @@
 .offer-webform .form-type-checkbox,
 .offer-webform .js-form-type-checkbox {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: 10px;
+}
+
+/* The checkbox row is a flex row (checkbox + label); its error is a
+   third child of that same row, so without this it lands to the right
+   of the label. Full width = its own line below checkbox and label. */
+.offer-webform .form-type-checkbox > .form-item--error-message,
+.offer-webform .js-form-type-checkbox > .form-item--error-message {
+  flex: 0 0 100%;
+  margin-top: 0;
+}
+.offer-webform .form-type-checkbox > label,
+.offer-webform .js-form-type-checkbox > label {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .offer-webform .form-type-checkbox input[type="checkbox"],

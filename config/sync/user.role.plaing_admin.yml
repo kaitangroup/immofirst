@@ -1,0 +1,35 @@
+uuid: 18f739eb-e1d3-4e44-bd5c-aa1d84c2a7a1
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.faq
+    - node.type.search_request
+    - taxonomy.vocabulary.faq_category
+  module:
+    - contextual
+    - immofirst_offers
+    - navigation
+    - node
+    - system
+    - taxonomy
+id: plaing_admin
+label: 'Plaing Admin'
+weight: 4
+is_admin: false
+permissions:
+  - 'access administration pages'
+  - 'access content overview'
+  - 'access contextual links'
+  - 'access navigation'
+  - 'access taxonomy overview'
+  - 'administer node published status'
+  - 'create faq content'
+  - 'create terms in faq_category'
+  - 'delete any faq content'
+  - 'delete any search_request content'
+  - 'edit any faq content'
+  - 'edit any search_request content'
+  - 'edit terms in faq_category'
+  - 'manage provider offers'
+  - 'view the administration theme'

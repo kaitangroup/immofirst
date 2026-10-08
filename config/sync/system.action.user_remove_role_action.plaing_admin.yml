@@ -1,0 +1,14 @@
+uuid: 9bb5a0e4-0bcc-4f3d-8e1c-8b313de2c326
+langcode: en
+status: true
+dependencies:
+  config:
+    - user.role.plaing_admin
+  module:
+    - user
+id: user_remove_role_action.plaing_admin
+label: 'Remove the Plaing Admin role from the selected user(s)'
+type: user
+plugin: user_remove_role_action
+configuration:
+  rid: plaing_admin

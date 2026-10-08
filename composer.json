@@ -39,6 +39,7 @@
         "drupal/module_filter": "^5.0",
         "drupal/pathauto": "^1.15",
         "drupal/redirect": "^1.13",
+        "drupal/smtp": "^1.4",
         "drupal/stage_file_proxy": "^4.0",
         "drupal/token": "^1.17",
         "drupal/twig_tweak": "^4.0@alpha",

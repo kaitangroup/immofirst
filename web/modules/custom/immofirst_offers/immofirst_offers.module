@@ -20,9 +20,12 @@ declare(strict_types=1);
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Url;
 use Drupal\immofirst_offers\OfferWorkflow;
 use Drupal\node\NodeInterface;
+use Drupal\user\UserInterface;
 use Drupal\webform\WebformSubmissionInterface;
 
 /**
@@ -134,6 +137,42 @@ function immofirst_offers_cron(): void {
  */
 function immofirst_offers_mail(string $key, array &$message, array $params): void {
   \Drupal::service('immofirst_offers.mailer')->buildMessage($key, $message, $params);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for user_login_form.
+ */
+function immofirst_offers_form_user_login_form_alter(array &$form, FormStateInterface $form_state): void {
+  // Runs after UserLoginForm::submitForm(), so it only replaces the default
+  // "go to your user page" redirect. An explicit ?destination still wins.
+  $form['#submit'][] = 'immofirst_offers_plaing_admin_login_redirect';
+}
+
+/**
+ * Login submit handler: sends Plaing Admins to the offers list.
+ *
+ * Only for accounts that have the plaing_admin role, no administrator-type
+ * role (is_admin) and are not user 1 — those keep Drupal's normal login
+ * behaviour — and only if the account can actually open the offers list.
+ */
+function immofirst_offers_plaing_admin_login_redirect(array &$form, FormStateInterface $form_state): void {
+  $account = \Drupal::entityTypeManager()->getStorage('user')->load($form_state->get('uid'));
+  if (!$account instanceof UserInterface
+    || (int) $account->id() === 1
+    || !in_array('plaing_admin', $account->getRoles(), TRUE)) {
+    return;
+  }
+  /** @var \Drupal\user\RoleInterface[] $roles */
+  $roles = \Drupal::entityTypeManager()->getStorage('user_role')->loadMultiple($account->getRoles());
+  foreach ($roles as $role) {
+    if ($role->isAdmin()) {
+      return;
+    }
+  }
+  $url = Url::fromRoute('immofirst_offers.list');
+  if ($url->access($account)) {
+    $form_state->setRedirectUrl($url);
+  }
 }
 
 /**

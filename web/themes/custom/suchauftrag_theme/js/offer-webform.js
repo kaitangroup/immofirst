@@ -84,11 +84,37 @@
     }
   };
 
+  /**
+   * The sheet that is currently open, if any (see Drupal.behaviors below:
+   * a Webform AJAX rebuild replaces the whole sheet markup).
+   */
+  OfferSheet.active = null;
+
+  /**
+   * Re-opens this (freshly rendered) sheet in place of `previous`, which
+   * was open when Webform's AJAX validation response replaced it — the
+   * whole [data-offer-webform] root sits inside Webform's AJAX wrapper,
+   * so it comes back closed while <html> still carries the scroll lock.
+   * Opens without the slide-in animation, as nothing visually moved.
+   */
+  OfferSheet.prototype.takeOverFrom = function (previous) {
+    document.removeEventListener('keydown', previous._onKeydown);
+    previous.isOpen = false;
+    this.panel.classList.add(DRAGGING_CLASS);
+    this.open();
+    this.lastFocused = previous.lastFocused;
+    var panel = this.panel;
+    window.requestAnimationFrame(function () {
+      panel.classList.remove(DRAGGING_CLASS);
+    });
+  };
+
   OfferSheet.prototype.open = function () {
     if (this.isOpen) {
       return;
     }
     this.isOpen = true;
+    OfferSheet.active = this;
     this.lastFocused = document.activeElement;
 
     this.backdrop.hidden = false;
@@ -114,6 +140,9 @@
       return;
     }
     this.isOpen = false;
+    if (OfferSheet.active === this) {
+      OfferSheet.active = null;
+    }
 
     this.backdrop.classList.remove(OPEN_CLASS);
     this.panel.classList.remove(OPEN_CLASS, DRAGGING_CLASS);
@@ -337,12 +366,22 @@
   }
 
   Drupal.behaviors.offerWebform = {
-    attach: function (context) {
-      var roots = context.querySelectorAll('[data-offer-webform]');
+    attach: function () {
+      // From `document`, not `context`: after a Webform AJAX rebuild the
+      // new [data-offer-webform] root can itself be the context, which
+      // querySelectorAll() (descendants only) never matches — the rebuilt
+      // sheet then had no controller at all. Same reasoning as for the
+      // submit button below; the offerSheetInstance / dataset guards keep
+      // this idempotent.
+      var roots = document.querySelectorAll('[data-offer-webform]');
 
       roots.forEach(function (root) {
         if (!root.offerSheetInstance) {
           root.offerSheetInstance = new OfferSheet(root);
+          var previous = OfferSheet.active;
+          if (previous && previous.isOpen && !document.contains(previous.root) && root.offerSheetInstance.panel) {
+            root.offerSheetInstance.takeOverFrom(previous);
+          }
         }
 
         root.querySelectorAll('.form-managed-file, .js-form-managed-file').forEach(enhanceDropzone);
@@ -360,7 +399,11 @@
       // button on every validation-error AJAX rebuild. Searching from
       // `document` sidesteps that entirely; enhanceSubmit()'s own
       // dataset guard keeps this idempotent either way.
-      document.querySelectorAll('.offer-webform form input[type="submit"], .offer-webform form button[type="submit"]').forEach(enhanceSubmit);
+      // Only the form's own submit in its actions container: the
+      // managed_file widget's hidden "Upload" button is also a
+      // type="submit" input, and enhancing it put a second icon+label
+      // "button" into the upload dropzone.
+      document.querySelectorAll('.offer-webform form .form-actions input[type="submit"], .offer-webform form .form-actions button[type="submit"]').forEach(enhanceSubmit);
     }
   };
 }(Drupal));

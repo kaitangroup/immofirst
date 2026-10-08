@@ -1,0 +1,14 @@
+uuid: 35eaddcb-78b5-43b9-a1b8-8352e712ce65
+langcode: en
+status: true
+dependencies:
+  config:
+    - user.role.plaing_admin
+  module:
+    - user
+id: user_add_role_action.plaing_admin
+label: 'Add the Plaing Admin role to the selected user(s)'
+type: user
+plugin: user_add_role_action
+configuration:
+  rid: plaing_admin
