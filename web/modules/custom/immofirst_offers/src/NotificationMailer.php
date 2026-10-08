@@ -14,6 +14,7 @@ use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
 use Drupal\webform\WebformSubmissionInterface;
@@ -204,7 +205,7 @@ final class NotificationMailer {
   /**
    * "Auf einen Blick" rows per e-mail, as laid out in Tab.4.
    *
-   * @return array<int, array{label: string, value: string, note?: string}>
+   * @return array<int, array{label: string, value: string|\Drupal\Core\StringTranslation\TranslatableMarkup, note?: string}>
    */
   private function summaryRows(string $key, NodeInterface $node, array $params): array {
     $created = (int) $node->getCreatedTime();
@@ -276,14 +277,18 @@ final class NotificationMailer {
 
   /**
    * "10 km rund um München".
+   *
+   * The translated variant is returned as markup, not cast to a string:
+   * t() has already escaped @location, so the template must not escape it
+   * a second time ("&" would otherwise arrive as "&amp;amp;").
    */
-  private function radiusLabel(NodeInterface $node): string {
+  private function radiusLabel(NodeInterface $node): string|TranslatableMarkup {
     $location = trim((string) $node->get('field_location')->value);
     $radius = $node->get('field_radius')->value;
     if ($radius === NULL || $radius === '') {
       return $location;
     }
-    return (string) $this->t('@km km rund um @location', ['@km' => $radius, '@location' => $location]);
+    return $this->t('@km km rund um @location', ['@km' => $radius, '@location' => $location]);
   }
 
   private function date(int $timestamp): string {

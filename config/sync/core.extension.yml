@@ -38,6 +38,7 @@ module:
   immo_faq: 0
   immofirst_api: 0
   immofirst_geosearch: 0
+  immofirst_offers: 0
   immofirst_search_request: 0
   inline_form_errors: 0
   jquery_ui: 0
