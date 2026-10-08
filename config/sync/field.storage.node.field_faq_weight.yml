@@ -1,0 +1,22 @@
+uuid: 946c2877-9432-4a6a-a79b-42fb4196a938
+langcode: de
+status: true
+dependencies:
+  module:
+    - node
+_core:
+  default_config_hash: UpHqYZtSw_6w0SGvHVTmeLiMt8HJQsFdWEQeXlsCpVE
+id: node.field_faq_weight
+field_name: field_faq_weight
+entity_type: node
+type: integer
+settings:
+  unsigned: false
+  size: normal
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

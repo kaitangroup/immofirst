@@ -1,0 +1,22 @@
+uuid: e1166294-53eb-4347-8e66-b78908f26032
+langcode: de
+status: true
+dependencies:
+  module:
+    - node
+    - taxonomy
+_core:
+  default_config_hash: 1jVKZYuExE5-jbnSqR1O4zbOvrzs_WWCZP2YTJP9ZTs
+id: node.field_faq_category
+field_name: field_faq_category
+entity_type: node
+type: entity_reference
+settings:
+  target_type: taxonomy_term
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

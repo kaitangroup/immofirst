@@ -1,0 +1,27 @@
+uuid: 29d3be93-ca6e-4598-bff0-5f712b337c01
+langcode: de
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_faq_weight
+    - node.type.faq
+_core:
+  default_config_hash: cz6DCyw8RZ32rqrq7VTEqyqVyhav-thweVwVDOGp1SM
+id: node.faq.field_faq_weight
+field_name: field_faq_weight
+entity_type: node
+bundle: faq
+label: Weight
+description: 'Sorting weight within category.'
+required: false
+translatable: true
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

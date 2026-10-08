@@ -1,0 +1,13 @@
+uuid: ca242de4-85dc-4de8-844a-9390e55945f1
+langcode: de
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: j9oJ42gtGMGyE2svtrcvs59uCUlAsV8TVXi59WORdDY
+name: FAQ
+type: faq
+description: 'Frequently Asked Question items.'
+help: ''
+new_revision: true
+preview_mode: 1
+display_submitted: false

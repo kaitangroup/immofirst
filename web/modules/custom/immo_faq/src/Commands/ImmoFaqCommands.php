@@ -2,7 +2,8 @@
 
 namespace Drupal\immo_faq\Commands;
 
-import Drush\Commands\DrushCommands;
+use Drush\Attributes as CLI;
+use Drush\Commands\DrushCommands;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\taxonomy\Entity\Term;
@@ -38,11 +39,9 @@ class ImmoFaqCommands extends DrushCommands {
 
   /**
    * Imports FAQs from json file.
-   *
-   * @command immo-faq:import
-   * @aliases ifi
-   * @usage immo-faq:import
    */
+  #[CLI\Command(name: 'immo-faq:import', aliases: ['ifi'])]
+  #[CLI\Usage(name: 'immo-faq:import', description: 'Import FAQ categories and items from data/faq.json.')]
   public function import() {
     $this->output()->writeln('Importing FAQ content...');
 
@@ -128,6 +127,7 @@ class ImmoFaqCommands extends DrushCommands {
             'format' => 'basic_html',
           ]);
           $node->set('field_faq_weight', $weight);
+          $node->setPublished();
           $node->save();
           $updated_count++;
           $this->output()->writeln("<comment>[UPDATED] {$question}</comment>");

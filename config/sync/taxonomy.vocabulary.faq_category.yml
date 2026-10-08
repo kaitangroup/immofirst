@@ -1,0 +1,11 @@
+uuid: 543dc94c-fa13-4d9a-bda5-d19f2456c191
+langcode: de
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: YU3KPT14ADpNcc8PphnhYUQKoBhhXK-JiFczL92my2E
+name: 'FAQ Category'
+vid: faq_category
+description: 'Categories for frequently asked questions.'
+weight: 0
+new_revision: false

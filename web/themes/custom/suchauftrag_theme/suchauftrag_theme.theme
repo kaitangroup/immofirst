@@ -15,13 +15,33 @@ function suchauftrag_theme_preprocess_page(array &$variables) {
 
   // Primary navigation links used by includes/header.html.twig.
   $variables['main_nav_links'] = [
-    ['title' => 'Suchaufträge', 'url' => '/', 'active' => TRUE],
+    ['title' => 'Suchaufträge', 'url' => '/', 'active' => FALSE],
    // ['title' => 'Suchauftrag erstellen', 'url' => '/suchauftrag-erstellen', 'active' => FALSE],
     // ['title' => "So funktioniert's", 'url' => '/so-funktionierts', 'active' => FALSE],
     // ['title' => 'Über uns', 'url' => '/ueber-uns', 'active' => FALSE],
     ['title' => 'FAQ', 'url' => '/faq', 'active' => FALSE],
   ];
   $request = \Drupal::request();
+
+  // Mark the link matching the current path as active: '/' on the front
+  // page, any other link on its own path or a sub-path of it. When nothing
+  // matches (search request detail pages, wizard, login, ...) Suchaufträge
+  // stays active, as it always was before.
+  $current_path = $request->getPathInfo();
+  $is_front = \Drupal::service('path.matcher')->isFrontPage();
+  $active_found = FALSE;
+  foreach ($variables['main_nav_links'] as &$link) {
+    $link['active'] = $link['url'] === '/'
+      ? $is_front
+      : ($current_path === $link['url'] || str_starts_with($current_path, $link['url'] . '/'));
+    $active_found = $active_found || $link['active'];
+  }
+  unset($link);
+  if (!$active_found) {
+    $variables['main_nav_links'][0]['active'] = TRUE;
+  }
+  $variables['#cache']['contexts'][] = 'url.path';
+  $variables['#cache']['contexts'][] = 'url.path.is_front';
 
   $variables['search_query'] = [
     'art' => $request->query->get('art', 'mieten'),

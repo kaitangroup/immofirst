@@ -1,6 +1,11 @@
-{% include '@suchauftrag_theme/templates/includes/header.html.twig' %}
-
-<main id="main-content" class="main-content immo-faq-main" role="main">
+{#
+/**
+ * @file
+ * FAQ page content. Rendered inside page.html.twig's page.content, which
+ * already provides the global header, <main id="main-content"> and footer.
+ */
+#}
+<div class="main-content immo-faq-main">
 
   {# Hero Band with background gradient wave #}
   <div class="hero-band immo-faq-hero-band">
@@ -127,6 +132,4 @@
     </div>
   </section>
 
-</main>
-
-{% include '@suchauftrag_theme/templates/includes/footer.html.twig' %}
+</div>
