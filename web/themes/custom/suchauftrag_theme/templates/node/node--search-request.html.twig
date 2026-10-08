@@ -62,7 +62,11 @@
 
 <div class="request-detail">
 
-  <a href="/" class="request-detail__back">
+  {# Goes back in browser history when the visitor came from the results
+     list (keeps filters, sorting, loaded pages and scroll position — see
+     theme.js, suchauftragBackToResults); the href is the fallback for a
+     detail page opened directly (bookmark, e-mail, shared link). #}
+  <a href="{{ path('<front>') }}" class="request-detail__back" data-back-to-results>
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     Zurück zur Ergebnisliste
   </a>

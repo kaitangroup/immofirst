@@ -131,17 +131,36 @@
   justify-content: center;
 }
 .request-detail__stat .stat-item__value {
+  display: block;
+  max-width: 100%;
   font-size: 18px;
   font-weight: 700;
   color: var(--text);
 }
 .request-detail__stat .stat-item__label {
+  max-width: 100%;
   font-size: 13px;
   color: var(--muted);
 }
+.request-detail__stat .stat-item__value,
+.request-detail__stat .stat-item__label {
+  /* Last resort for a single word wider than the whole card; does not
+     lower min-content, so the wrapping below still sees the full word. */
+  overflow-wrap: break-word;
+}
 
+/* Two per row by default; an item whose longest word (e.g.
+   "Tiefgaragenstellplatz") cannot fit in half the card wraps onto its
+   own full-width row instead of pushing its neighbour out of the card. */
 @media (max-width: 640px) {
-  .request-detail__stats { grid-template-columns: repeat(2, 1fr); }
+  .request-detail__stats {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .request-detail__stat {
+    flex: 1 1 calc(50% - 6px);
+    max-width: 100%;
+  }
 }
 
 /* ===== Generic content sections ===== */

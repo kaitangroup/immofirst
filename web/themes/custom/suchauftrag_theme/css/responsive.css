@@ -352,13 +352,18 @@
     -webkit-mask-repeat:no-repeat;
     mask-repeat:no-repeat;
   }
-  /* Client spec: mobile keeps only the "Sortieren" control in this
-     row — the saved-search filter button is hidden here rather than
-     squeezed in beside it, to avoid disturbing the existing mobile
-     layout (spec explicitly allows omitting it or moving it elsewhere
-     later; no second mobile-only copy is added here since there's no
-     approved design for where exactly it'd sit in the filter panel). */
-  .saved-filter-btn{ display:none; }
+  /* Client Issue 25: "Nur gemerkte anzeigen" on mobile too. The title/
+     count + sort icon row stays exactly as it was; the SAME button (no
+     mobile copy, same toggle/storage — js/saved-searches.js) wraps onto
+     its own full-width row below it. display:contents lets the button
+     leave .search-requests__sort and wrap within .search-requests__head;
+     the sort .select stays a normal box, so its dropdown is unaffected. */
+  .search-requests__head{ flex-wrap:wrap; row-gap:14px; }
+  .search-requests__sort{ display:contents; }
+  .saved-filter-btn{
+    flex:1 0 100%;
+    justify-content:center;
+  }
 
   .search-requests__load-more [data-load-more]{
     width:100%;
@@ -533,6 +538,21 @@
     justify-content:center;
     color:var(--primary);
     flex-shrink:0;
+  }
+  /* Client Issue 25: tapping anywhere on the card opens the details.
+     The existing arrow link's hit area is stretched over the whole card
+     (no extra link, no link wrapping the bookmark <button> — that would
+     be invalid nested interactive content). The bookmark sits above
+     that area, so tapping it only toggles the bookmark. */
+  .property-card{ position:relative; }
+  .property-card__arrow::after{
+    content:"";
+    position:absolute;
+    inset:0;
+  }
+  .property-card__trailing .property-card__bookmark{
+    position:relative;
+    z-index:1;
   }
 
   .cta-banner{ padding:0 16px 40px; }

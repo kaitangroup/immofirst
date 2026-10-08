@@ -904,17 +904,7 @@ $settings['migrate_node_migrate_type_classic'] = FALSE;
 
 
 
-/**
- * Geocoding credentials (immofirst_geosearch).
- *
- * geocoder.geocoder_provider.mapbox is exported with an empty accessToken;
- * every environment provides its own token via the MAPBOX_ACCESS_TOKEN
- * environment variable (or overrides it in settings.local.php). Runtime
- * overrides like this are never written by `drush config:export`.
- */
-if ($mapbox_access_token = getenv('MAPBOX_ACCESS_TOKEN')) {
-  $config['geocoder.geocoder_provider.mapbox']['configuration']['accessToken'] = $mapbox_access_token;
-}
+
 
  if (file_exists($app_root . '/' . $site_path . '/settings.local.php')) {
    include $app_root . '/' . $site_path . '/settings.local.php';
