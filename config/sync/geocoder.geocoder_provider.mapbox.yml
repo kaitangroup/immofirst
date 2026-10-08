@@ -1,0 +1,20 @@
+uuid: c8bb9f23-2ce5-4323-934b-2c186d024ad3
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: 0qSPiy4Ef7v9f7M-ktwDfI83RZ7xAS3mPnq6WlYjhPQ
+id: mapbox
+label: Mapbox
+plugin: mapbox
+configuration:
+  throttle:
+    period: null
+    limit: null
+  geocoder:
+    locale: de
+  accessToken: ''
+  country: de
+  geocodingMode: mapbox.places
+  location_type: 'postcode,place,locality,district,neighborhood,address'
+  fuzzy_match: false

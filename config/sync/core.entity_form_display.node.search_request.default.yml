@@ -17,6 +17,7 @@ dependencies:
     - field.field.node.search_request.field_lease_price_max
     - field.field.node.search_request.field_lease_price_min
     - field.field.node.search_request.field_location
+    - field.field.node.search_request.field_location_coordinates
     - field.field.node.search_request.field_notes
     - field.field.node.search_request.field_parking_type
     - field.field.node.search_request.field_phone
@@ -37,6 +38,7 @@ dependencies:
     - field.field.node.search_request.field_views
     - node.type.search_request
   module:
+    - geofield
     - path
 id: node.search_request.default
 targetEntityType: node
@@ -137,6 +139,13 @@ content:
     settings:
       size: 60
       placeholder: ''
+    third_party_settings: {  }
+  field_location_coordinates:
+    type: geofield_latlon
+    weight: 35
+    region: content
+    settings:
+      html5_geolocation: false
     third_party_settings: {  }
   field_notes:
     type: string_textarea
