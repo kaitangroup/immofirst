@@ -186,7 +186,7 @@ function immofirst_offers_theme(): array {
         'texts' => [],
         'rows' => [],
         'button_url' => '',
-        'offer' => NULL,
+        'seller' => NULL,
         'site' => [],
       ],
     ],

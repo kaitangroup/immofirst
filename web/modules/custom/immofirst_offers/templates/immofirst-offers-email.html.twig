@@ -13,7 +13,8 @@
  * - texts: that e-mail's config texts.
  * - rows: summary rows [{label, value, note}].
  * - button_url: absolute URL for the main button.
- * - offer: rendered offer values (offer_forward only).
+ * - seller: the provider's offer as plain values (offer_forward only):
+ *   name, phone, phone_href, email, message (lines), documents [{name, size}].
  * - site: brand/footer values.
  */
 #}
@@ -51,7 +52,7 @@
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td width="56" valign="top" style="padding-right:16px;">
-                  <div style="width:48px;height:48px;line-height:48px;border-radius:24px;background:#DCE6FF;color:{{ blue }};font-size:24px;font-weight:bold;text-align:center;">{{ email_key == 'search_request_terminated' ? '&#9201;'|raw : '&#10003;'|raw }}</div>
+                  <div style="width:48px;height:48px;line-height:48px;border-radius:24px;background:#DCE6FF;color:{{ blue }};font-size:24px;font-weight:bold;text-align:center;">{{ email_key == 'search_request_terminated' ? '&#9201;'|raw : (email_key == 'offer_forward' ? '&#9993;'|raw : '&#10003;'|raw) }}</div>
                 </td>
                 <td valign="top" style="{{ font }}">
                   <h1 style="margin:0 0 12px;font-size:24px;line-height:1.25;color:{{ navy }};">{{ texts.heading }}</h1>
@@ -85,18 +86,76 @@
         </tr>
         {% endif %}
 
-        {# Forwarded offer (offer_forward only): rendered by Webform from its configured elements. #}
-        {% if offer %}
+        {# "Nachricht vom Anbieter" (offer_forward only): the provider's own
+           values, all autoescaped; the message keeps its line breaks.
+           Documents are listed by name/size only — they are private files. #}
+        {% if seller %}
         <tr>
-          <td style="padding:16px 32px 8px;{{ font }}">
-            <h2 style="margin:0 0 10px;font-size:17px;color:{{ navy }};">{{ texts.next_heading }}</h2>
-            <div style="font-size:14px;line-height:1.5;color:{{ navy }};">{{ offer }}</div>
+          <td style="padding:16px 32px 8px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E6ECF7;border-radius:12px;">
+              <tr><td colspan="2" style="padding:18px 20px 6px;{{ font }}font-size:17px;font-weight:bold;color:{{ navy }};">{{ texts.next_heading }}</td></tr>
+              {% if seller.name %}
+                <tr>
+                  <td width="38%" valign="top" style="padding:10px 20px;border-top:1px solid #EEF2F9;{{ font }}font-size:14px;color:{{ muted }};">{{ 'Anbieter'|t }}</td>
+                  <td valign="top" style="padding:10px 20px;border-top:1px solid #EEF2F9;{{ font }}font-size:14px;color:{{ navy }};">{{ seller.name }}</td>
+                </tr>
+              {% endif %}
+              {% if seller.phone %}
+                <tr>
+                  <td width="38%" valign="top" style="padding:10px 20px;border-top:1px solid #EEF2F9;{{ font }}font-size:14px;color:{{ muted }};">{{ 'Kontakt'|t }}</td>
+                  <td valign="top" style="padding:10px 20px;border-top:1px solid #EEF2F9;{{ font }}font-size:14px;font-weight:bold;color:{{ navy }};">{% if seller.phone_href %}<a href="tel:{{ seller.phone_href }}" style="color:{{ navy }};text-decoration:none;">{{ seller.phone }}</a>{% else %}{{ seller.phone }}{% endif %}</td>
+                </tr>
+              {% endif %}
+              {% if seller.email %}
+                <tr>
+                  <td width="38%" valign="top" style="padding:10px 20px;border-top:1px solid #EEF2F9;{{ font }}font-size:14px;color:{{ muted }};">{{ 'E-Mail'|t }}</td>
+                  <td valign="top" style="padding:10px 20px;border-top:1px solid #EEF2F9;{{ font }}font-size:14px;"><a href="mailto:{{ seller.email }}" style="color:{{ blue }};text-decoration:none;">{{ seller.email }}</a></td>
+                </tr>
+              {% endif %}
+              {% if seller.message %}
+                <tr>
+                  <td colspan="2" style="padding:8px 20px 12px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F5F8FF;border:1px solid #E6ECF7;border-radius:10px;">
+                      <tr>
+                        <td style="padding:16px 18px;{{ font }}font-size:14px;line-height:1.55;color:{{ navy }};">
+                          <p style="margin:0 0 6px;font-weight:bold;">{{ 'Nachricht'|t }}</p>
+                          <p style="margin:0;">{% for line in seller.message %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              {% endif %}
+              {% if seller.documents %}
+                <tr>
+                  <td colspan="2" style="padding:0 20px 12px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E6ECF7;border-radius:10px;">
+                      <tr>
+                        <td style="padding:14px 18px;{{ font }}font-size:14px;color:{{ navy }};">
+                          <p style="margin:0 0 8px;font-size:15px;font-weight:bold;">&#128206; {{ 'Angehängte Dokumente'|t }}</p>
+                          {% for document in seller.documents %}
+                            <p style="margin:0 0 4px;">&#128196; {{ document.name }} <span style="font-size:12px;color:{{ muted }};">{{ document.size }}</span></p>
+                          {% endfor %}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              {% endif %}
+              {% if texts.button_label and button_url %}
+                <tr>
+                  <td colspan="2" align="center" style="padding:12px 20px 24px;{{ font }}">
+                    <a href="{{ button_url }}" style="display:inline-block;padding:14px 32px;background:{{ blue }};color:#FFFFFF;font-size:15px;font-weight:bold;text-decoration:none;border-radius:8px;">&rarr;&nbsp; {{ texts.button_label }}</a>
+                  </td>
+                </tr>
+              {% endif %}
+            </table>
           </td>
         </tr>
         {% endif %}
 
         {# Next steps + button #}
-        {% if not offer and (texts.next_heading or texts.next_text) %}
+        {% if not seller and (texts.next_heading or texts.next_text) %}
         <tr>
           <td style="padding:16px 32px 8px;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F5F8FF;border-radius:12px;">
@@ -113,7 +172,8 @@
         </tr>
         {% endif %}
 
-        {% if texts.button_label and button_url %}
+        {# The offer forward has its button inside the "Nachricht vom Anbieter" box. #}
+        {% if texts.button_label and button_url and not seller %}
         <tr>
           <td align="center" style="padding:20px 32px 8px;{{ font }}">
             {% if texts.button_caption and email_key == 'offer_sent' %}<p style="margin:0 0 12px;font-size:15px;color:{{ navy }};">{{ texts.button_caption }}</p>{% endif %}
@@ -165,7 +225,8 @@
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;">
         <tr>
           <td align="center" style="padding:16px 12px;{{ font }}font-size:12px;line-height:1.6;color:{{ muted }};">
-            {{ site.footer_note }}<br>
+            {# The offer forward's Reply-To is the provider, so "do not reply" would be wrong there. #}
+            {% if email_key != 'offer_forward' %}{{ site.footer_note }}<br>{% endif %}
             {{ site.footer_company }}
             {% if site.imprint_url %} &middot; <a href="{{ site.imprint_url }}" style="color:{{ muted }};">{{ 'Impressum'|t }}</a>{% endif %}
             {% if site.privacy_url %} &middot; <a href="{{ site.privacy_url }}" style="color:{{ muted }};">{{ 'Datenschutz'|t }}</a>{% endif %}

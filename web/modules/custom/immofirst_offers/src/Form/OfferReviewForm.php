@@ -92,7 +92,7 @@ final class OfferReviewForm extends FormBase {
         '#value' => $this->t('Senden'),
         '#submit' => ['::send'],
         '#button_type' => 'primary',
-        '#suffix' => '<p>' . $this->t('Leitet das Angebot an die E-Mail-Adresse des Suchenden weiter und bestätigt dem Anbieter den Versand (E-Mail 4.4).') . '</p>',
+       
       ];
     }
     $form['actions']['back'] = Link::createFromRoute($this->t('Zurück zur Liste'), 'immofirst_offers.list')->toRenderable();

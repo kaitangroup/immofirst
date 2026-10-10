@@ -5,6 +5,17 @@ immofirst_offers.list:
   parent: system.admin_content
   weight: 5
 
+# Same page in core Navigation's sidebar, whose "Content" section is built
+# from the separate "content" menu (NavigationContentLinks), not from the
+# admin menu above. Shown only to users with access to the route.
+immofirst_offers.navigation.list:
+  title: 'Angebote'
+  description: 'Anbieter-Angebote prüfen, freigeben und versenden.'
+  route_name: immofirst_offers.list
+  menu_name: content
+  parent: navigation.content
+  weight: 5
+
 immofirst_offers.settings:
   title: 'ImmoFirst E-Mails'
   description: 'Texte, Betreffzeilen und Laufzeit für die E-Mails 4.1–4.4.'

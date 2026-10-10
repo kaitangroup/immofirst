@@ -67,14 +67,12 @@ emails:
     extra_text: ''
   offer_forward:
     subject: 'Neues Angebot zu Ihrem Suchauftrag'
-    heading: 'Sie haben ein neues Angebot erhalten!'
-    intro: |-
-      Ein Anbieter hat Ihnen ein Angebot zu Ihrem Suchauftrag gesendet.
-      Wenn Sie Interesse haben, antworten Sie einfach auf diese E-Mail oder kontaktieren Sie den Anbieter direkt.
-    summary_heading: 'Ihr Suchauftrag'
-    next_heading: 'Das Angebot'
+    heading: 'Ein passendes Angebot für Ihren Suchauftrag!'
+    intro: 'Ein Anbieter hat Ihnen ein Angebot gesendet, das gut zu Ihrem Suchauftrag passt. Alle Details finden Sie im Folgenden.'
+    summary_heading: 'Details zum Suchauftrag'
+    next_heading: 'Nachricht vom Anbieter'
     next_text: ''
-    button_label: 'Zu meinem Suchauftrag'
+    button_label: 'Suchauftrag im Detail einsehen'
     button_caption: ''
     extra_heading: ''
     extra_text: ''

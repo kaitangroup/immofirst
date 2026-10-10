@@ -10,7 +10,6 @@ services:
       - '@language_manager'
       - '@renderer'
       - '@email.validator'
-      - '@webform.token_manager'
 
   immofirst_offers.workflow:
     class: Drupal\immofirst_offers\OfferWorkflow

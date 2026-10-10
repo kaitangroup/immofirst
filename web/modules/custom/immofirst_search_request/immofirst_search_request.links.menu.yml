@@ -1,0 +1,17 @@
+# "Suchaufträge" management list (views.view.search_request_admin, page_1).
+# Classic admin menu: Administration › Content.
+immofirst_search_request.admin_list:
+  title: 'Suchaufträge'
+  description: 'Suchaufträge finden, bearbeiten und veröffentlichen/zurückziehen.'
+  route_name: view.search_request_admin.page_1
+  parent: system.admin_content
+  weight: 4
+
+# Core Navigation sidebar: its "Content" section uses the "content" menu.
+immofirst_search_request.navigation.admin_list:
+  title: 'Suchaufträge'
+  description: 'Suchaufträge finden, bearbeiten und veröffentlichen/zurückziehen.'
+  route_name: view.search_request_admin.page_1
+  menu_name: content
+  parent: navigation.content
+  weight: 4

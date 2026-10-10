@@ -11,14 +11,13 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Mail\MailManagerInterface;
-use Drupal\Core\Render\Markup;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
+use Drupal\file\FileInterface;
 use Drupal\node\NodeInterface;
 use Drupal\webform\WebformSubmissionInterface;
-use Drupal\webform\WebformTokenManagerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -30,8 +29,12 @@ use Psr\Log\LoggerInterface;
  * immofirst-offers-email.html.twig template.
  *
  * HTML delivery relies on system.mail's "immofirst_offers" interface entry
- * pointing at Webform's "webform_php_mail" plugin (core's php_mail strips
- * HTML). That entry lives in config/sync/system.mail.yml.
+ * pointing at an HTML-capable SMTP plugin ("SMTPMailSystem", with
+ * smtp.settings:smtp_allowhtml). Both live in config/sync.
+ *
+ * Roles: the "requester" created the search request (field_email); the
+ * "provider" (Anbieter) submitted an offer via the offer_to_search_request
+ * webform.
  */
 final class NotificationMailer {
 
@@ -43,6 +46,17 @@ final class NotificationMailer {
   public const KEY_OFFER_SENT = 'offer_sent';
   public const KEY_OFFER_FORWARD = 'offer_forward';
 
+  /**
+   * Element keys of the offer_to_search_request webform used by the forward.
+   *
+   * The provider's e-mail element is configurable
+   * (immofirst_offers.settings:provider_email_element).
+   */
+  private const OFFER_ELEMENT_NAME = 'name';
+  private const OFFER_ELEMENT_PHONE = 'telefon';
+  private const OFFER_ELEMENT_MESSAGE = 'angebot';
+  private const OFFER_ELEMENT_FILES = 'dateien';
+
   public function __construct(
     private readonly MailManagerInterface $mailManager,
     private readonly ConfigFactoryInterface $configFactory,
@@ -52,7 +66,6 @@ final class NotificationMailer {
     private readonly LanguageManagerInterface $languageManager,
     private readonly RendererInterface $renderer,
     private readonly EmailValidatorInterface $emailValidator,
-    private readonly WebformTokenManagerInterface $webformTokenManager,
   ) {}
 
   /**
@@ -147,8 +160,8 @@ final class NotificationMailer {
       '#texts' => $texts,
       '#rows' => $this->summaryRows($key, $node, $params),
       '#button_url' => $this->buttonUrl($key, $node),
-      '#offer' => isset($params['webform_submission']) && $key === self::KEY_OFFER_FORWARD
-        ? $this->offerValuesMarkup($params['webform_submission'])
+      '#seller' => isset($params['webform_submission']) && $key === self::KEY_OFFER_FORWARD
+        ? $this->offerDetails($params['webform_submission'])
         : NULL,
       '#site' => $this->siteVariables(),
     ];
@@ -232,8 +245,133 @@ final class NotificationMailer {
         'label' => (string) $this->t('Weitergeleitet an'),
         'value' => (string) $this->t('an die hinterlegte E-Mail-Adresse des Suchenden'),
       ], $suchId],
+      self::KEY_OFFER_FORWARD => $this->requestDetailRows($node),
       default => [$anzeige, $umkreis, $suchId],
     };
+  }
+
+  /**
+   * "Details zum Suchauftrag" for the offer forward; empty values are skipped.
+   *
+   * @return array<int, array{label: string, value: string}>
+   */
+  private function requestDetailRows(NodeInterface $node): array {
+    $radius = $node->get('field_radius')->value;
+    $rows = [
+      [$this->t('Such-ID'), (string) $node->get('field_reference_number')->value],
+      [$this->t('Immobilienart'), $this->listLabel($node, 'field_property_type')],
+      [$this->t('Kauf / Miete'), match ((string) $node->get('field_request_type')->value) {
+        'kaufen' => (string) $this->t('Kauf'),
+        'mieten' => (string) $this->t('Miete'),
+        default => '',
+      }],
+      [$this->t('Standort'), trim((string) $node->get('field_location')->value)],
+      [$this->t('Umkreis'), $radius !== NULL && $radius !== '' ? $radius . ' km' : ''],
+      [$this->t('Weitere Kriterien'), $this->criteriaSummary($node)],
+    ];
+    $out = [];
+    foreach ($rows as [$label, $value]) {
+      if ($value !== '') {
+        $out[] = ['label' => (string) $label, 'value' => $value];
+      }
+    }
+    return $out;
+  }
+
+  /**
+   * "Wohnfläche ab 120 m² | 4 Zimmer | Kaufpreis bis 450.000 €".
+   */
+  private function criteriaSummary(NodeInterface $node): string {
+    $parts = [];
+    $add = function (string $min_field, string $max_field, string $label, string $unit, int $decimals = 0) use ($node, &$parts): void {
+      if (!$node->hasField($min_field) || !$node->hasField($max_field)) {
+        return;
+      }
+      $format = fn ($v) => number_format((float) $v, $decimals, ',', '.');
+      $min = $node->get($min_field)->value;
+      $max = $node->get($max_field)->value;
+      $min = $min === NULL || $min === '' || (float) $min == 0 ? NULL : $format($min);
+      $max = $max === NULL || $max === '' || (float) $max == 0 ? NULL : $format($max);
+      $range = match (TRUE) {
+        $min !== NULL && $max !== NULL => $min === $max ? $min : "$min – $max",
+        $min !== NULL => $this->t('ab @value', ['@value' => $min]),
+        $max !== NULL => $this->t('bis @value', ['@value' => $max]),
+        default => NULL,
+      };
+      if ($range !== NULL) {
+        $parts[] = trim(($label !== '' ? $label . ' ' : '') . $range . ' ' . $unit);
+      }
+    };
+    $add('field_area_min', 'field_area_max', (string) $this->t('Wohnfläche'), 'm²');
+    $add('field_rooms_min', 'field_rooms_max', '', (string) $this->t('Zimmer'));
+    $add('field_land_size_min', 'field_land_size_max', (string) $this->t('Grundstück'), 'm²');
+    $price_label = (string) $node->get('field_request_type')->value === 'kaufen' ? $this->t('Kaufpreis') : $this->t('Miete');
+    $add('field_price_min', 'field_price_max', (string) $price_label, '€');
+    $add('field_lease_price_min', 'field_lease_price_max', (string) $this->t('Pacht'), '€');
+    return implode(' | ', $parts);
+  }
+
+  /**
+   * German file size for the document list: "2,4 MB", "512 KB".
+   */
+  private function fileSize(int $bytes): string {
+    return match (TRUE) {
+      $bytes >= 1048576 => number_format($bytes / 1048576, 1, ',', '.') . ' MB',
+      $bytes >= 1024 => number_format($bytes / 1024, 0, ',', '.') . ' KB',
+      default => $bytes . ' Bytes',
+    };
+  }
+
+  /**
+   * Label of a list field's stored value ("house" → "Haus").
+   */
+  private function listLabel(NodeInterface $node, string $field): string {
+    if (!$node->hasField($field) || $node->get($field)->isEmpty()) {
+      return '';
+    }
+    $value = (string) $node->get($field)->value;
+    $allowed = $node->getFieldDefinition($field)->getFieldStorageDefinition()->getSetting('allowed_values') ?? [];
+    return (string) ($allowed[$value] ?? $value);
+  }
+
+  /**
+   * The provider's offer as plain values for the forward e-mail.
+   *
+   * Everything is returned as plain strings, so Twig autoescaping applies to
+   * all of it. Uploaded files are listed by name and size only: they are
+   * private webform files that only offer managers may download, so no
+   * download link is put into the e-mail.
+   *
+   * @return array{name: string, phone: string, phone_href: string, email: string, message: string[], documents: array<int, array{name: string, size: string}>}
+   */
+  private function offerDetails(WebformSubmissionInterface $submission): array {
+    $value = static fn (string $key): string => trim((string) (is_scalar($submission->getElementData($key)) ? $submission->getElementData($key) : ''));
+
+    // As entered ("Ihr Name" is often a company); no salutation prefix.
+    $name = $value(self::OFFER_ELEMENT_NAME);
+
+    $phone = $value(self::OFFER_ELEMENT_PHONE);
+    $message = str_replace(["\r\n", "\r"], "\n", $value(self::OFFER_ELEMENT_MESSAGE));
+
+    $documents = [];
+    $fids = array_filter((array) $submission->getElementData(self::OFFER_ELEMENT_FILES), 'is_numeric');
+    if ($fids) {
+      foreach (\Drupal::entityTypeManager()->getStorage('file')->loadMultiple($fids) as $file) {
+        if ($file instanceof FileInterface) {
+          $documents[] = ['name' => (string) $file->getFilename(), 'size' => $this->fileSize((int) $file->getSize())];
+        }
+      }
+    }
+
+    return [
+      'name' => $name,
+      'phone' => $phone,
+      // Only digits and a leading "+" may end up in the tel: link.
+      'phone_href' => $phone !== '' ? preg_replace('/(?!^\+)[^0-9]/', '', $phone) : '',
+      'email' => $this->providerEmail($submission) ?? '',
+      'message' => $message !== '' ? explode("\n", $message) : [],
+      'documents' => $documents,
+    ];
   }
 
   /**
@@ -250,16 +388,6 @@ final class NotificationMailer {
       default => Url::fromRoute('<front>'),
     };
     return $url->setAbsolute()->toString();
-  }
-
-  /**
-   * The provider's submitted offer, rendered by Webform from its elements.
-   *
-   * Uses Webform's own token so the e-mail always reflects the form as
-   * configured in the Webform UI — no element names are hard-coded here.
-   */
-  private function offerValuesMarkup(WebformSubmissionInterface $submission): Markup {
-    return Markup::create((string) $this->webformTokenManager->replace('[webform_submission:values:html]', $submission));
   }
 
   /**
