@@ -4,7 +4,10 @@ immofirst_offers.settings:
   mapping:
     search_request_term_months:
       type: integer
-      label: 'Search request term (months)'
+      label: 'Search request term in months (legacy: only requests created before the switch to days, see NotificationMailer::termDaysSince())'
+    search_request_term_days:
+      type: integer
+      label: 'Search request validity in days (1–365)'
     provider_email_element:
       type: string
       label: 'Provider e-mail element key in offer_to_search_request'

@@ -20,6 +20,16 @@ immofirst_offers.review:
       webform_submission:
         type: entity:webform_submission
 
+# Only the validity period; deliberately separate from the e-mail settings
+# (which need "administer site configuration").
+immofirst_offers.expiration_settings:
+  path: '/admin/config/system/immobiliengesuch-laufzeit'
+  defaults:
+    _form: '\Drupal\immofirst_offers\Form\ExpirationSettingsForm'
+    _title: 'Gültigkeitsdauer von Immobiliengesuchen'
+  requirements:
+    _permission: 'administer immobiliengesuch expiration settings'
+
 immofirst_offers.settings:
   path: '/admin/config/system/immofirst-emails'
   defaults:

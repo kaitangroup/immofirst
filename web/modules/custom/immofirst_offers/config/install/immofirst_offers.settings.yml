@@ -1,4 +1,6 @@
+langcode: de
 search_request_term_months: 3
+search_request_term_days: 90
 provider_email_element: email
 brand_name: Suchauftrag.de
 tagline: 'Ihr Vorsprung am Immobilienmarkt'

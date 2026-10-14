@@ -51,16 +51,8 @@ final class SettingsForm extends ConfigFormBase {
   }
 
   public function buildForm(array $form, FormStateInterface $form_state): array {
-    $form['search_request_term_months'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Laufzeit eines Immobiliengesuchs (Monate)'),
-      '#description' => $this->t('Angezeigt in E-Mail 4.1; danach beendet der Cron das Immobiliengesuch automatisch (unveröffentlicht) und sendet E-Mail 4.2.'),
-      '#min' => 1,
-      '#max' => 36,
-      '#step' => 1,
-      '#required' => TRUE,
-      '#config_target' => self::CONFIG . ':search_request_term_months',
-    ];
+    // The validity period has its own page and permission:
+    // ExpirationSettingsForm (/admin/config/system/immobiliengesuch-laufzeit).
     $form['provider_email_element'] = [
       '#type' => 'textfield',
       '#title' => $this->t('E-Mail-Element im Webform „@id“', ['@id' => OfferWorkflow::WEBFORM_ID]),

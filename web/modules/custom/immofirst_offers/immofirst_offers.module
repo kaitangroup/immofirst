@@ -100,33 +100,41 @@ function immofirst_offers_node_delete(NodeInterface $node): void {
 /**
  * Implements hook_cron() — e-mail 4.2.
  *
- * Ends published search requests whose term (immofirst_offers.settings:
- * search_request_term_months) has run out: field_status → closed,
+ * Ends published search requests whose term has run out — see
+ * NotificationMailer::termEnd(): search_request_term_days (requests created
+ * since NotificationMailer::termDaysSince()) or, for older requests, the
+ * months they were announced with. field_status → closed,
  * unpublished (removed from the public list), then 4.2. Already closed or
  * archived requests are skipped, so each request is ended — and mailed —
  * only once.
  */
 function immofirst_offers_cron(): void {
-  $months = max(1, (int) \Drupal::config('immofirst_offers.settings')->get('search_request_term_months'));
-  $cutoff = (new \DateTimeImmutable('@' . \Drupal::time()->getRequestTime()))->modify("-{$months} months")->getTimestamp();
+  /** @var \Drupal\immofirst_offers\NotificationMailer $mailer */
+  $mailer = \Drupal::service('immofirst_offers.mailer');
+  $since = $mailer->termDaysSince();
+  $now = (new \DateTimeImmutable('@' . \Drupal::time()->getRequestTime()))->setTimezone(new \DateTimeZone(date_default_timezone_get()));
+  // Candidates per rule; the exact end date is checked with termEnd() below.
+  $days_cutoff = $now->modify('-' . $mailer->termDays() . ' days')->getTimestamp();
+  $months_cutoff = $now->modify('-' . $mailer->legacyTermMonths() . ' months')->getTimestamp();
 
   $storage = \Drupal::entityTypeManager()->getStorage('node');
   $query = $storage->getQuery()
     ->accessCheck(FALSE)
     ->condition('type', 'search_request')
     ->condition('status', 1)
-    ->condition('created', $cutoff, '<=')
     ->sort('created')
     ->range(0, 50);
+  $due = $query->orConditionGroup()
+    ->condition($query->andConditionGroup()->condition('created', $since, '>=')->condition('created', $days_cutoff, '<='))
+    ->condition($query->andConditionGroup()->condition('created', $since, '<')->condition('created', $months_cutoff, '<='));
+  $query->condition($due);
   $open = $query->orConditionGroup()
     ->condition('field_status', ['closed', 'archived'], 'NOT IN')
     ->notExists('field_status');
   $ids = $query->condition($open)->execute();
 
-  /** @var \Drupal\immofirst_offers\NotificationMailer $mailer */
-  $mailer = \Drupal::service('immofirst_offers.mailer');
   $logger = \Drupal::logger('immofirst_offers');
-  $now = \Drupal::time()->getRequestTime();
+  $now = $now->getTimestamp();
   foreach ($storage->loadMultiple($ids) as $node) {
     /** @var \Drupal\node\NodeInterface $node */
     // Same end date as shown in e-mails 4.1/4.2 ("bis …"); month arithmetic

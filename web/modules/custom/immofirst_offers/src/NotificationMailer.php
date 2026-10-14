@@ -141,8 +141,67 @@ final class NotificationMailer {
    * End of the search request's term (created + configured months).
    */
   public function termEnd(NodeInterface $node): int {
-    $months = max(1, (int) $this->settings()->get('search_request_term_months'));
-    return (new \DateTimeImmutable("@" . (int) $node->getCreatedTime()))->modify("+{$months} months")->getTimestamp();
+    $created = (new \DateTimeImmutable('@' . (int) $node->getCreatedTime()))
+      ->setTimezone(new \DateTimeZone(date_default_timezone_get()));
+    if ($this->usesLegacyTerm($node)) {
+      return $created->modify('+' . $this->legacyTermMonths() . ' months')->getTimestamp();
+    }
+    // Calendar days in the site's timezone (same time of day, also across
+    // a daylight-saving change).
+    return $created->modify('+' . $this->termDays() . ' days')->getTimestamp();
+  }
+
+  /**
+   * Fallback validity in days when the setting is missing or out of range.
+   */
+  public const TERM_DAYS_DEFAULT = 90;
+
+  /**
+   * Upper limit for the validity in days (one year).
+   */
+  public const TERM_DAYS_MAX = 365;
+
+  /**
+   * Validity in days (immofirst_offers.settings:search_request_term_days).
+   *
+   * Falls back to TERM_DAYS_DEFAULT unless the stored value is a whole
+   * number from 1 to TERM_DAYS_MAX.
+   */
+  public function termDays(): int {
+    $days = $this->settings()->get('search_request_term_days');
+    return is_int($days) && $days >= 1 && $days <= self::TERM_DAYS_MAX ? $days : self::TERM_DAYS_DEFAULT;
+  }
+
+  /**
+   * Whether $node still runs on the old "N months" term.
+   *
+   * Requests created before the switch to days
+   * (termDaysSince()) keep the end date their e-mail 4.1
+   * announced — "+3 months" can be 89–92 days, so recalculating them with
+   * days would end some of them earlier than promised.
+   */
+  public function usesLegacyTerm(NodeInterface $node): bool {
+    return (int) $node->getCreatedTime() < $this->termDaysSince();
+  }
+
+  /**
+   * State key: when this site switched from months to days (timestamp).
+   *
+   * Per environment (State API, not exported config): set once by
+   * immofirst_offers_post_update_term_in_days() when it runs on that site.
+   * Unset (fresh installs) means days apply to every request.
+   */
+  public const TERM_DAYS_SINCE_STATE_KEY = 'immofirst_offers.term_days_since';
+
+  public function termDaysSince(): int {
+    return (int) \Drupal::state()->get(self::TERM_DAYS_SINCE_STATE_KEY, 0);
+  }
+
+  /**
+   * The old term in months, only used for requests created before the switch.
+   */
+  public function legacyTermMonths(): int {
+    return max(1, (int) $this->settings()->get('search_request_term_months'));
   }
 
   /**
@@ -244,7 +303,9 @@ final class NotificationMailer {
     return match ($key) {
       self::KEY_CREATED => [$anzeige, $umkreis, $suchId, $erstellt, [
         'label' => (string) $this->t('Gültig für'),
-        'value' => (string) $this->formatPlural((int) $this->settings()->get('search_request_term_months'), '1 Monat (bis @date)', '@count Monate (bis @date)', ['@date' => $this->date($this->termEnd($node))]),
+        'value' => $this->usesLegacyTerm($node)
+          ? (string) $this->formatPlural($this->legacyTermMonths(), '1 Monat (bis @date)', '@count Monate (bis @date)', ['@date' => $this->date($this->termEnd($node))])
+          : (string) $this->formatPlural($this->termDays(), '1 Tag (bis @date)', '@count Tage (bis @date)', ['@date' => $this->date($this->termEnd($node))]),
         'note' => (string) $this->t('danach automatisch deaktiviert'),
       ]],
       self::KEY_TERMINATED => [$anzeige, $umkreis, $suchId, $erstellt, [

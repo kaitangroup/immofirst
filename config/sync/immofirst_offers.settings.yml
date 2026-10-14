@@ -1,6 +1,8 @@
 _core:
   default_config_hash: tSb6QofYs53z40TgqJn2OAFLzVYqf6j548-KlfQkImg
+langcode: de
 search_request_term_months: 3
+search_request_term_days: 90
 provider_email_element: email
 brand_name: Suchauftrag.de
 tagline: 'Ihr Vorsprung am Immobilienmarkt'

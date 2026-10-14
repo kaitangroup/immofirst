@@ -2,3 +2,7 @@ manage provider offers:
   title: 'Manage provider offers'
   description: 'Review, approve and send provider offers (offer_to_search_request submissions) to search requesters.'
   restrict access: true
+
+administer immobiliengesuch expiration settings:
+  title: 'Gültigkeitsdauer von Immobiliengesuchen verwalten'
+  description: 'Nur die Gültigkeitsdauer (Tage) ändern — kein Zugriff auf E-Mail-Texte oder SMTP.'

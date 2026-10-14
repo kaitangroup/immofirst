@@ -23,6 +23,7 @@ permissions:
   - 'access contextual links'
   - 'access navigation'
   - 'access taxonomy overview'
+  - 'administer immobiliengesuch expiration settings'
   - 'administer node published status'
   - 'create faq content'
   - 'create terms in faq_category'
