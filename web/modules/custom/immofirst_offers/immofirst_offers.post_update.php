@@ -54,3 +54,20 @@ function immofirst_offers_post_update_settings_langcode(): string {
   $config->set('langcode', 'de')->save();
   return 'immofirst_offers.settings: langcode set to "de".';
 }
+
+/**
+ * Switches on the 7-day expiry reminder from now on.
+ *
+ * Records the switch-on time per site (State). Requests whose reminder
+ * moment (end date − 7 days) is already in the past get no late reminder;
+ * they expire as before with e-mail 4.2. Running this again changes nothing.
+ */
+function immofirst_offers_post_update_expiry_reminder(): string {
+  $state = \Drupal::state();
+  if ($state->get('immofirst_offers.expiry_reminder_since') !== NULL) {
+    return 'Expiry reminder already switched on, nothing changed.';
+  }
+  $since = \Drupal::time()->getRequestTime();
+  $state->set('immofirst_offers.expiry_reminder_since', $since);
+  return 'Expiry reminder switched on from ' . date('c', $since) . '.';
+}

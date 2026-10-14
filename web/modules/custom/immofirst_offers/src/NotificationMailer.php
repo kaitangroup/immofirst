@@ -46,6 +46,12 @@ final class NotificationMailer {
   public const KEY_DELETED = 'search_request_deleted';
   public const KEY_OFFER_SENT = 'offer_sent';
   public const KEY_OFFER_FORWARD = 'offer_forward';
+  public const KEY_EXPIRING = 'search_request_expiring';
+
+  /**
+   * The expiry reminder goes out this many calendar days before termEnd().
+   */
+  public const REMINDER_DAYS = 7;
 
   /**
    * Element keys of the offer_to_search_request webform used by the forward.
@@ -82,6 +88,28 @@ final class NotificationMailer {
    */
   public function searchRequestTerminated(NodeInterface $node): void {
     $this->afterCommit(fn () => $this->sendToRequester(self::KEY_TERMINATED, $node, ['node' => $node]));
+  }
+
+  /**
+   * Reminder: the Immobiliengesuch expires in REMINDER_DAYS days.
+   *
+   * Sent from cron (no surrounding transaction), so it is handed to the
+   * mail system right away; the return value tells the caller whether it
+   * was accepted.
+   */
+  public function searchRequestExpiring(NodeInterface $node): bool {
+    return $this->sendToRequester(self::KEY_EXPIRING, $node, ['node' => $node]);
+  }
+
+  /**
+   * When the expiry reminder is due: REMINDER_DAYS calendar days before
+   * the very end date the request expires on (termEnd()).
+   */
+  public function reminderTime(NodeInterface $node): int {
+    return (new \DateTimeImmutable('@' . $this->termEnd($node)))
+      ->setTimezone(new \DateTimeZone(date_default_timezone_get()))
+      ->modify('-' . self::REMINDER_DAYS . ' days')
+      ->getTimestamp();
   }
 
   /**
@@ -232,6 +260,8 @@ final class NotificationMailer {
       '#seller' => isset($params['webform_submission']) && $key === self::KEY_OFFER_FORWARD
         ? $this->offerDetails($params['webform_submission'])
         : NULL,
+      // 4.4: the request as shown on the homepage listing card.
+      '#preview' => $key === self::KEY_OFFER_SENT ? $this->listingPreview($node) : NULL,
       '#site' => $this->siteVariables(),
       // Requester's own deletion link (Tab.4: 4.1 and below 4.5 only).
       '#delete_url' => in_array($key, [self::KEY_CREATED, self::KEY_OFFER_FORWARD], TRUE)
@@ -308,6 +338,11 @@ final class NotificationMailer {
           : (string) $this->formatPlural($this->termDays(), '1 Tag (bis @date)', '@count Tage (bis @date)', ['@date' => $this->date($this->termEnd($node))]),
         'note' => (string) $this->t('danach automatisch deaktiviert'),
       ]],
+      self::KEY_EXPIRING => [$anzeige, $umkreis, $suchId, $erstellt, [
+        'label' => (string) $this->t('Läuft ab am'),
+        'value' => $this->dateTime($this->termEnd($node)),
+        'note' => (string) $this->t('danach automatisch deaktiviert'),
+      ]],
       self::KEY_TERMINATED => [$anzeige, $umkreis, $suchId, $erstellt, [
         'label' => (string) $this->t('Laufzeit'),
         'value' => $this->date($created) . ' – ' . $this->date($this->termEnd($node)),
@@ -351,6 +386,66 @@ final class NotificationMailer {
       }
     }
     return $out;
+  }
+
+  /**
+   * The request as the homepage listing card shows it (property_card).
+   *
+   * Same content and order as suchauftrag_theme_preprocess_views_view_unformatted():
+   * KAUFEN/MIETEN badge, date, title, location + radius, the 2–3 key figures
+   * from _suchauftrag_theme_property_card_stats() (the theme's own helper, so
+   * labels/formatting/"Beliebig" stay identical) and the notes — plus the
+   * Such-ID and the request's URL. The date is absolute (not "Heute"/
+   * "Gestern"), since an e-mail is read later than it is sent.
+   *
+   * @return array{badge: string, request_type: string, date: string, title: string, location: string, stats: array<int, array{label: string, value: string}>, description: string, reference: string, url: string}
+   */
+  private function listingPreview(NodeInterface $node): array {
+    $get = static fn (string $field): string => $node->hasField($field) && !$node->get($field)->isEmpty() ? (string) $node->get($field)->value : '';
+    $type = $get('field_request_type') ?: 'mieten';
+    $property = $get('field_property_type') ?: 'apartment';
+
+    $stats = [];
+    if ($this->loadListingHelpers()) {
+      foreach (_suchauftrag_theme_property_card_stats($node, $property, $type, $get) as $stat) {
+        if (empty($stat['empty'])) {
+          $stats[] = ['label' => (string) $stat['label'], 'value' => (string) $stat['value']];
+        }
+      }
+    }
+    $location = $get('field_location');
+    $radius = $get('field_radius');
+
+    return [
+      'badge' => $type === 'kaufen' ? 'KAUFEN' : 'MIETEN',
+      'request_type' => $type,
+      'date' => $this->date((int) $node->getCreatedTime()),
+      'title' => (string) $node->label(),
+      'location' => $location . ($location !== '' && $radius !== '' ? ', ' : '') . ($radius !== '' ? $radius . ' km Umkreis' : ''),
+      'stats' => $stats,
+      'description' => $get('field_notes'),
+      'reference' => $get('field_reference_number'),
+      'url' => $node->toUrl()->setAbsolute()->toString(),
+    ];
+  }
+
+  /**
+   * Makes the site theme's listing helpers available.
+   *
+   * E-mails are also built where another theme is active (4.4 is sent from
+   * the admin offer page, Gin) or none (cron), so suchauftrag_theme.theme
+   * may not be loaded yet.
+   */
+  private function loadListingHelpers(): bool {
+    if (!function_exists('_suchauftrag_theme_property_card_stats')) {
+      try {
+        \Drupal::service('theme_handler')->getTheme('suchauftrag_theme')->load();
+      }
+      catch (\Throwable $e) {
+        $this->logger->warning('Listing preview without key figures: @message', ['@message' => $e->getMessage()]);
+      }
+    }
+    return function_exists('_suchauftrag_theme_property_card_stats');
   }
 
   /**
@@ -456,7 +551,7 @@ final class NotificationMailer {
     $url = match ($key) {
       // "Navigate directly to the search query using the corresponding
       // search ID."
-      self::KEY_CREATED, self::KEY_OFFER_FORWARD => $node->toUrl(),
+      self::KEY_CREATED, self::KEY_OFFER_FORWARD, self::KEY_EXPIRING => $node->toUrl(),
       // "create a new search request"
       self::KEY_TERMINATED, self::KEY_DELETED => Url::fromRoute('immofirst_search_request.wizard'),
       // "Navigate to all search queries."

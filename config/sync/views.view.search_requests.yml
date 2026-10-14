@@ -655,7 +655,7 @@ display:
           content: '@total'
       display_extenders: {  }
       block_description: 'Immobiliengesuche – Übersicht (Startseite)'
-      block_category: Suchauftrag.de
+      block_category: Immo-Gesuch.de
     cache_metadata:
       max-age: -1
       contexts:

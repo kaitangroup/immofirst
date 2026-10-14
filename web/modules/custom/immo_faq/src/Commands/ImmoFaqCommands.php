@@ -101,6 +101,12 @@ class ImmoFaqCommands extends DrushCommands {
           $created_cats[$cat_label] = $term->id();
           $this->output()->writeln("<info>[OK] Created category: {$cat_label}</info>");
         }
+        elseif ($cat_desc !== '' && $term->getDescription() !== $cat_desc) {
+          // Keep an existing category's description in line with faq.json.
+          $term->setDescription($cat_desc);
+          $term->save();
+          $this->output()->writeln("<comment>[UPDATED] Category description: {$cat_label}</comment>");
+        }
 
         $term_id = $term->id();
 

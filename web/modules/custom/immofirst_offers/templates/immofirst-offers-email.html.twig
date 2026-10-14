@@ -17,6 +17,7 @@
  *   name, phone, phone_href, email, message (lines), documents [{name, size}].
  * - site: brand/footer values.
  * - delete_url: signed early-deletion link (4.1 and offer_forward only).
+ * - preview: 4.4 only — the request as on the homepage listing card.
  */
 #}
 {% set navy = '#142A5C' %}
@@ -53,7 +54,7 @@
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td width="56" valign="top" style="padding-right:16px;">
-                  <div style="width:48px;height:48px;line-height:48px;border-radius:24px;background:#DCE6FF;color:{{ blue }};font-size:24px;font-weight:bold;text-align:center;">{{ email_key == 'search_request_terminated' ? '&#9201;'|raw : (email_key == 'offer_forward' ? '&#9993;'|raw : '&#10003;'|raw) }}</div>
+                  <div style="width:48px;height:48px;line-height:48px;border-radius:24px;background:#DCE6FF;color:{{ blue }};font-size:24px;font-weight:bold;text-align:center;">{{ email_key in ['search_request_terminated', 'search_request_expiring'] ? '&#9201;'|raw : (email_key == 'offer_forward' ? '&#9993;'|raw : '&#10003;'|raw) }}</div>
                 </td>
                 <td valign="top" style="{{ font }}">
                   <h1 style="margin:0 0 12px;font-size:24px;line-height:1.25;color:{{ navy }};">{{ texts.heading }}</h1>
@@ -66,8 +67,57 @@
           </td>
         </tr>
 
+        {# 4.4: the request as the homepage listing card shows it (green box in Tab.4). #}
+        {% if preview %}
+        <tr>
+          <td style="padding:24px 32px 8px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E6ECF7;border-radius:12px;">
+              <tr><td style="padding:18px 20px 6px;{{ font }}font-size:17px;font-weight:bold;color:{{ navy }};">{{ texts.summary_heading }}</td></tr>
+              <tr>
+                <td style="padding:10px 20px 4px;{{ font }}font-size:12px;">
+                  {% if preview.request_type == 'kaufen' %}
+                    <span style="display:inline-block;padding:3px 10px;border-radius:999px;background:#DCFCE7;color:#15803D;font-weight:bold;letter-spacing:.04em;">{{ preview.badge }}</span>
+                  {% else %}
+                    <span style="display:inline-block;padding:3px 10px;border-radius:999px;background:#FFF1E0;color:#C2691A;font-weight:bold;letter-spacing:.04em;">{{ preview.badge }}</span>
+                  {% endif %}
+                  <span style="color:{{ muted }};">&nbsp; {{ preview.date }}</span>
+                </td>
+              </tr>
+              <tr><td style="padding:6px 20px 2px;{{ font }}font-size:17px;font-weight:bold;"><a href="{{ preview.url }}" style="color:{{ navy }};text-decoration:none;">{{ preview.title }}</a></td></tr>
+              {% if preview.location %}
+                <tr><td style="padding:2px 20px 10px;{{ font }}font-size:14px;color:{{ muted }};">&#128205; {{ preview.location }}</td></tr>
+              {% endif %}
+              {% if preview.stats %}
+                <tr>
+                  <td style="padding:6px 20px 6px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #EEF2F9;border-bottom:1px solid #EEF2F9;">
+                      <tr>
+                        {% for stat in preview.stats %}
+                          <td valign="top" width="{{ (100 / preview.stats|length)|round }}%" style="padding:12px 8px 12px 0;{{ font }}">
+                            <div style="font-size:14px;font-weight:bold;color:{{ navy }};">{{ stat.value }}</div>
+                            <div style="font-size:12px;color:{{ muted }};">{{ stat.label }}</div>
+                          </td>
+                        {% endfor %}
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              {% endif %}
+              {% if preview.description %}
+                <tr><td style="padding:8px 20px 4px;{{ font }}font-size:14px;line-height:1.5;color:{{ navy }};">{{ preview.description }}</td></tr>
+              {% endif %}
+              <tr>
+                <td style="padding:10px 20px 16px;{{ font }}font-size:14px;">
+                  {% if preview.reference %}<span style="color:{{ muted }};">{{ 'Such-ID'|t }}:</span> <span style="color:{{ navy }};">{{ preview.reference }}</span> &nbsp;&middot;&nbsp; {% endif %}<a href="{{ preview.url }}" style="color:{{ blue }};">{{ 'Details ansehen'|t }} &rarr;</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        {% endif %}
+
         {# Summary #}
-        {% if rows %}
+        {% if rows and not preview %}
         <tr>
           <td style="padding:24px 32px 8px;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E6ECF7;border-radius:12px;">

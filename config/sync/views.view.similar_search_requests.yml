@@ -3,8 +3,7 @@ langcode: de
 status: true
 dependencies:
   config:
-    - field.storage.node.field_property_type
-    - field.storage.node.field_request_type
+    - core.entity_view_mode.node.teaser
     - node.type.search_request
   module:
     - node
@@ -130,15 +129,15 @@ display:
       relationships: {  }
       header: {  }
       footer: {  }
+      display_extenders: {  }
     cache_metadata:
       max-age: -1
       contexts:
-        - 'languages:language_content'
         - 'languages:language_interface'
         - url
-      tags:
-        - 'config:node.type.search_request'
-        - node_list
+        - 'user.node_grants:view'
+        - user.permissions
+      tags: {  }
   block_1:
     id: block_1
     display_title: 'Ähnliche Immobiliengesuche Block'
@@ -147,13 +146,12 @@ display:
     display_options:
       display_extenders: {  }
       block_description: 'Ähnliche Immobiliengesuche (Detailseite)'
-      block_category: Suchauftrag.de
+      block_category: Immo-Gesuch.de
     cache_metadata:
       max-age: -1
       contexts:
-        - 'languages:language_content'
         - 'languages:language_interface'
         - url
-      tags:
-        - 'config:node.type.search_request'
-        - node_list
+        - 'user.node_grants:view'
+        - user.permissions
+      tags: {  }

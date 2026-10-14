@@ -20,6 +20,7 @@ final class SettingsForm extends ConfigFormBase {
 
   private const EMAILS = [
     'search_request_created' => '4.1 Immobiliengesuch erfolgreich erstellt',
+    'search_request_expiring' => '4.2a Erinnerung: Immobiliengesuch läuft in 7 Tagen ab',
     'search_request_terminated' => '4.2 Immobiliengesuch beendet',
     'search_request_deleted' => '4.3 Immobiliengesuch gelöscht',
     'offer_sent' => '4.4 Angebot erfolgreich versendet (an Anbieter)',

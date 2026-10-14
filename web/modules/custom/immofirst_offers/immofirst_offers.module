@@ -23,6 +23,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
+use Drupal\immofirst_offers\NotificationMailer;
 use Drupal\immofirst_offers\OfferWorkflow;
 use Drupal\node\NodeInterface;
 use Drupal\user\UserInterface;
@@ -94,6 +95,7 @@ function immofirst_offers_node_delete(NodeInterface $node): void {
     // any other deletion (admin UI, API, Drush) gets the neutral wording.
     $by_requester = \Drupal::request()->attributes->get('immofirst_search_request.deleted_by_requester') === (int) $node->id();
     \Drupal::service('immofirst_offers.mailer')->searchRequestDeleted($node, \Drupal::time()->getRequestTime(), $by_requester);
+    \Drupal::keyValue(IMMOFIRST_OFFERS_REMINDER_COLLECTION)->delete($node->id());
   }
 }
 
@@ -147,6 +149,7 @@ function immofirst_offers_cron(): void {
       $node->setUnpublished();
       $node->save();
       $mailer->searchRequestTerminated($node);
+      \Drupal::keyValue(IMMOFIRST_OFFERS_REMINDER_COLLECTION)->delete($node->id());
       $logger->notice('Search request @nid ended after its term.', ['@nid' => $node->id()]);
     }
     catch (\Throwable $e) {
@@ -155,6 +158,128 @@ function immofirst_offers_cron(): void {
       $logger->error('Search request @nid could not be ended: @message', ['@nid' => $node->id(), '@message' => $e->getMessage()]);
     }
   }
+  // After the expiry pass, so a request that just ended gets no reminder.
+  _immofirst_offers_send_expiry_reminders();
+}
+
+/**
+ * Key-value collection: nid => time the expiry reminder was sent.
+ */
+const IMMOFIRST_OFFERS_REMINDER_COLLECTION = 'immofirst_offers.expiry_reminder';
+
+/**
+ * State key: when the expiry reminder was switched on (per site).
+ */
+const IMMOFIRST_OFFERS_REMINDER_SINCE_STATE_KEY = 'immofirst_offers.expiry_reminder_since';
+
+/**
+ * Sends the "läuft in 7 Tagen ab" reminder, at most once per request.
+ *
+ * Due when NotificationMailer::reminderTime() (termEnd() − 7 days) has
+ * passed and the request is still open: published, not closed/archived,
+ * not yet expired. Each request is claimed atomically before sending
+ * (setIfNotExists), so repeated or overlapping cron runs can't send twice;
+ * the claim is only released if the mail system rejects the message, so the
+ * next run retries. Requests whose reminder moment lies before the feature
+ * was switched on, or before the request even existed (term of 7 days or
+ * less), get no reminder — they simply expire with e-mail 4.2.
+ *
+ * After claiming, the node is reloaded from the database (bypassing the
+ * entity cache) and checked again, so a request deleted, unpublished or
+ * closed since the query gets no reminder, and the mail uses its current
+ * e-mail address, Such-ID and end date.
+ */
+function _immofirst_offers_send_expiry_reminders(): void {
+  /** @var \Drupal\immofirst_offers\NotificationMailer $mailer */
+  $mailer = \Drupal::service('immofirst_offers.mailer');
+  $sent = \Drupal::keyValue(IMMOFIRST_OFFERS_REMINDER_COLLECTION);
+  $logger = \Drupal::logger('immofirst_offers');
+  $tz = new \DateTimeZone(date_default_timezone_get());
+  $now = \Drupal::time()->getRequestTime();
+  $active_since = (int) \Drupal::state()->get(IMMOFIRST_OFFERS_REMINDER_SINCE_STATE_KEY, 0);
+  $days_since = $mailer->termDaysSince();
+  $lead = '+' . NotificationMailer::REMINDER_DAYS . ' days';
+
+  // created ↔ reminder moment, per term rule (exactly checked again below).
+  $window = function (string $term) use ($tz, $now, $active_since, $lead): array {
+    $at = fn (int $ts) => (new \DateTimeImmutable('@' . $ts))->setTimezone($tz)->modify($lead)->modify('-' . $term)->getTimestamp();
+    return [$at($active_since), $at($now)];
+  };
+  [$days_from, $days_to] = $window($mailer->termDays() . ' days');
+  [$months_from, $months_to] = $window($mailer->legacyTermMonths() . ' months');
+
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
+  $query = $storage->getQuery()
+    ->accessCheck(FALSE)
+    ->condition('type', 'search_request')
+    ->condition('status', 1)
+    ->sort('created')
+    ->range(0, 50);
+  $due = $query->orConditionGroup()
+    ->condition($query->andConditionGroup()->condition('created', $days_since, '>=')->condition('created', [$days_from, $days_to], 'BETWEEN'))
+    ->condition($query->andConditionGroup()->condition('created', $days_since, '<')->condition('created', [$months_from, $months_to], 'BETWEEN'));
+  $query->condition($due);
+  $query->condition($query->orConditionGroup()
+    ->condition('field_status', ['closed', 'archived'], 'NOT IN')
+    ->notExists('field_status'));
+  if ($already = array_keys($sent->getAll())) {
+    // Drop tracking records of requests that no longer exist (e.g. deleted
+    // without hook_node_delete() running), so the list doesn't grow forever.
+    $existing = $storage->getQuery()->accessCheck(FALSE)->condition('nid', $already, 'IN')->execute();
+    if ($stale = array_diff($already, array_map('intval', $existing))) {
+      $sent->deleteMultiple($stale);
+    }
+    $query->condition('nid', $already, 'NOT IN');
+  }
+
+  $due = static fn (NodeInterface $node): bool => _immofirst_offers_expiry_reminder_due($node, $mailer, $now, $active_since);
+  foreach ($query->execute() as $nid) {
+    $node = $storage->load($nid);
+    if (!$node instanceof NodeInterface || !$due($node)) {
+      continue;
+    }
+    if (!$sent->setIfNotExists($nid, $now)) {
+      continue;
+    }
+    // Recheck the current state right before sending: the request may have
+    // been deleted or changed since the query (or by an overlapping run).
+    $storage->resetCache([$nid]);
+    $node = $storage->load($nid);
+    if (!$node instanceof NodeInterface || !$due($node)) {
+      $logger->notice('Expiry reminder for search request @nid skipped: deleted or no longer eligible.', ['@nid' => $nid]);
+      $sent->delete($nid);
+      continue;
+    }
+    try {
+      if ($mailer->searchRequestExpiring($node)) {
+        $logger->notice('Expiry reminder sent for search request @nid (ends @end).', ['@nid' => $node->id(), '@end' => date('c', $mailer->termEnd($node))]);
+        continue;
+      }
+      $logger->warning('Expiry reminder for search request @nid was not accepted by the mail system; will retry on the next cron run.', ['@nid' => $node->id()]);
+    }
+    catch (\Throwable $e) {
+      $logger->error('Expiry reminder for search request @nid failed: @message', ['@nid' => $node->id(), '@message' => $e->getMessage()]);
+    }
+    $sent->delete($node->id());
+  }
+}
+
+/**
+ * Whether $node should get the expiry reminder now.
+ *
+ * Search request, published, not closed/archived, reminder moment reached
+ * but not before the feature was switched on or the request was created,
+ * and not yet expired.
+ */
+function _immofirst_offers_expiry_reminder_due(NodeInterface $node, NotificationMailer $mailer, int $now, int $active_since): bool {
+  if ($node->bundle() !== 'search_request' || !$node->isPublished()) {
+    return FALSE;
+  }
+  if (in_array((string) $node->get('field_status')->value, ['closed', 'archived'], TRUE)) {
+    return FALSE;
+  }
+  $remind_at = $mailer->reminderTime($node);
+  return $remind_at <= $now && $remind_at >= $active_since && $remind_at > (int) $node->getCreatedTime() && $mailer->termEnd($node) > $now;
 }
 
 /**
@@ -212,6 +337,7 @@ function immofirst_offers_theme(): array {
         'rows' => [],
         'button_url' => '',
         'seller' => NULL,
+        'preview' => NULL,
         'delete_url' => '',
         'site' => [],
       ],

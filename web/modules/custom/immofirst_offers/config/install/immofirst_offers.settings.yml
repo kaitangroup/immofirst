@@ -2,10 +2,10 @@ langcode: de
 search_request_term_months: 3
 search_request_term_days: 90
 provider_email_element: email
-brand_name: Suchauftrag.de
+brand_name: Immo-Gesuch.de
 tagline: 'Ihr Vorsprung am Immobilienmarkt'
 footer_note: 'Diese E-Mail wurde automatisch versendet. Bitte antworten Sie nicht auf diese E-Mail.'
-footer_company: 'Suchauftrag.de ist eine Plattform der PLAING GmbH'
+footer_company: 'Immo-Gesuch.de ist eine Plattform der PLAING GmbH'
 contact_url: ''
 imprint_url: ''
 privacy_url: ''
@@ -13,28 +13,37 @@ emails:
   search_request_created:
     subject: 'Ihr Immobiliengesuch wurde erfolgreich erstellt'
     heading: 'Ihr Immobiliengesuch wurde erfolgreich erstellt!'
-    intro: |-
-      Vielen Dank! Wir haben Ihr Immobiliengesuch erhalten und für Sie aktiviert.
-      Wir benachrichtigen Sie, sobald ein passendes Angebot für Sie eingeht.
+    intro: "Vielen Dank! Wir haben Ihr Immobiliengesuch erhalten und für Sie aktiviert.\r\nWir benachrichtigen Sie, sobald ein passendes Angebot für Sie eingeht."
     intro_admin: ''
     summary_heading: 'Ihr Immobiliengesuch auf einen Blick'
     next_heading: 'Wie geht es jetzt weiter?'
-    next_text: |-
-      Wir prüfen laufend neue Angebote für Sie.
-      Sobald ein passendes Angebot eingeht, informieren wir Sie.
-      Sie bleiben immer einen Schritt voraus – wir suchen, damit Sie finden.
+    next_text: "Wir prüfen laufend neue Angebote für Sie.\r\nSobald ein passendes Angebot eingeht, informieren wir Sie.\r\nSie bleiben immer einen Schritt voraus – wir suchen, damit Sie finden."
     button_label: 'Zu meinem Immobiliengesuch'
     button_caption: 'Hier können Sie Ihr Immobiliengesuch jederzeit einsehen.'
     extra_heading: ''
     extra_text: ''
     delete_question: 'Sie möchten dieses Immobiliengesuch vorzeitig löschen?'
     delete_label: 'Immobiliengesuch löschen'
+  search_request_expiring:
+    subject: 'Ihr Immobiliengesuch läuft in 7 Tagen ab'
+    heading: 'Ihr Immobiliengesuch läuft bald ab'
+    intro: 'Ihr Immobiliengesuch ist noch 7 Tage aktiv. Danach wird es automatisch beendet und ist nicht mehr öffentlich sichtbar.'
+    intro_admin: ''
+    summary_heading: 'Ihr Immobiliengesuch im Überblick'
+    next_heading: 'Wie geht es weiter?'
+    next_text: |-
+      Sie müssen nichts tun. Zum Ablaufdatum erhalten Sie eine Bestätigung per E-Mail.
+      Wenn Sie danach weiterhin suchen, können Sie jederzeit ein neues Immobiliengesuch erstellen.
+    button_label: 'Zu meinem Immobiliengesuch'
+    button_caption: ''
+    extra_heading: ''
+    extra_text: ''
+    delete_question: ''
+    delete_label: ''
   search_request_terminated:
     subject: 'Ihr Immobiliengesuch ist beendet'
     heading: 'Ihr Immobiliengesuch ist beendet'
-    intro: |-
-      Die Laufzeit Ihres Immobiliengesuchs ist abgelaufen. Der Auftrag wurde automatisch beendet und aus der Auftragsliste entfernt.
-      Vielen Dank für Ihr Vertrauen.
+    intro: "Die Laufzeit Ihres Immobiliengesuchs ist abgelaufen. Der Auftrag wurde automatisch beendet und aus der Auftragsliste entfernt.\r\nVielen Dank für Ihr Vertrauen."
     intro_admin: ''
     summary_heading: 'Ihr Immobiliengesuch im Überblick'
     next_heading: 'Wie geht es jetzt weiter?'
@@ -48,12 +57,8 @@ emails:
   search_request_deleted:
     subject: 'Ihr Immobiliengesuch wurde gelöscht'
     heading: 'Ihr Immobiliengesuch wurde gelöscht'
-    intro: |-
-      Ihr Immobiliengesuch wurde auf Ihren Wunsch erfolgreich gelöscht und aus unserer Auftragsliste entfernt.
-      Zu diesem Immobiliengesuch werden Ihnen keine weiteren Angebote mehr zugeordnet.
-    intro_admin: |-
-      Ihr Immobiliengesuch wurde von unserem Team gelöscht und aus unserer Auftragsliste entfernt.
-      Zu diesem Immobiliengesuch werden Ihnen keine weiteren Angebote mehr zugeordnet.
+    intro: "Ihr Immobiliengesuch wurde auf Ihren Wunsch erfolgreich gelöscht und aus unserer Auftragsliste entfernt.\r\nZu diesem Immobiliengesuch werden Ihnen keine weiteren Angebote mehr zugeordnet."
+    intro_admin: "Ihr Immobiliengesuch wurde von unserem Team gelöscht und aus unserer Auftragsliste entfernt.\r\nZu diesem Immobiliengesuch werden Ihnen keine weiteren Angebote mehr zugeordnet."
     summary_heading: 'Ihr Immobiliengesuch im Überblick'
     next_heading: 'Sie suchen zu einem späteren Zeitpunkt wieder eine Immobilie?'
     next_text: 'Erstellen Sie jederzeit ein neues Immobiliengesuch – schnell, kostenlos und unverbindlich.'
@@ -66,11 +71,9 @@ emails:
   offer_sent:
     subject: 'Ihr Angebot wurde erfolgreich versendet'
     heading: 'Ihr Angebot wurde erfolgreich versendet!'
-    intro: |-
-      Vielen Dank! Ihr Angebot wurde an den Suchenden weitergeleitet.
-      Sollte Ihr Angebot für den Suchenden interessant sein, wird er sich direkt mit Ihnen in Verbindung setzen.
+    intro: "Vielen Dank! Ihr Angebot wurde an den Suchenden weitergeleitet.\r\nSollte Ihr Angebot für den Suchenden interessant sein, wird er sich direkt mit Ihnen in Verbindung setzen."
     intro_admin: ''
-    summary_heading: 'Ihr Angebot auf einen Blick'
+    summary_heading: 'Das Immobiliengesuch auf einen Blick'
     next_heading: 'Wie geht es jetzt weiter?'
     next_text: 'Wenn der Suchende Interesse an Ihrem Angebot hat, wird er sich persönlich bei Ihnen melden. Sie erhalten von uns keine weiteren Benachrichtigungen zu diesem Angebot.'
     button_label: 'Zu den Immobiliengesuchen'

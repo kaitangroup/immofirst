@@ -39,6 +39,9 @@ immofirst_offers.settings:
         search_request_created:
           type: immofirst_offers.email
           label: '4.1 Search request created'
+        search_request_expiring:
+          type: immofirst_offers.email
+          label: '4.2a Reminder: expires in 7 days'
         search_request_terminated:
           type: immofirst_offers.email
           label: '4.2 Search request terminated'

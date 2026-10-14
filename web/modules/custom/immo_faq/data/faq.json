@@ -2,7 +2,7 @@
   {
     "category": "allgemeine-fragen",
     "category_label": "Allgemeine Fragen",
-    "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
+    "category_desc": "Fragen, die für alle Nutzer von Immo-Gesuch.de relevant sind.",
     "question": "Was ist ein Immobiliengesuch?",
     "answer": "Ein Immobiliengesuch beschreibt, welche Immobilie Sie suchen. Sie können dabei unter anderem Ort, Wohnfläche, Zimmer, Preis und weitere Wünsche angeben. Ihr Immobiliengesuch wird anschließend für passende Anbieter sichtbar.",
     "weight": 0,
@@ -13,23 +13,29 @@
   {
     "category": "allgemeine-fragen",
     "category_label": "Allgemeine Fragen",
-    "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
-    "question": "Wie funktioniert Suchauftrag.de?",
-    "answer": "Suchauftrag.de verbindet Immobiliensuchende mit passenden Anbietern, Maklern und Verkäufern. Erstellen Sie einfach Ihr Immobiliengesuch und erhalten Sie maßgeschneiderte Angebote direkt.",
-    "weight": 1
+    "category_desc": "Fragen, die für alle Nutzer von Immo-Gesuch.de relevant sind.",
+    "question": "Wie funktioniert Immo-Gesuch.de?",
+    "answer": "Immo-Gesuch.de verbindet Immobiliensuchende mit passenden Anbietern, Maklern und Verkäufern. Erstellen Sie einfach Ihr Immobiliengesuch und erhalten Sie maßgeschneiderte Angebote direkt.",
+    "weight": 1,
+    "previous_questions": [
+      "Wie funktioniert Suchauftrag.de?"
+    ]
   },
   {
     "category": "allgemeine-fragen",
     "category_label": "Allgemeine Fragen",
-    "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
-    "question": "Ist die Nutzung von Suchauftrag.de kostenlos?",
-    "answer": "Ja, die Erstellung eines Immobiliengesuchs und die Nutzung von Suchauftrag.de sind für Suchende komplett kostenlos.",
-    "weight": 2
+    "category_desc": "Fragen, die für alle Nutzer von Immo-Gesuch.de relevant sind.",
+    "question": "Ist die Nutzung von Immo-Gesuch.de kostenlos?",
+    "answer": "Ja, die Erstellung eines Immobiliengesuchs und die Nutzung von Immo-Gesuch.de sind für Suchende komplett kostenlos.",
+    "weight": 2,
+    "previous_questions": [
+      "Ist die Nutzung von Suchauftrag.de kostenlos?"
+    ]
   },
   {
     "category": "allgemeine-fragen",
     "category_label": "Allgemeine Fragen",
-    "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
+    "category_desc": "Fragen, die für alle Nutzer von Immo-Gesuch.de relevant sind.",
     "question": "Wie lange ist ein Immobiliengesuch aktiv?",
     "answer": "Standardmäßig bleibt Ihr Immobiliengesuch 30 Tage aktiv und kann jederzeit verlängert oder vorzeitig beendet werden.",
     "weight": 3,
@@ -40,7 +46,7 @@
   {
     "category": "allgemeine-fragen",
     "category_label": "Allgemeine Fragen",
-    "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
+    "category_desc": "Fragen, die für alle Nutzer von Immo-Gesuch.de relevant sind.",
     "question": "Wie werden meine Daten geschützt?",
     "answer": "Ihre Daten werden streng nach DSGVO geschützt. Kontaktdaten werden erst dann an Anbieter weitergegeben, wenn Sie einem Angebot aktiv zustimmen.",
     "weight": 4
@@ -48,7 +54,7 @@
   {
     "category": "allgemeine-fragen",
     "category_label": "Allgemeine Fragen",
-    "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
+    "category_desc": "Fragen, die für alle Nutzer von Immo-Gesuch.de relevant sind.",
     "question": "Wann werden Kontaktdaten weitergegeben?",
     "answer": "Kontaktdaten werden erst nach Ihrer ausdrücklichen Zustimmung im Rahmen eines konkreten Angebots oder einer Kontaktaufnahme übermittelt.",
     "weight": 5
