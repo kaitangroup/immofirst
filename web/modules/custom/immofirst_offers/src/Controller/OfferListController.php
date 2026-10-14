@@ -58,7 +58,7 @@ final class OfferListController extends ControllerBase {
         $this->dateFormatter->format((int) $submission->getCreatedTime(), 'custom', 'd.m.Y H:i'),
         $node
           ? Link::fromTextAndUrl($node->get('field_reference_number')->value ?: $node->label(), $node->toUrl())
-          : $this->t('— kein Suchauftrag —'),
+          : $this->t('— kein Immobiliengesuch —'),
         $this->mailer->providerEmail($submission) ?? '—',
         $labels[$this->workflow->status($submission)] ?? '—',
         Link::createFromRoute($this->t('Prüfen'), 'immofirst_offers.review', ['webform_submission' => $submission->id()]),
@@ -79,7 +79,7 @@ final class OfferListController extends ControllerBase {
         '#type' => 'table',
         '#header' => [
           $this->t('Eingang'),
-          $this->t('Suchauftrag'),
+          $this->t('Immobiliengesuch'),
           $this->t('Anbieter'),
           $this->t('Status'),
           $this->t('Aktion'),

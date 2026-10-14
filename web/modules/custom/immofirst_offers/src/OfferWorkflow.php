@@ -99,10 +99,10 @@ final class OfferWorkflow {
       $node = $this->searchRequest($submission);
       if (!$node) {
         $this->logger->error('Offer @sid not sent: no search request linked.', ['@sid' => $submission->id()]);
-        return WorkflowResult::failure($this->t('Diesem Angebot ist kein Suchauftrag zugeordnet.'));
+        return WorkflowResult::failure($this->t('Diesem Angebot ist kein Immobiliengesuch zugeordnet.'));
       }
       if ($this->mailer->requesterEmail($node) === NULL) {
-        return WorkflowResult::failure($this->t('Der Suchauftrag hat keine gültige E-Mail-Adresse.'));
+        return WorkflowResult::failure($this->t('Das Immobiliengesuch hat keine gültige E-Mail-Adresse.'));
       }
       if ($this->mailer->providerEmail($submission) === NULL) {
         return WorkflowResult::failure($this->t('Das Angebot enthält keine gültige Anbieter-E-Mail-Adresse.'));

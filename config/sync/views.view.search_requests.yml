@@ -10,7 +10,7 @@ dependencies:
     - options
     - user
 id: search_requests
-label: Suchaufträge
+label: Immobiliengesuche
 module: views
 description: 'Listet veröffentlichte Search-Request-Inhalte (Suchanfragen aus dem Wizard), neueste zuerst. Wird von suchauftrag_theme über views_embed_view() eingebettet. Vor dieser Migration wurden Suchauftrag-Inhalte gelistet — siehe node.type.search_request in den Dependencies.'
 tag: ''
@@ -23,7 +23,7 @@ display:
     display_plugin: default
     position: 0
     display_options:
-      title: Suchaufträge
+      title: Immobiliengesuche
       fields: {  }
       pager:
         type: full
@@ -68,7 +68,7 @@ display:
           field: area_text_custom
           plugin_id: text_custom
           empty: true
-          content: 'Aktuell wurden keine Suchaufträge gefunden. Bitte passen Sie Ihre Filter an oder schauen Sie später wieder vorbei.'
+          content: 'Aktuell wurden keine Immobiliengesuche gefunden. Bitte passen Sie Ihre Filter an oder schauen Sie später wieder vorbei.'
       sorts:
         created:
           id: created
@@ -347,7 +347,7 @@ display:
       tags: {  }
   block_1:
     id: block_1
-    display_title: 'Suchaufträge Block'
+    display_title: 'Immobiliengesuche Block'
     display_plugin: block
     position: 1
     display_options:
@@ -394,7 +394,7 @@ display:
           field: area_text_custom
           plugin_id: text_custom
           empty: true
-          content: 'Aktuell wurden keine Suchaufträge gefunden. Bitte passen Sie Ihre Filter an oder schauen Sie später wieder vorbei.'
+          content: 'Aktuell wurden keine Immobiliengesuche gefunden. Bitte passen Sie Ihre Filter an oder schauen Sie später wieder vorbei.'
       sorts:
         created:
           id: created
@@ -654,7 +654,7 @@ display:
           empty: false
           content: '@total'
       display_extenders: {  }
-      block_description: 'Suchaufträge – Übersicht (Startseite)'
+      block_description: 'Immobiliengesuche – Übersicht (Startseite)'
       block_category: Suchauftrag.de
     cache_metadata:
       max-age: -1

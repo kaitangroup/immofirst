@@ -2,7 +2,7 @@ immofirst_search_request.wizard:
   path: '/suchauftrag-erstellen'
   defaults:
     _form: '\Drupal\immofirst_search_request\Form\SearchRequestWizardForm'
-    _title: 'Suchauftrag erstellen'
+    _title: 'Immobiliengesuch erstellen'
   requirements:
     _access: 'TRUE'
 
@@ -10,7 +10,7 @@ immofirst_search_request.thank_you:
   path: '/suchauftrag-erstellen/danke'
   defaults:
     _controller: '\Drupal\immofirst_search_request\Controller\ThankYouController::build'
-    _title: 'Suchauftrag erstellt'
+    _title: 'Immobiliengesuch erstellt'
   requirements:
     _access: 'TRUE'
 
@@ -20,3 +20,20 @@ immofirst_search_request.location_autocomplete:
     _controller: '\Drupal\immofirst_search_request\Controller\LocationAutocompleteController::autocomplete'
   requirements:
     _access: 'TRUE'
+
+# Requester's own deletion, linked from e-mails 4.1 and 4.5. The {hash} is a
+# per-request signature (SearchRequestDeletionLink); GET only shows the
+# confirmation form, the delete happens on submit. Never page-cached.
+immofirst_search_request.self_delete:
+  path: '/immobiliengesuch/{node}/loeschen/{hash}'
+  defaults:
+    _form: '\Drupal\immofirst_search_request\Form\SearchRequestSelfDeleteForm'
+    _title: 'Immobiliengesuch löschen'
+  requirements:
+    _custom_access: '\Drupal\immofirst_search_request\Form\SearchRequestSelfDeleteForm::access'
+    node: \d+
+  options:
+    no_cache: TRUE
+    parameters:
+      node:
+        type: entity:node

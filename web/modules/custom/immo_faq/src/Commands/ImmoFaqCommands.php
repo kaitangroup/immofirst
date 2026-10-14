@@ -104,24 +104,31 @@ class ImmoFaqCommands extends DrushCommands {
 
         $term_id = $term->id();
 
-        // Check if FAQ node already exists by title and category.
-        $existing_nodes = $node_storage->loadByProperties([
-          'type' => 'faq',
-          'title' => $question,
-        ]);
-
-        $node = NULL;
-        foreach ($existing_nodes as $existing) {
-          if ($existing->hasField('field_faq_category') && !$existing->get('field_faq_category')->isEmpty()) {
-            if ($existing->get('field_faq_category')->target_id == $term_id) {
-              $node = $existing;
-              break;
+        // Existing FAQ node with this title in this category, if any.
+        $find = function (string $title) use ($node_storage, $term_id) {
+          foreach ($node_storage->loadByProperties(['type' => 'faq', 'title' => $title]) as $existing) {
+            if ($existing->hasField('field_faq_category') && !$existing->get('field_faq_category')->isEmpty()
+              && $existing->get('field_faq_category')->target_id == $term_id) {
+              return $existing;
             }
+          }
+          return NULL;
+        };
+
+        $node = $find($question);
+        // A question that was reworded (e.g. "Suchauftrag" → "Immobiliengesuch")
+        // lists its old wording in "previous_questions": the existing entry is
+        // renamed instead of a duplicate being created next to it.
+        foreach ($node ? [] : ($item['previous_questions'] ?? []) as $previous) {
+          if ($node = $find($previous)) {
+            $this->output()->writeln("<comment>[RENAMED] {$previous} → {$question}</comment>");
+            break;
           }
         }
 
         if ($node) {
           // Update existing node.
+          $node->setTitle($question);
           $node->set('body', [
             'value' => $answer,
             'format' => 'basic_html',

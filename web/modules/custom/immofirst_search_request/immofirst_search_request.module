@@ -12,6 +12,19 @@ use Drupal\views\Plugin\views\query\Sql;
 
 function immofirst_search_request_views_pre_view(ViewExecutable $view, $display_id, array &$args): void {
 
+  // Admin list: a Such-ID quoted from an e-mail sent before the SA- → IG-
+  // prefix change ("SA-2026-000283") still finds the request ("IG-2026-000283").
+  if ($view->id() === 'search_request_admin') {
+    $exposed = $view->getExposedInput();
+    $term = trim((string) ($exposed['suche'] ?? ''));
+    $legacy = \Drupal\immofirst_search_request\Service\SearchRequestNodeCreator::LEGACY_REFERENCE_NUMBER_PREFIX;
+    if (stripos($term, $legacy) === 0) {
+      $exposed['suche'] = \Drupal\immofirst_search_request\Service\SearchRequestNodeCreator::REFERENCE_NUMBER_PREFIX . substr($term, strlen($legacy));
+      $view->setExposedInput($exposed);
+    }
+    return;
+  }
+
   if ($view->id() !== 'search_requests' || $display_id !== 'block_1') {
     return;
   }

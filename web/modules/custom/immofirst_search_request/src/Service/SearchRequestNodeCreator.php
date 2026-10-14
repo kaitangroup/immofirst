@@ -35,15 +35,21 @@ final class SearchRequestNodeCreator {
   ];
 
   /**
-   * "SA-<year>-<6-digit id>" reference number format.
+   * "IG-<year>-<6-digit id>" reference number (Such-ID) format.
    *
-   * Kept identical to the one the wizard's own Step 5 success screen
-   * (SearchRequestWizardForm::buildStep5()) and ThankYouController
-   * already compute independently from the node id — this constant
-   * exists only so field_reference_number stores the SAME string, not
-   * to change what either of those (untouched) UI code paths shows.
+   * The single definition: stored in field_reference_number here, and used
+   * by the wizard's Step 5 success screen and ThankYouController to show
+   * the same string. Before the "Immobiliengesuch" rename the prefix was
+   * "SA-"; existing IDs were migrated by
+   * immofirst_search_request_post_update_reference_prefix_ig().
    */
-  private const REFERENCE_NUMBER_FORMAT = 'SA-%s-%06d';
+  public const REFERENCE_NUMBER_FORMAT = 'IG-%s-%06d';
+
+  /**
+   * Current and legacy Such-ID prefixes.
+   */
+  public const REFERENCE_NUMBER_PREFIX = 'IG-';
+  public const LEGACY_REFERENCE_NUMBER_PREFIX = 'SA-';
 
   /**
    * Per-request cache of list-field allowed_values, keyed by field name.
@@ -78,8 +84,8 @@ final class SearchRequestNodeCreator {
     // once the node has been saved once, so it's filled in with a
     // second, cheap save. This does not change what the wizard displays:
     // Step 5's success screen and ThankYouController both already
-    // compute this exact same "SA-<year>-<id>" string themselves from
-    // $node->id(), independently of this field.
+    // compute the same "IG-<year>-<id>" string from $node->id(), using
+    // REFERENCE_NUMBER_FORMAT, independently of this field.
     $referenceNumber = $this->generateReferenceNumber($node);
     $node->set('field_reference_number', $referenceNumber);
     $node->save();
@@ -294,7 +300,7 @@ final class SearchRequestNodeCreator {
   }
 
   /**
-   * Computes the "SA-<year>-<6-digit id>" reference number for a node.
+   * Computes the "IG-<year>-<6-digit id>" reference number for a node.
    */
   private function generateReferenceNumber(NodeInterface $node): string {
     return sprintf(self::REFERENCE_NUMBER_FORMAT, date('Y'), (int) $node->id());

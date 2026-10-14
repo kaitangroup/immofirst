@@ -6,6 +6,7 @@ namespace Drupal\immofirst_search_request\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\immofirst_search_request\Service\SearchRequestNodeCreator;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -49,7 +50,7 @@ final class ThankYouController extends ControllerBase {
     }
 
     $referenceNumber = $node
-      ? sprintf('SA-%s-%06d', date('Y'), $node->id())
+      ? sprintf(SearchRequestNodeCreator::REFERENCE_NUMBER_FORMAT, date('Y'), $node->id())
       : NULL;
 
     return [

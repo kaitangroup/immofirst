@@ -16,6 +16,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\file\FileInterface;
+use Drupal\immofirst_search_request\Service\SearchRequestDeletionLink;
 use Drupal\node\NodeInterface;
 use Drupal\webform\WebformSubmissionInterface;
 use Psr\Log\LoggerInterface;
@@ -66,6 +67,7 @@ final class NotificationMailer {
     private readonly LanguageManagerInterface $languageManager,
     private readonly RendererInterface $renderer,
     private readonly EmailValidatorInterface $emailValidator,
+    private readonly SearchRequestDeletionLink $deletionLink,
   ) {}
 
   /**
@@ -85,8 +87,12 @@ final class NotificationMailer {
   /**
    * 4.3 — queued until the delete has committed.
    */
-  public function searchRequestDeleted(NodeInterface $node, int $deletedAt): void {
-    $this->afterCommit(fn () => $this->sendToRequester(self::KEY_DELETED, $node, ['node' => $node, 'deleted_at' => $deletedAt]));
+  public function searchRequestDeleted(NodeInterface $node, int $deletedAt, bool $deletedByRequester = FALSE): void {
+    $this->afterCommit(fn () => $this->sendToRequester(self::KEY_DELETED, $node, [
+      'node' => $node,
+      'deleted_at' => $deletedAt,
+      'deleted_by_requester' => $deletedByRequester,
+    ]));
   }
 
   /**
@@ -144,6 +150,10 @@ final class NotificationMailer {
    */
   public function buildMessage(string $key, array &$message, array $params): void {
     $texts = $this->settings()->get('emails.' . $key) ?? [];
+    // 4.3: "auf Ihren Wunsch" only when the requester deleted it themselves.
+    if ($key === self::KEY_DELETED && empty($params['deleted_by_requester']) && !empty($texts['intro_admin'])) {
+      $texts['intro'] = $texts['intro_admin'];
+    }
     /** @var \Drupal\node\NodeInterface $node */
     $node = $params['node'];
     $reference = (string) $node->get('field_reference_number')->value;
@@ -164,6 +174,10 @@ final class NotificationMailer {
         ? $this->offerDetails($params['webform_submission'])
         : NULL,
       '#site' => $this->siteVariables(),
+      // Requester's own deletion link (Tab.4: 4.1 and below 4.5 only).
+      '#delete_url' => in_array($key, [self::KEY_CREATED, self::KEY_OFFER_FORWARD], TRUE)
+        ? (string) $this->deletionLink->url($node)
+        : '',
     ];
     $message['body'][] = (string) $this->renderer->renderInIsolation($build);
   }
@@ -222,7 +236,7 @@ final class NotificationMailer {
    */
   private function summaryRows(string $key, NodeInterface $node, array $params): array {
     $created = (int) $node->getCreatedTime();
-    $anzeige = ['label' => (string) $this->t('Anzeige'), 'value' => $this->adLabel($node)];
+    $anzeige = ['label' => (string) $this->t('Gesuch'), 'value' => $this->adLabel($node)];
     $umkreis = ['label' => (string) $this->t('Umkreis'), 'value' => $this->radiusLabel($node)];
     $suchId = ['label' => (string) $this->t('Such-ID'), 'value' => (string) $node->get('field_reference_number')->value];
     $erstellt = ['label' => (string) $this->t('Erstellt am'), 'value' => $this->dateTime($created)];

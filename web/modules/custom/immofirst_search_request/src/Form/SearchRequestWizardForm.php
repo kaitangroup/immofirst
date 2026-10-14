@@ -74,7 +74,7 @@ final class SearchRequestWizardForm extends FormBase {
     2 => 'Ihre Anforderungen',
     3 => 'Zusätzliche Kriterien',
     4 => 'Ihre Kontaktdaten',
-    5 => 'Suchauftrag erstellt!',
+    5 => 'Immobiliengesuch erstellt!',
   ];
 
   /**
@@ -458,7 +458,7 @@ final class SearchRequestWizardForm extends FormBase {
       else {
         $form['actions']['finish'] = [
           '#type' => 'submit',
-          '#value' => $this->t('Suchauftrag anlegen'),
+          '#value' => $this->t('Immobiliengesuch anlegen'),
           '#name' => 'wizard_finish',
           '#submit' => ['::submitFinish'],
           '#attributes' => ['class' => ['btn', 'btn--primary', 'wizard__btn-finish']],
@@ -533,7 +533,7 @@ final class SearchRequestWizardForm extends FormBase {
         '#attributes' => ['class' => ['immofirst-overview__cta']],
         'button' => [
           '#type' => 'submit',
-          '#value' => $this->t('Jetzt kostenlos starten'),
+          '#value' => $this->t('Immobiliengesuch erstellen'),
           '#name' => 'start_wizard',
           '#attributes' => ['class' => ['immofirst-overview__cta-button']],
           '#submit' => ['::startWizard'],
@@ -564,16 +564,20 @@ final class SearchRequestWizardForm extends FormBase {
    *   Raw HTML for the hero section.
    */
   private function buildOverviewHero(): string {
-    $line1 = $this->t('Finden Sie Ihre neue');
-    $accent = $this->t('Wunschimmobilie,');
-    $line3 = $this->t('bevor es andere sehen.');
-    $subtitle = $this->t('Erhalten Sie exklusive Immobilien, noch bevor sie öffentlich auf den großen Plattformen erscheinen.');
+    $line1 = $this->t('Sie suchen eine Immobilie? ');
+    $line2 = $this->t('Stellen Sie jetzt Ihr  ');
+    $accent = $this->t('Immobiliengesuch');
+    $line3 = $this->t('ein.');
+    $subtitle = $this->t('Ob Wohnung, Haus, Grundstück oder Stellplatz 
+– zum Kauf oder zur Miete: 
+Veröffentlichen Sie kostenlos Ihr Immobiliengesuch und lassen Sie sich von passenden Eigentümern, Vermietern oder Immobilienmaklern finden.');
 
     return <<<HTML
 <section class="immofirst-overview__hero" aria-labelledby="immofirst-overview-heading">
   <div class="immofirst-overview__hero-icon">{$this->overviewIcon('house-heart', 32)}</div>
   <h1 id="immofirst-overview-heading" class="immofirst-overview__hero-title">
     {$line1}<br>
+     {$line2}<br>
     <span class="immofirst-overview__hero-title-accent">{$accent}</span><br>
     {$line3}
   </h1>
@@ -591,14 +595,14 @@ HTML;
   private function buildOverviewBenefits(): string {
     $heading = $this->t('Vorteile auf einen Blick');
 
-    $card1Title = $this->t('In nur zwei Minuten erstellt');
-    $card1Text = $this->t('Schnell, einfach, ohne Registrierung.');
+    $card1Title = $this->t('Kostenlos in 2 Minuten');
+    $card1Text = $this->t('Erstellen Sie Ihr Immobiliengesuch schnell und kostenlos.');
 
-    $card2Title = $this->t('Ihre Daten bleiben geschützt');
-    $card2Text = $this->t('Ihre Telefonnummer, ID und E-Mail werden nicht veröffentlicht. Sie entscheiden selbst, wann Sie Kontakt freigeben möchten.');
+    $card2Title = $this->t('Sie behalten die Kontrolle');
+    $card2Text = $this->t('Entscheiden Sie selbst, ob und wann Sie Kontakt zu einem Anbieter aufnehmen.');
 
     $card3Title = $this->t('Ohne Registrierung');
-    $card3Text = $this->t('Kein Konto, kein Passwort, einfach loslegen.');
+    $card3Text = $this->t('Kein Benutzerkonto und kein Passwort erforderlich.');
 
     $checkBadge = $this->overviewIcon('check', 12);
 
@@ -648,7 +652,7 @@ HTML;
   private function buildOverviewTrustBadges(): string {
     $item1 = $this->t('Kostenlos');
     $item2 = $this->t('Unverbindlich');
-    $item3 = $this->t('Jederzeit anpassbar');
+    $item3 = $this->t('Ohne Registrierung');
     $check = $this->overviewIcon('check-bold', 14);
 
     return <<<HTML
@@ -673,10 +677,10 @@ HTML;
     $step1Text = $this->t('Beschreiben Sie kurz Ihre Wunschimmobilie.');
 
     $step2Title = $this->t('Angebote erhalten');
-    $step2Text = $this->t('Passende Immobilien von Verkäufern & Maklern erhalten.');
+    $step2Text = $this->t('Passende Immobilien von Verkäufern, Vermietern oder Maklern erhalten.');
 
     $step3Title = $this->t('Kontakt bei Interesse');
-    $step3Text = $this->t('Sie entscheiden, wann Sie den Kontakt freigeben möchten.');
+    $step3Text = $this->t('Sie entscheiden selbst, ob Sie Kontakt zu einem Anbieter aufnehmen möchten.');
 
     return <<<HTML
 <section class="immofirst-overview__process" aria-labelledby="immofirst-overview-process-heading">
@@ -720,7 +724,7 @@ HTML;
   private function buildOverviewPanel(): string {
     $heading = $this->t('Vertrauen & Sicherheit');
     $title = $this->t('Sie behalten die Kontrolle.');
-    $text = $this->t('Erst wenn ein Angebot zusagt, entscheiden Sie, ob Sie Kontakt zum Anbieter freigeben möchten.');
+    $text = $this->t('Erst wenn Ihnen ein Angebot zusagt, entscheiden Sie, ob Sie Kontakt zum Anbieter aufnehmen möchten.');
 
     return <<<HTML
 <section class="immofirst-overview__panel" aria-label="{$heading}">
@@ -2024,12 +2028,12 @@ HTML;
    *
    * The reference number is derived from the just-created node the
    * same way ThankYouController does (untouched file) — same
-   * "SA-<year>-<6-digit id>" format — but computed here directly
+   * "IG-<year>-<6-digit id>" format — but computed here directly
    * since this screen no longer receives it via a redirect querystring.
    */
   private function buildStep5(array &$form, FormStateInterface $form_state): void {
     $nodeId = $form_state->get('created_node_id');
-    $referenceNumber = is_numeric($nodeId) ? sprintf('SA-%s-%06d', date('Y'), (int) $nodeId) : NULL;
+    $referenceNumber = is_numeric($nodeId) ? sprintf(SearchRequestNodeCreator::REFERENCE_NUMBER_FORMAT, date('Y'), (int) $nodeId) : NULL;
 
     $form['step_content']['success'] = [
       '#markup' => Markup::create($this->buildSuccessScreenMarkup($referenceNumber, is_numeric($nodeId) ? (int) $nodeId : NULL)),
@@ -2040,7 +2044,7 @@ HTML;
    * Builds the Step 5 success screen's markup.
    *
    * @param string|null $referenceNumber
-   *   The generated "SA-2026-000123"-style reference number, or NULL
+   *   The generated "IG-2026-000123"-style reference number, or NULL
    *   if no node id was available (defensive fallback — the reference
    *   card is simply omitted in that case).
    * @param int|null $nodeId
@@ -2053,16 +2057,17 @@ HTML;
    */
   private function buildSuccessScreenMarkup(?string $referenceNumber, ?int $nodeId = NULL): string {
     $title = $this->t('Vielen Dank!');
-    $text = $this->t('Ihr Suchauftrag wurde erfolgreich erstellt.');
+    $text = $this->t('Ihr Immobiliengesuch wurde erfolgreich erstellt.
+In Kürze erhalten Sie eine Bestätigung per E-Mail.');
 
     $item1 = $this->t('Sie erhalten passende Angebote per E-Mail oder WhatsApp.');
-    $item2 = $this->t('Sie können Ihren Suchauftrag jederzeit bearbeiten oder löschen.');
+    $item2 = $this->t('Sie können Ihr Immobiliengesuch jederzeit über den Löschlink in Ihrer Bestätigungs-E-Mail löschen.');
     $item3 = $this->t('Ihre Daten bleiben vertraulich und werden nicht weitergegeben.');
 
     $reference = '';
     if ($referenceNumber !== NULL) {
-      $referenceLabel = $this->t('Ihre Suchauftragsnummer');
-      $copyLabel = $this->t('Suchauftragsnummer kopieren');
+      $referenceLabel = $this->t('Ihre Immobiliengesuchsnummer');
+      $copyLabel = $this->t('Immobiliengesuchsnummer kopieren');
 
       $reference = <<<HTML
 <div class="wizard-success__reference">
@@ -2077,8 +2082,8 @@ HTML;
 HTML;
     }
 
-    $viewRequestsLabel = $this->t('Suchaufträge ansehen');
-    $newRequestLabel = $this->t('Neuen Suchauftrag erstellen');
+    $viewRequestsLabel = $this->t('Immobiliengesuche ansehen');
+    $newRequestLabel = $this->t('Neues Immobiliengesuch erstellen');
     $viewRequestsUrl = $nodeId !== NULL
       ? Url::fromRoute('entity.node.canonical', ['node' => $nodeId])->toString()
       : '/suchauftraege';
@@ -2137,7 +2142,7 @@ HTML;
    */
   private function buildSuccessPage(FormStateInterface $form_state): array {
     $nodeId = $form_state->get('created_node_id');
-    $referenceNumber = is_numeric($nodeId) ? sprintf('SA-%s-%06d', date('Y'), (int) $nodeId) : NULL;
+    $referenceNumber = is_numeric($nodeId) ? sprintf(SearchRequestNodeCreator::REFERENCE_NUMBER_FORMAT, date('Y'), (int) $nodeId) : NULL;
 
     return [
       '#markup' => Markup::create($this->buildSuccessScreenMarkup($referenceNumber, is_numeric($nodeId) ? (int) $nodeId : NULL)),

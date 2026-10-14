@@ -86,13 +86,13 @@
     if (resultsRegion) {
       resultsRegion.innerHTML =
         '<div class="property-grid">' +
-          '<div class="property-grid__empty">Sie haben noch keine Suchaufträge gemerkt.</div>' +
+          '<div class="property-grid__empty">Sie haben noch keine Immobiliengesuche gemerkt.</div>' +
         '</div>';
     }
 
     var countEl = document.getElementById('search-requests-count');
     if (countEl) {
-      countEl.textContent = '0 Suchaufträge gefunden';
+      countEl.textContent = '0 Immobiliengesuche gefunden';
     }
 
     var loadMoreWrapper = document.querySelector('.search-requests__load-more');

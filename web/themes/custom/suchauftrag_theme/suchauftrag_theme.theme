@@ -15,7 +15,7 @@ function suchauftrag_theme_preprocess_page(array &$variables) {
 
   // Primary navigation links used by includes/header.html.twig.
   $variables['main_nav_links'] = [
-    ['title' => 'Suchaufträge', 'url' => '/', 'active' => FALSE],
+    ['title' => 'Immobiliengesuche', 'url' => '/', 'active' => FALSE],
    // ['title' => 'Suchauftrag erstellen', 'url' => '/suchauftrag-erstellen', 'active' => FALSE],
     // ['title' => "So funktioniert's", 'url' => '/so-funktionierts', 'active' => FALSE],
     // ['title' => 'Über uns', 'url' => '/ueber-uns', 'active' => FALSE],
@@ -91,7 +91,7 @@ function suchauftrag_theme_preprocess_page__front(array &$variables) {
     [
       'icon' => 'target',
       'title' => 'Aktuelle Gesuche',
-      'text' => 'Täglich neue Suchaufträge von geprüften Interessenten.',
+      'text' => 'Täglich neue Immobiliengesuche von geprüften Interessenten.',
       'color' => 'indigo',
     ],
     [

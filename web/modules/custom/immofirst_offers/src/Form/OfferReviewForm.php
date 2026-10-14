@@ -63,11 +63,11 @@ final class OfferReviewForm extends FormBase {
       '#items' => [
         $this->t('Status: <strong>@status</strong>', ['@status' => OfferWorkflow::statusLabels()[$status] ?? '—']),
         $node
-          ? $this->t('Suchauftrag: @link (@title)', [
+          ? $this->t('Immobiliengesuch: @link (@title)', [
             '@link' => Link::fromTextAndUrl($node->get('field_reference_number')->value ?: $node->id(), $node->toUrl())->toString(),
             '@title' => $node->label(),
           ])
-          : $this->t('Suchauftrag: — keiner zugeordnet —'),
+          : $this->t('Immobiliengesuch: — keines zugeordnet —'),
       ],
     ];
 

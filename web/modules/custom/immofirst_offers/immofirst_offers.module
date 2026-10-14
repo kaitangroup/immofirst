@@ -90,7 +90,10 @@ function immofirst_offers_node_update(NodeInterface $node): void {
  */
 function immofirst_offers_node_delete(NodeInterface $node): void {
   if ($node->bundle() === 'search_request') {
-    \Drupal::service('immofirst_offers.mailer')->searchRequestDeleted($node, \Drupal::time()->getRequestTime());
+    // Set by the requester's own deletion form (signed e-mail link) only;
+    // any other deletion (admin UI, API, Drush) gets the neutral wording.
+    $by_requester = \Drupal::request()->attributes->get('immofirst_search_request.deleted_by_requester') === (int) $node->id();
+    \Drupal::service('immofirst_offers.mailer')->searchRequestDeleted($node, \Drupal::time()->getRequestTime(), $by_requester);
   }
 }
 
@@ -122,13 +125,27 @@ function immofirst_offers_cron(): void {
 
   /** @var \Drupal\immofirst_offers\NotificationMailer $mailer */
   $mailer = \Drupal::service('immofirst_offers.mailer');
+  $logger = \Drupal::logger('immofirst_offers');
+  $now = \Drupal::time()->getRequestTime();
   foreach ($storage->loadMultiple($ids) as $node) {
     /** @var \Drupal\node\NodeInterface $node */
-    $node->set('field_status', 'closed');
-    $node->setUnpublished();
-    $node->save();
-    $mailer->searchRequestTerminated($node);
-    \Drupal::logger('immofirst_offers')->notice('Search request @nid ended after its term.', ['@nid' => $node->id()]);
+    // Same end date as shown in e-mails 4.1/4.2 ("bis …"); month arithmetic
+    // around month ends can make the query cutoff a day earlier.
+    if ($mailer->termEnd($node) > $now) {
+      continue;
+    }
+    try {
+      $node->set('field_status', 'closed');
+      $node->setUnpublished();
+      $node->save();
+      $mailer->searchRequestTerminated($node);
+      $logger->notice('Search request @nid ended after its term.', ['@nid' => $node->id()]);
+    }
+    catch (\Throwable $e) {
+      // One broken request must not stop the rest of the batch; it stays
+      // open and is retried on the next cron run.
+      $logger->error('Search request @nid could not be ended: @message', ['@nid' => $node->id(), '@message' => $e->getMessage()]);
+    }
   }
 }
 
@@ -187,6 +204,7 @@ function immofirst_offers_theme(): array {
         'rows' => [],
         'button_url' => '',
         'seller' => NULL,
+        'delete_url' => '',
         'site' => [],
       ],
     ],

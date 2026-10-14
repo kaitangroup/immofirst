@@ -40,8 +40,8 @@
     <div class="container">
       <div class="search-requests__head">
         <div>
-          <h2 id="search-requests-title" class="search-requests__title">Aktuelle Suchaufträge</h2>
-          <p class="search-requests__count" id="search-requests-count">{{ search_requests_count is defined ? search_requests_count : 0 }} Suchaufträge gefunden</p>
+          <h2 id="search-requests-title" class="search-requests__title">Aktuelle Immobiliengesuche</h2>
+          <p class="search-requests__count" id="search-requests-count">{{ search_requests_count is defined ? search_requests_count : 0 }} Immobiliengesuche gefunden</p>
         </div>
         <div class="search-requests__sort">
           <label for="sort-select" class="sort__label">Sortieren nach</label>
@@ -85,7 +85,7 @@
           {{ search_requests_view }}
         {% else %}
           <div class="property-grid__empty-state">
-            <p>Aktuell wurden keine Suchaufträge gefunden.</p>
+            <p>Aktuell wurden keine Immobiliengesuche gefunden.</p>
             <p class="u-text-muted">Bitte passen Sie Ihre Filter an oder versuchen Sie es später erneut.</p>
           </div>
         {% endif %}
@@ -93,7 +93,7 @@
 
       <div class="search-requests__load-more">
         <button type="button" class="btn btn--outline" data-load-more>
-          Weitere Suchaufträge laden
+          Weitere Immobiliengesuche laden
           <svg class="btn__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>

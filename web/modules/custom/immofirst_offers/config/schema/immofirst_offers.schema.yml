@@ -62,6 +62,9 @@ immofirst_offers.email:
     intro:
       type: text
       label: 'Intro'
+    intro_admin:
+      type: text
+      label: 'Intro when deleted by an administrator (4.3 only)'
     summary_heading:
       type: label
       label: 'Summary heading'
@@ -83,3 +86,9 @@ immofirst_offers.email:
     extra_text:
       type: text
       label: 'Extra box text'
+    delete_question:
+      type: label
+      label: 'Early deletion question (4.1 / offer forward)'
+    delete_label:
+      type: label
+      label: 'Early deletion link label (4.1 / offer forward)'

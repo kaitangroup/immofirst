@@ -3,16 +3,19 @@
     "category": "allgemeine-fragen",
     "category_label": "Allgemeine Fragen",
     "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
-    "question": "Was ist ein Suchauftrag?",
-    "answer": "Ein Suchauftrag beschreibt, welche Immobilie Sie suchen. Sie können dabei unter anderem Ort, Wohnfläche, Zimmer, Preis und weitere Wünsche angeben. Ihr Suchauftrag wird anschließend für passende Anbieter sichtbar.",
-    "weight": 0
+    "question": "Was ist ein Immobiliengesuch?",
+    "answer": "Ein Immobiliengesuch beschreibt, welche Immobilie Sie suchen. Sie können dabei unter anderem Ort, Wohnfläche, Zimmer, Preis und weitere Wünsche angeben. Ihr Immobiliengesuch wird anschließend für passende Anbieter sichtbar.",
+    "weight": 0,
+    "previous_questions": [
+      "Was ist ein Suchauftrag?"
+    ]
   },
   {
     "category": "allgemeine-fragen",
     "category_label": "Allgemeine Fragen",
     "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
     "question": "Wie funktioniert Suchauftrag.de?",
-    "answer": "Suchauftrag.de verbindet Immobiliensuchende mit passenden Anbietern, Maklern und Verkäufern. Erstellen Sie einfach Ihren Suchauftrag und erhalten Sie maßgeschneiderte Angebote direkt.",
+    "answer": "Suchauftrag.de verbindet Immobiliensuchende mit passenden Anbietern, Maklern und Verkäufern. Erstellen Sie einfach Ihr Immobiliengesuch und erhalten Sie maßgeschneiderte Angebote direkt.",
     "weight": 1
   },
   {
@@ -20,16 +23,19 @@
     "category_label": "Allgemeine Fragen",
     "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
     "question": "Ist die Nutzung von Suchauftrag.de kostenlos?",
-    "answer": "Ja, die Erstellung eines Suchauftrags und die Nutzung von Suchauftrag.de sind für Suchende komplett kostenlos.",
+    "answer": "Ja, die Erstellung eines Immobiliengesuchs und die Nutzung von Suchauftrag.de sind für Suchende komplett kostenlos.",
     "weight": 2
   },
   {
     "category": "allgemeine-fragen",
     "category_label": "Allgemeine Fragen",
     "category_desc": "Fragen, die für alle Nutzer von Suchauftrag.de relevant sind.",
-    "question": "Wie lange ist ein Suchauftrag aktiv?",
-    "answer": "Standardmäßig bleibt Ihr Suchauftrag 30 Tage aktiv und kann jederzeit verlängert oder vorzeitig beendet werden.",
-    "weight": 3
+    "question": "Wie lange ist ein Immobiliengesuch aktiv?",
+    "answer": "Standardmäßig bleibt Ihr Immobiliengesuch 30 Tage aktiv und kann jederzeit verlängert oder vorzeitig beendet werden.",
+    "weight": 3,
+    "previous_questions": [
+      "Wie lange ist ein Suchauftrag aktiv?"
+    ]
   },
   {
     "category": "allgemeine-fragen",
@@ -51,33 +57,42 @@
     "category": "ich-suche-eine-immobilie",
     "category_label": "Ich suche eine Immobilie",
     "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
-    "question": "Wie erstelle ich einen Suchauftrag?",
-    "answer": "Klicken Sie auf „Suchauftrag erstellen“ und geben Sie Ihre gewünschten Kriterien ein. Dazu gehören z. B. Immobilientyp, Kauf oder Miete, Ort, Wohnfläche, Zimmer, Preis und weitere Wünsche. Nach dem Absenden wird Ihr Suchauftrag auf der Plattform veröffentlicht.",
-    "weight": 0
+    "question": "Wie erstelle ich ein Immobiliengesuch?",
+    "answer": "Klicken Sie auf „Immobiliengesuch erstellen“ und geben Sie Ihre gewünschten Kriterien ein. Dazu gehören z. B. Immobilientyp, Kauf oder Miete, Ort, Wohnfläche, Zimmer, Preis und weitere Wünsche. Nach dem Absenden wird Ihr Immobiliengesuch auf der Plattform veröffentlicht.",
+    "weight": 0,
+    "previous_questions": [
+      "Wie erstelle ich einen Suchauftrag?"
+    ]
   },
   {
     "category": "ich-suche-eine-immobilie",
     "category_label": "Ich suche eine Immobilie",
     "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
     "question": "Wie erhalte ich Angebote?",
-    "answer": "Sobald ein passender Anbieter oder Makler Ihren Suchauftrag sieht und eine passende Immobilie hat, erhalten Sie direkt Angebote in Ihrem Postfach oder per Benachrichtigung.",
+    "answer": "Sobald ein passender Anbieter oder Makler Ihr Immobiliengesuch sieht und eine passende Immobilie hat, erhalten Sie direkt Angebote in Ihrem Postfach oder per Benachrichtigung.",
     "weight": 1
   },
   {
     "category": "ich-suche-eine-immobilie",
     "category_label": "Ich suche eine Immobilie",
     "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
-    "question": "Wie lange bleibt mein Suchauftrag online?",
-    "answer": "Ihr Suchauftrag bleibt für den gewählten Zeitraum online und kann jederzeit im Account verwaltet oder verlängert werden.",
-    "weight": 2
+    "question": "Wie lange bleibt mein Immobiliengesuch online?",
+    "answer": "Ihr Immobiliengesuch bleibt für den gewählten Zeitraum online und kann jederzeit im Account verwaltet oder verlängert werden.",
+    "weight": 2,
+    "previous_questions": [
+      "Wie lange bleibt mein Suchauftrag online?"
+    ]
   },
   {
     "category": "ich-suche-eine-immobilie",
     "category_label": "Ich suche eine Immobilie",
     "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
-    "question": "Kann ich meinen Suchauftrag löschen?",
-    "answer": "Ja, Sie können Ihren Suchauftrag jederzeit mit wenigen Klicks in Ihrem Benutzerbereich deaktivieren oder löschen.",
-    "weight": 3
+    "question": "Kann ich mein Immobiliengesuch löschen?",
+    "answer": "Ja. In der Bestätigungs-E-Mail zu Ihrem Immobiliengesuch und in jeder E-Mail mit einem neuen Angebot finden Sie den Link „Immobiliengesuch löschen“. Über diesen sicheren, nur für Ihr Gesuch gültigen Link können Sie Ihr Immobiliengesuch jederzeit selbst löschen. Nach Ihrer Bestätigung wird es sofort entfernt, und Sie erhalten eine Bestätigung per E-Mail.",
+    "weight": 3,
+    "previous_questions": [
+      "Kann ich meinen Suchauftrag löschen?"
+    ]
   },
   {
     "category": "ich-suche-eine-immobilie",
@@ -99,16 +114,19 @@
     "category": "ich-biete-eine-immobilie-an",
     "category_label": "Ich biete eine Immobilie an",
     "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
-    "question": "Wie finde ich passende Suchaufträge?",
-    "answer": "Unter „Suchaufträge“ können Sie nach passenden Gesuchen suchen. Sie können die Suchaufträge anhand der angegebenen Kriterien prüfen und z. B. nach Ort, Immobilientyp, Wohnfläche oder Preis passende Anfragen finden.",
-    "weight": 0
+    "question": "Wie finde ich passende Immobiliengesuche?",
+    "answer": "Unter „Immobiliengesuche“ können Sie nach passenden Gesuchen suchen. Sie können die Immobiliengesuche anhand der angegebenen Kriterien prüfen und z. B. nach Ort, Immobilientyp, Wohnfläche oder Preis passende Anfragen finden.",
+    "weight": 0,
+    "previous_questions": [
+      "Wie finde ich passende Suchaufträge?"
+    ]
   },
   {
     "category": "ich-biete-eine-immobilie-an",
     "category_label": "Ich biete eine Immobilie an",
     "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
     "question": "Wie kann ich einem Suchenden ein Angebot senden?",
-    "answer": "Klicken Sie auf der Detailseite eines Suchauftrags auf „Angebot senden“ und füllen Sie das kurze Formular mit den Immobiliendetails aus.",
+    "answer": "Klicken Sie auf der Detailseite eines Immobiliengesuchs auf „Angebot senden“ und füllen Sie das kurze Formular mit den Immobiliendetails aus.",
     "weight": 1
   },
   {
@@ -132,15 +150,18 @@
     "category_label": "Ich biete eine Immobilie an",
     "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
     "question": "Ist das Einstellen eines Angebots kostenlos?",
-    "answer": "Die Kontaktaufnahme und das Senden von Angeboten auf Suchaufträge sind für Anbieter transparent und flexibel gestaltet.",
+    "answer": "Die Kontaktaufnahme und das Senden von Angeboten auf Immobiliengesuche sind für Anbieter transparent und flexibel gestaltet.",
     "weight": 4
   },
   {
     "category": "ich-biete-eine-immobilie-an",
     "category_label": "Ich biete eine Immobilie an",
     "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
-    "question": "Kann ich mehrere Suchaufträge kontaktieren?",
-    "answer": "Ja, Sie können beliebig viele passende Suchaufträge durchsuchen und für entsprechende Immobilien passende Angebote versenden.",
-    "weight": 5
+    "question": "Kann ich mehrere Immobiliengesuche kontaktieren?",
+    "answer": "Ja, Sie können beliebig viele passende Immobiliengesuche durchsuchen und für entsprechende Immobilien passende Angebote versenden.",
+    "weight": 5,
+    "previous_questions": [
+      "Kann ich mehrere Suchaufträge kontaktieren?"
+    ]
   }
 ]

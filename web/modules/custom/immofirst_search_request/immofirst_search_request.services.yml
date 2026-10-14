@@ -13,3 +13,7 @@ services:
     class: Drupal\immofirst_search_request\Service\SearchCriteriaTermRepository
     arguments:
       - '@entity_type.manager'
+  immofirst_search_request.deletion_link:
+    class: Drupal\immofirst_search_request\Service\SearchRequestDeletionLink
+    arguments:
+      - '@private_key'

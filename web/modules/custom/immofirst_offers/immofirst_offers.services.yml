@@ -10,6 +10,7 @@ services:
       - '@language_manager'
       - '@renderer'
       - '@email.validator'
+      - '@immofirst_search_request.deletion_link'
 
   immofirst_offers.workflow:
     class: Drupal\immofirst_offers\OfferWorkflow

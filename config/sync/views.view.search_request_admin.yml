@@ -13,7 +13,7 @@ dependencies:
     - options
     - user
 id: search_request_admin
-label: 'Suchaufträge (Verwaltung)'
+label: 'Immobiliengesuche (Verwaltung)'
 module: views
 description: 'Verwaltungsliste der Suchaufträge (auch unveröffentlichte) mit Bearbeiten-Link. Keine Massenaktionen.'
 tag: ''
@@ -26,7 +26,7 @@ display:
     display_plugin: default
     position: 0
     display_options:
-      title: Suchaufträge
+      title: Immobiliengesuche
       fields:
         title:
           id: title
@@ -332,7 +332,7 @@ display:
           admin_label: ''
           plugin_id: text_custom
           empty: true
-          content: 'Keine Suchaufträge gefunden.'
+          content: 'Keine Immobiliengesuche gefunden.'
           tokenize: false
       sorts: {  }
       arguments: {  }

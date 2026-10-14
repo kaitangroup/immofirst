@@ -267,7 +267,7 @@
 
       function setCount(n) {
         if (countEl) {
-          countEl.textContent = n + ' Suchaufträge gefunden';
+          countEl.textContent = n + ' Immobiliengesuche gefunden';
         }
       }
 

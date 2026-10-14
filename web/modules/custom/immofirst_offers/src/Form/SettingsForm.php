@@ -19,17 +19,18 @@ final class SettingsForm extends ConfigFormBase {
   private const CONFIG = 'immofirst_offers.settings';
 
   private const EMAILS = [
-    'search_request_created' => '4.1 Suchauftrag erfolgreich erstellt',
-    'search_request_terminated' => '4.2 Suchauftrag beendet',
-    'search_request_deleted' => '4.3 Suchauftrag gelöscht',
+    'search_request_created' => '4.1 Immobiliengesuch erfolgreich erstellt',
+    'search_request_terminated' => '4.2 Immobiliengesuch beendet',
+    'search_request_deleted' => '4.3 Immobiliengesuch gelöscht',
     'offer_sent' => '4.4 Angebot erfolgreich versendet (an Anbieter)',
-    'offer_forward' => 'Angebot an Suchenden weiterleiten (Aktion „Senden“)',
+    'offer_forward' => '4.5 Angebot an Suchenden weiterleiten (Aktion „Senden“)',
   ];
 
   private const EMAIL_FIELDS = [
     'subject' => ['Betreff', 'textfield'],
     'heading' => ['Überschrift', 'textfield'],
     'intro' => ['Einleitung (eine Zeile pro Absatz)', 'textarea'],
+    'intro_admin' => ['Einleitung bei Löschung durch die Verwaltung (nur 4.3; eine Zeile pro Absatz)', 'textarea'],
     'summary_heading' => ['Überschrift Übersicht', 'textfield'],
     'next_heading' => ['Überschrift „Wie geht es weiter?“', 'textfield'],
     'next_text' => ['Text „Wie geht es weiter?“ (eine Zeile pro Absatz)', 'textarea'],
@@ -37,6 +38,8 @@ final class SettingsForm extends ConfigFormBase {
     'button_caption' => ['Text am Button', 'textfield'],
     'extra_heading' => ['Überschrift Zusatzbox', 'textfield'],
     'extra_text' => ['Text Zusatzbox', 'textarea'],
+    'delete_question' => ['Frage „vorzeitig löschen“ (nur 4.1 und 4.5)', 'textfield'],
+    'delete_label' => ['Link „Immobiliengesuch löschen“ (nur 4.1 und 4.5)', 'textfield'],
   ];
 
   public function getFormId(): string {
@@ -50,9 +53,11 @@ final class SettingsForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state): array {
     $form['search_request_term_months'] = [
       '#type' => 'number',
-      '#title' => $this->t('Laufzeit eines Suchauftrags (Monate)'),
-      '#description' => $this->t('Angezeigt in E-Mail 4.1; danach beendet der Cron den Suchauftrag und sendet E-Mail 4.2.'),
+      '#title' => $this->t('Laufzeit eines Immobiliengesuchs (Monate)'),
+      '#description' => $this->t('Angezeigt in E-Mail 4.1; danach beendet der Cron das Immobiliengesuch automatisch (unveröffentlicht) und sendet E-Mail 4.2.'),
       '#min' => 1,
+      '#max' => 36,
+      '#step' => 1,
       '#required' => TRUE,
       '#config_target' => self::CONFIG . ':search_request_term_months',
     ];

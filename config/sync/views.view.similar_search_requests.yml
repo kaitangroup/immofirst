@@ -10,7 +10,7 @@ dependencies:
     - node
     - user
 id: similar_search_requests
-label: 'Ähnliche Suchaufträge'
+label: 'Ähnliche Immobiliengesuche'
 module: views
 description: 'Zeigt ähnliche Suchaufträge für die Detailseite an, gefiltert nach dem aktuellen Knoten und ausgeschlossen über die Node-ID Kontextexport-Argumente.'
 tag: ''
@@ -23,7 +23,7 @@ display:
     display_plugin: default
     position: 0
     display_options:
-      title: 'Ähnliche Suchaufträge'
+      title: 'Ähnliche Immobiliengesuche'
       fields: {  }
       pager:
         type: some
@@ -44,7 +44,7 @@ display:
           field: area_text_custom
           plugin_id: text_custom
           empty: true
-          content: 'Passende Suchaufträge werden hier bald angezeigt.'
+          content: 'Passende Immobiliengesuche werden hier bald angezeigt.'
       sorts:
         created:
           id: created
@@ -141,12 +141,12 @@ display:
         - node_list
   block_1:
     id: block_1
-    display_title: 'Ähnliche Suchaufträge Block'
+    display_title: 'Ähnliche Immobiliengesuche Block'
     display_plugin: block
     position: 1
     display_options:
       display_extenders: {  }
-      block_description: 'Ähnliche Suchaufträge (Detailseite)'
+      block_description: 'Ähnliche Immobiliengesuche (Detailseite)'
       block_category: Suchauftrag.de
     cache_metadata:
       max-age: -1

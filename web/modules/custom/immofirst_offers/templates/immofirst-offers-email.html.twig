@@ -16,6 +16,7 @@
  * - seller: the provider's offer as plain values (offer_forward only):
  *   name, phone, phone_href, email, message (lines), documents [{name, size}].
  * - site: brand/footer values.
+ * - delete_url: signed early-deletion link (4.1 and offer_forward only).
  */
 #}
 {% set navy = '#142A5C' %}
@@ -179,6 +180,23 @@
             {% if texts.button_caption and email_key == 'offer_sent' %}<p style="margin:0 0 12px;font-size:15px;color:{{ navy }};">{{ texts.button_caption }}</p>{% endif %}
             <a href="{{ button_url }}" style="display:inline-block;padding:14px 28px;background:{{ blue }};color:#FFFFFF;font-size:15px;font-weight:bold;text-decoration:none;border-radius:8px;">{{ texts.button_label }} &rarr;</a>
             {% if texts.button_caption and email_key != 'offer_sent' %}<p style="margin:10px 0 0;font-size:13px;color:{{ muted }};">{{ texts.button_caption }}</p>{% endif %}
+          </td>
+        </tr>
+        {% endif %}
+
+        {# Requester's own early deletion (4.1, and below 4.5): signed link to a
+           confirmation page — nothing is deleted by opening the link. #}
+        {% if delete_url and texts.delete_question and texts.delete_label %}
+        <tr>
+          <td align="center" style="padding:8px 32px 8px;{{ font }}">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #E6ECF7;">
+              <tr>
+                <td align="center" style="padding:16px 0 4px;{{ font }}font-size:14px;color:{{ navy }};">&#128465; {{ texts.delete_question }}</td>
+              </tr>
+              <tr>
+                <td align="center" style="padding:0 0 8px;{{ font }}font-size:14px;"><a href="{{ delete_url }}" style="color:{{ blue }};text-decoration:underline;">{{ texts.delete_label }}</a></td>
+              </tr>
+            </table>
           </td>
         </tr>
         {% endif %}
