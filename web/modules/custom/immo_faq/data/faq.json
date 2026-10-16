@@ -4,7 +4,7 @@
     "category_label": "Allgemeine Fragen",
     "category_desc": "Fragen, die für alle Nutzer von Immo-Gesuch.de relevant sind.",
     "question": "Was ist ein Immobiliengesuch?",
-    "answer": "Ein Immobiliengesuch beschreibt, welche Immobilie Sie suchen. Sie können dabei unter anderem Ort, Wohnfläche, Zimmer, Preis und weitere Wünsche angeben. Ihr Immobiliengesuch wird anschließend für passende Anbieter sichtbar.",
+    "answer": "Ein Immobiliengesuch beschreibt, welche Immobilie Sie suchen. Sie können dabei unter anderem Ort, Wohnfläche, Zimmer, Preis und weitere Wünsche angeben. Ihr Immobiliengesuch wird anschließend für die Anbieter sichtbar.",
     "weight": 0,
     "previous_questions": [
       "Was ist ein Suchauftrag?"
@@ -15,7 +15,7 @@
     "category_label": "Allgemeine Fragen",
     "category_desc": "Fragen, die für alle Nutzer von Immo-Gesuch.de relevant sind.",
     "question": "Wie funktioniert Immo-Gesuch.de?",
-    "answer": "Immo-Gesuch.de verbindet Immobiliensuchende mit passenden Anbietern, Maklern und Verkäufern. Erstellen Sie einfach Ihr Immobiliengesuch und erhalten Sie maßgeschneiderte Angebote direkt.",
+    "answer": "Sie erstellen kostenlos ein Immobiliengesuch mit Ihren gewünschten Kriterien. Vermieter, Verkäufer und Makler können passende Immobiliengesuche ansehen und Ihnen direkt ein Angebot senden. Ihre Kontaktdaten werden dabei nicht öffentlich angezeigt.",
     "weight": 1,
     "previous_questions": [
       "Wie funktioniert Suchauftrag.de?"
@@ -26,7 +26,7 @@
     "category_label": "Allgemeine Fragen",
     "category_desc": "Fragen, die für alle Nutzer von Immo-Gesuch.de relevant sind.",
     "question": "Ist die Nutzung von Immo-Gesuch.de kostenlos?",
-    "answer": "Ja, die Erstellung eines Immobiliengesuchs und die Nutzung von Immo-Gesuch.de sind für Suchende komplett kostenlos.",
+    "answer": "Ja. Das Erstellen eines Immobiliengesuchs und die Nutzung der Plattform ist für Immobiliensuchende kostenlos.",
     "weight": 2,
     "previous_questions": [
       "Ist die Nutzung von Suchauftrag.de kostenlos?"
@@ -47,16 +47,19 @@
     "category": "allgemeine-fragen",
     "category_label": "Allgemeine Fragen",
     "category_desc": "Fragen, die für alle Nutzer von Immo-Gesuch.de relevant sind.",
-    "question": "Wie werden meine Daten geschützt?",
-    "answer": "Ihre Daten werden streng nach DSGVO geschützt. Kontaktdaten werden erst dann an Anbieter weitergegeben, wenn Sie einem Angebot aktiv zustimmen.",
-    "weight": 4
+    "question": "Werden meine Daten geschützt?",
+    "answer": "Ihre persönlichen Daten werden vertraulich behandelt und nicht öffentlich angezeigt.",
+    "weight": 4,
+    "previous_questions": [
+      "Wie werden meine Daten geschützt?"
+    ]
   },
   {
     "category": "allgemeine-fragen",
     "category_label": "Allgemeine Fragen",
     "category_desc": "Fragen, die für alle Nutzer von Immo-Gesuch.de relevant sind.",
     "question": "Wann werden Kontaktdaten weitergegeben?",
-    "answer": "Kontaktdaten werden erst nach Ihrer ausdrücklichen Zustimmung im Rahmen eines konkreten Angebots oder einer Kontaktaufnahme übermittelt.",
+    "answer": "Ihre Kontaktdaten werden durch das Veröffentlichen Ihres Immobiliengesuchs nicht öffentlich zugänglich. Wenn ein Anbieter Ihnen ein passendes Angebot sendet und Sie daran Interesse haben, kann der weitere Kontakt direkt zwischen Ihnen und dem Anbieter erfolgen.",
     "weight": 5
   },
   {
@@ -64,7 +67,7 @@
     "category_label": "Ich suche eine Immobilie",
     "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
     "question": "Wie erstelle ich ein Immobiliengesuch?",
-    "answer": "Klicken Sie auf „Immobiliengesuch erstellen“ und geben Sie Ihre gewünschten Kriterien ein. Dazu gehören z. B. Immobilientyp, Kauf oder Miete, Ort, Wohnfläche, Zimmer, Preis und weitere Wünsche. Nach dem Absenden wird Ihr Immobiliengesuch auf der Plattform veröffentlicht.",
+    "answer": "Klicken Sie auf „Immobiliengesuch erstellen“ und geben Sie Ihre gewünschten Kriterien ein. Dazu gehören beispielsweise Immobilientyp, Kauf oder Miete, Ort, Wohnfläche, Zimmer, Preis und weitere Wünsche. Nach dem Absenden wird Ihr Immobiliengesuch auf der Plattform veröffentlicht.",
     "weight": 0,
     "previous_questions": [
       "Wie erstelle ich einen Suchauftrag?"
@@ -75,7 +78,7 @@
     "category_label": "Ich suche eine Immobilie",
     "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
     "question": "Wie erhalte ich Angebote?",
-    "answer": "Sobald ein passender Anbieter oder Makler Ihr Immobiliengesuch sieht und eine passende Immobilie hat, erhalten Sie direkt Angebote in Ihrem Postfach oder per Benachrichtigung.",
+    "answer": "Vermieter, Verkäufer und Makler können nach passenden Immobiliengesuchen suchen. Wenn Ihr Immobiliengesuch zu einer Immobilie passt, können die Anbieter Ihnen über „Angebot senden“ ein Angebot zukommen lassen.",
     "weight": 1
   },
   {
@@ -83,7 +86,7 @@
     "category_label": "Ich suche eine Immobilie",
     "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
     "question": "Wie lange bleibt mein Immobiliengesuch online?",
-    "answer": "Ihr Immobiliengesuch bleibt für den gewählten Zeitraum online und kann jederzeit im Account verwaltet oder verlängert werden.",
+    "answer": "Ihr Immobiliengesuch bleibt drei Monate online. Bei Bedarf können Sie es jederzeit selbst löschen. Andernfalls wird es nach Ablauf der drei Monate automatisch gelöscht.",
     "weight": 2,
     "previous_questions": [
       "Wie lange bleibt mein Suchauftrag online?"
@@ -94,7 +97,7 @@
     "category_label": "Ich suche eine Immobilie",
     "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
     "question": "Kann ich mein Immobiliengesuch löschen?",
-    "answer": "Ja. In der Bestätigungs-E-Mail zu Ihrem Immobiliengesuch und in jeder E-Mail mit einem neuen Angebot finden Sie den Link „Immobiliengesuch löschen“. Über diesen sicheren, nur für Ihr Gesuch gültigen Link können Sie Ihr Immobiliengesuch jederzeit selbst löschen. Nach Ihrer Bestätigung wird es sofort entfernt, und Sie erhalten eine Bestätigung per E-Mail.",
+    "answer": "Ja. Über den Link „Immobiliengesuch löschen“ in der ersten Bestätigungs-E-Mail zu Ihrem Immobiliengesuch können Sie es direkt löschen. Nach der Löschung erhalten Sie eine Benachrichtigung per E-Mail. Anschließend wird Ihr Immobiliengesuch aus der aktiven Übersicht entfernt und es werden keine weiteren Angebote mehr diesem Immobiliengesuch zugeordnet.",
     "weight": 3,
     "previous_questions": [
       "Kann ich meinen Suchauftrag löschen?"
@@ -104,16 +107,19 @@
     "category": "ich-suche-eine-immobilie",
     "category_label": "Ich suche eine Immobilie",
     "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
-    "question": "Was passiert, wenn ein Anbieter Interesse an meiner Suche hat?",
-    "answer": "Der Anbieter sendet Ihnen ein unverbindliches Angebot mit Exposé oder Kontaktdaten, welches Sie prüfen und annehmen können.",
-    "weight": 4
+    "question": "Was passiert, wenn ein Anbieter Interesse an meinem Gesuch hat?",
+    "answer": "Der Anbieter kann Ihnen über die Plattform ein passendes Angebot zu Ihrem Immobiliengesuch senden. Sie können das Angebot prüfen und selbst entscheiden, ob Sie Kontakt aufnehmen möchten. Bei Interesse kann der weitere Austausch anschließend direkt zwischen Ihnen und dem Anbieter erfolgen.",
+    "weight": 4,
+    "previous_questions": [
+      "Was passiert, wenn ein Anbieter Interesse an meiner Suche hat?"
+    ]
   },
   {
     "category": "ich-suche-eine-immobilie",
     "category_label": "Ich suche eine Immobilie",
     "category_desc": "Hier finden Sie Antworten rund um Ihren Suchauftrag als Immobiliensuchender.",
     "question": "Werden meine Kontaktdaten veröffentlicht?",
-    "answer": "Nein, Ihre Kontaktdaten sind öffentlich nicht sichtbar und werden erst bei explizitem Interesse und Ihrer Freigabe geteilt.",
+    "answer": "Nein, Ihre Kontaktdaten werden nicht öffentlich in Ihrem Immobiliengesuch angezeigt. Erst wenn Sie ein passendes Angebot erhalten und Interesse daran haben, können Sie den Kontakt zum Anbieter persönlich aufnehmen. So entscheiden Sie selbst, wann Sie Ihre Kontaktdaten zur Verfügung stellen.",
     "weight": 5
   },
   {
@@ -121,7 +127,7 @@
     "category_label": "Ich biete eine Immobilie an",
     "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
     "question": "Wie finde ich passende Immobiliengesuche?",
-    "answer": "Unter „Immobiliengesuche“ können Sie nach passenden Gesuchen suchen. Sie können die Immobiliengesuche anhand der angegebenen Kriterien prüfen und z. B. nach Ort, Immobilientyp, Wohnfläche oder Preis passende Anfragen finden.",
+    "answer": "Unter „Immobiliengesuche“ können Sie nach passenden Gesuchen suchen. Sie können die Immobiliengesuche anhand der angegebenen Kriterien prüfen und beispielsweise nach Ort, Immobilientyp, Wohnfläche oder Preis passende Anfragen finden.",
     "weight": 0,
     "previous_questions": [
       "Wie finde ich passende Suchaufträge?"
@@ -132,7 +138,7 @@
     "category_label": "Ich biete eine Immobilie an",
     "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
     "question": "Wie kann ich einem Suchenden ein Angebot senden?",
-    "answer": "Klicken Sie auf der Detailseite eines Immobiliengesuchs auf „Angebot senden“ und füllen Sie das kurze Formular mit den Immobiliendetails aus.",
+    "answer": "Wenn Sie eine passende Immobilie anbieten können, öffnen Sie das entsprechende Immobiliengesuch und klicken auf „Angebot senden“. Anschließend geben Sie Ihre Kontaktdaten und die wichtigsten Informationen zu Ihrer Immobilie ein und senden das Angebot ab.",
     "weight": 1
   },
   {
@@ -140,7 +146,7 @@
     "category_label": "Ich biete eine Immobilie an",
     "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
     "question": "Welche Daten muss ich beim Angebot angeben?",
-    "answer": "Geben Sie die wichtigsten Eckdaten der Immobilie (z. B. Adresse, Preis, Wohnfläche, Zimmer) sowie eine kurze Beschreibung und Kontaktdaten an.",
+    "answer": "Für die Kontaktaufnahme benötigen wir zunächst Ihre Anrede, Ihren Namen und Ihre E-Mail-Adresse. Eine Telefonnummer kann optional ergänzt werden. Außerdem können Sie Ihr Angebot beschreiben und bei Bedarf Unterlagen oder Bilder hochladen.",
     "weight": 2
   },
   {
@@ -148,23 +154,26 @@
     "category_label": "Ich biete eine Immobilie an",
     "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
     "question": "Was passiert, nachdem ich ein Angebot gesendet habe?",
-    "answer": "Der Suchende erhält Ihre Nachricht und kann direkt mit Ihnen in Kontakt treten, sofern Interesse besteht.",
+    "answer": "Ihr Angebot wird an die Person weitergeleitet, die das Immobiliengesuch erstellt hat. Sie erhalten anschließend eine automatische Bestätigung per E-Mail. Wenn die suchende Person Interesse an Ihrem Angebot hat, kann sie sich direkt mit Ihnen in Verbindung setzen.",
     "weight": 3
   },
   {
     "category": "ich-biete-eine-immobilie-an",
     "category_label": "Ich biete eine Immobilie an",
     "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
-    "question": "Ist das Einstellen eines Angebots kostenlos?",
-    "answer": "Die Kontaktaufnahme und das Senden von Angeboten auf Immobiliengesuche sind für Anbieter transparent und flexibel gestaltet.",
-    "weight": 4
+    "question": "Ist das Abgeben eines Angebots kostenlos?",
+    "answer": "Ja. Das Senden eines Angebots zu einem passenden Immobiliengesuch ist auf der Plattform kostenlos.",
+    "weight": 4,
+    "previous_questions": [
+      "Ist das Einstellen eines Angebots kostenlos?"
+    ]
   },
   {
     "category": "ich-biete-eine-immobilie-an",
     "category_label": "Ich biete eine Immobilie an",
     "category_desc": "Hier finden Sie Antworten rund um Angebote und Suchaufträge als Anbieter, Makler oder Verkäufer/Vermieter.",
     "question": "Kann ich mehrere Immobiliengesuche kontaktieren?",
-    "answer": "Ja, Sie können beliebig viele passende Immobiliengesuche durchsuchen und für entsprechende Immobilien passende Angebote versenden.",
+    "answer": "Ja. Wenn Ihre Immobilie zu mehreren Immobiliengesuchen passt, können Sie den jeweiligen Suchenden ein passendes Angebot senden. Jeder Kontakt wird separat behandelt.",
     "weight": 5,
     "previous_questions": [
       "Kann ich mehrere Suchaufträge kontaktieren?"
