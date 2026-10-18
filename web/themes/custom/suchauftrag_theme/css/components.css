@@ -81,7 +81,12 @@
     font-size:19px;
     color:var(--text);
     flex-shrink:0;
+    /* Mobile browsers flash a translucent square over a tapped link by
+       default, which made the logo look like a button on click. Keyboard
+       focus keeps the global a:focus-visible outline (style.css). */
+    -webkit-tap-highlight-color:transparent;
   }
+  .header__logo:focus-visible{ border-radius:8px; }
   .header__logo-img{
     display:block;
     height:52px;

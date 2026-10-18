@@ -44,9 +44,18 @@
      if reused as-is here. These sit further up and further right,
      in the gap the ragged (left-aligned) heading text leaves on its
      right side once it's the only thing in a single-column row. */
-  .hero__path{ top:2%; left:64%; }
-  .hero__pin--1{ top:6%; left:82%; }
-  .hero__pin--2{ top:42%; left:64%; }
+  /* Client feedback (Oct 2026): those percentage positions still put
+     the graphic on top of the full-width heading at every stacked
+     width, because no part of a full-width ragged heading is reliably
+     empty. Instead, .hero__bg becomes a small fixed box in the hero's
+     top padding band, right-aligned ABOVE the heading's first line, so
+     it can never intersect the heading or subtitle at any width. Same
+     path + two pins, just scaled to fit the band: pin 2 sits at the
+     path's lower-left start, pin 1 at its upper-right end. */
+  .hero__bg{ inset:auto; top:-74px; right:var(--container-padding); width:160px; height:68px; }
+  .hero__path{ top:6px; left:12px; width:120px; height:62px; }
+  .hero__pin--1{ top:0; left:auto; right:0; }
+  .hero__pin--2{ top:44px; left:0; }
 
   .search-card__grid{
     grid-template-columns:1fr 1fr;
@@ -263,14 +272,19 @@
     --space-content-to-footer:40px;
   }
 
-  .hero{ padding:36px 0 24px; }
+  /* Top padding 36px → 60px: just enough room for the (smaller)
+     decoration band above the heading — see the ≤1024px block. */
+  .hero{ padding:60px 0 24px; }
   .hero__title{ font-size:26px; }
   .hero__subtitle{ font-size:15px; }
   .hero__card{ display:none; }
-  /* .hero__bg's pins/path already got their stacked-layout positions
-     in the ≤1024px block above (this range is a subset of it) —
-     matches the client's phone mockup: pins visible in the top-right
-     whitespace beside the heading, nothing further needed here. */
+  /* Phone-sized version of the ≤1024px top-band decoration: fits the
+     60px top padding, slightly lighter so it stays secondary. */
+  .hero__bg{ top:-54px; width:112px; height:48px; opacity:.85; }
+  .hero__path{ top:4px; left:8px; width:86px; height:44px; }
+  .hero__pin--1 svg{ width:22px; height:22px; }
+  .hero__pin--2{ top:30px; }
+  .hero__pin--2 svg{ width:16px; height:16px; }
   .feature-icons{ display:none; }
 
   .label-mobile, .btn-text-mobile { display: inline; }
