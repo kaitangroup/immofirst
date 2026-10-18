@@ -1,0 +1,100 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for ImmoFirst Contact.
+ */
+
+declare(strict_types=1);
+
+use Drupal\Component\Render\MarkupInterface;
+use Drupal\Component\Utility\Html;
+use Drupal\Core\Render\Markup;
+use Drupal\Core\Template\Attribute;
+
+/**
+ * Implements hook_theme().
+ */
+function immofirst_contact_theme(): array {
+  return [
+    'immofirst_contact_form' => [
+      'render element' => 'form',
+    ],
+    'immofirst_contact_submit' => [
+      'render element' => 'element',
+    ],
+    'immofirst_contact_thank_you' => [
+      'variables' => [],
+    ],
+    'immofirst_contact_email' => [
+      'variables' => [
+        'name' => '',
+        'email' => '',
+        'subject' => '',
+        'message' => '',
+      ],
+    ],
+  ];
+}
+
+/**
+ * Prepares variables for the contact form (immofirst-contact-form.html.twig).
+ *
+ * Inline validation errors, same markup as the search-request wizard
+ * (SearchRequestWizardForm::attachSiblingFieldError()): each field has
+ * #error_no_message, so Drupal prints neither its own inline message nor
+ * the (English) "n errors have been found" summary at the top; instead
+ * the message is rendered as a '.form-item--error-message' sibling right
+ * below the field and linked to it via aria-describedby. Core still adds
+ * the 'error' class and aria-invalid to the input.
+ */
+function template_preprocess_immofirst_contact_form(array &$variables): void {
+  foreach (['name', 'email', 'subject', 'message', 'privacy'] as $key) {
+    $element = &$variables['form'][$key];
+    if (empty($element['#errors'])) {
+      continue;
+    }
+    $id = $element['#id'] . '--error';
+    $error = $element['#errors'];
+    $error = $error instanceof MarkupInterface ? (string) $error : Html::escape((string) $error);
+    $element['#attributes']['aria-describedby'] = $id;
+    $element['#suffix'] = Markup::create('<div id="' . $id . '" class="form-item--error-message">' . $error . '</div>');
+  }
+}
+
+/**
+ * Prepares variables for the contact form's submit button.
+ *
+ * Renders the submit element as a <button> (same name/value as core's
+ * <input type="submit">) so it can carry the envelope icon.
+ */
+function template_preprocess_immofirst_contact_submit(array &$variables): void {
+  $element = $variables['element'];
+  $variables['attributes'] = new Attribute($element['#attributes'] ?? []);
+  $variables['label'] = $element['#value'];
+}
+
+/**
+ * Implements hook_mail().
+ *
+ * Key "contact": the inquiry notification to the site team. All submitted
+ * values are rendered through immofirst-contact-email.html.twig, so they
+ * are escaped by Twig's autoescape. The visitor's address is only used as
+ * Reply-To (passed by ContactForm to MailManager::mail()); the sender is
+ * the site/SMTP address.
+ */
+function immofirst_contact_mail(string $key, array &$message, array $params): void {
+  if ($key !== 'contact') {
+    return;
+  }
+  $message['subject'] = (string) t('Kontaktanfrage über Immo-Gesuch.de: @subject', ['@subject' => $params['subject']], ['langcode' => $message['langcode']]);
+  $build = [
+    '#theme' => 'immofirst_contact_email',
+    '#name' => $params['name'],
+    '#email' => $params['email'],
+    '#subject' => $params['subject'],
+    '#message' => $params['message'],
+  ];
+  $message['headers']['Content-Type'] = 'text/html; charset=UTF-8';
+  $message['body'][] = Markup::create((string) \Drupal::service('renderer')->renderInIsolation($build));
+}

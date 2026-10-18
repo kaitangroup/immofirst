@@ -1,0 +1,30 @@
+{#
+/**
+ * @file
+ * Contact confirmation page (Tab. 7 kontakt, second screen).
+ */
+#}
+<div class="immo-contact immo-contact--thanks">
+  <div class="immo-contact__intro">
+    <div class="immo-contact__icon immo-contact__icon--lg" aria-hidden="true">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <rect x="8" y="14" width="40" height="28" rx="3" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M10 17l18 13 18-13" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="47" cy="43" r="10" fill="currentColor"/>
+        <path d="M42.5 43.2l3.2 3.2 5.8-6" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h1 class="immo-contact__title immo-contact__title--lg">
+      <span class="immo-contact__title-line">{{ 'Vielen Dank'|t }}</span>
+      <span class="immo-contact__title-line immo-contact__title-accent">{{ 'für Ihre Nachricht!'|t }}</span>
+    </h1>
+    <p class="immo-contact__lead">{{ 'Wir haben Ihre Anfrage erfolgreich erhalten und werden uns so schnell wie möglich bei Ihnen melden.'|t }}</p>
+  </div>
+
+  <div class="immo-contact__back">
+    <a href="{{ path('<front>') }}" class="btn btn--primary immo-contact__back-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 11l8-6.5 8 6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 9.5V19.5h12V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 19.5v-5h4v5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      {{ 'Zurück zur Startseite'|t }}
+    </a>
+  </div>
+</div>

@@ -1,0 +1,50 @@
+{#
+/**
+ * @file
+ * Contact page (Tab. 7 kontakt): intro, form card, info boxes.
+ *
+ * Rendered as the form's #theme inside the <form> wrapper, which itself
+ * sits in page.html.twig's content container (shared header/footer).
+ *
+ * Available variables:
+ * - form: the immofirst_contact_form render array.
+ */
+#}
+<div class="immo-contact">
+  <div class="immo-contact__intro">
+    <div class="immo-contact__icon" aria-hidden="true">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5.5" width="17" height="13" rx="1.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 7l7.5 5.5L19.5 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h1 class="immo-contact__title">
+      <span class="immo-contact__title-line">{{ 'Wir helfen Ihnen gerne'|t }}</span>
+    </h1>
+    <p class="immo-contact__lead">{{ 'Sie haben Fragen zu Ihrem Immobiliengesuch oder benötigen Unterstützung? Schreiben Sie uns – wir melden uns so bald wie möglich.'|t }}</p>
+  </div>
+
+  <div class="immo-contact__card">
+    {{ form|without('privacy', 'actions') }}
+    {{ form.privacy }}
+    {{ form.actions }}
+  </div>
+
+  <div class="immo-contact__note immo-contact__note--box">
+    <div class="immo-contact__note-icon" aria-hidden="true">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5.5c0 4.3-3 8-7 9.5-4-1.5-7-5.2-7-9.5V6l7-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div>
+      <h2 class="immo-contact__note-title">{{ 'Sicher & direkt'|t }}</h2>
+      <p class="immo-contact__note-text">{{ 'Ihre Angaben werden ausschließlich zur Bearbeitung Ihrer Anfrage verwendet.'|t }}</p>
+    </div>
+  </div>
+
+  <div class="immo-contact__note">
+    <div class="immo-contact__note-icon immo-contact__note-icon--sm" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5.5" width="17" height="13" rx="1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 7l7.5 5.5L19.5 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div>
+      <h2 class="immo-contact__note-title">{{ 'Lieber per E-Mail?'|t }}</h2>
+      <a class="immo-contact__mail" href="mailto:{{ form['#recipient'] }}">{{ form['#recipient'] }}</a>
+    </div>
+  </div>
+
+</div>

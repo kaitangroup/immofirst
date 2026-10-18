@@ -1,0 +1,10 @@
+# Attached to the offer form's upload element by OfferUploadGuard::protect().
+# German client-side message for unsupported file types (core's file.js
+# shows it in English; the site has no interface translation).
+offer-upload:
+  js:
+    js/offer-upload.js: {}
+  dependencies:
+    - core/drupal
+    - core/jquery
+    - file/drupal.file

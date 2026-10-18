@@ -1,0 +1,5 @@
+name: 'ImmoFirst Contact'
+type: module
+description: 'Tab. 7 kontakt: contact form at /kontakt with confirmation page; inquiries are mailed to info@immo-gesuch.de.'
+package: ImmoFirst
+core_version_requirement: ^11

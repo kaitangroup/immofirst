@@ -91,7 +91,7 @@ function suchauftrag_theme_preprocess_page__front(array &$variables) {
     [
       'icon' => 'target',
       'title' => 'Aktuelle Gesuche',
-      'text' => 'Täglich neue Immobiliengesuche von geprüften Interessenten.',
+      'text' => 'Finden Sie passende Gesuche und senden Sie unverbindlich Angebote.',
       'color' => 'indigo',
     ],
     [
@@ -368,6 +368,106 @@ function _suchauftrag_theme_property_type_to_card_icon(string $property_type): s
     'commercial' => 'commercial',
     default => 'house',
   };
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for node--page.html.twig.
+ *
+ * Legal Basic pages (Impressum, Datenschutz, AGB, ...): splits the body
+ * into an intro (everything before the first <h2>, shown under the
+ * title) and one section per <h2>, so the template can lay them out as
+ * divided rows in a card. Purely presentational — the stored body is
+ * untouched and stays editable as one field. The split works on the
+ * text-format-filtered HTML, so the output is as safe as the normal
+ * field render. A body without any <h2> falls back to {{ content }}.
+ */
+function suchauftrag_theme_preprocess_node__page(array &$variables): void {
+  /** @var \Drupal\node\NodeInterface $node */
+  $node = $variables['node'];
+  $variables['intro'] = NULL;
+  $variables['sections'] = [];
+  if (!$variables['page'] || !$node->hasField('body') || $node->get('body')->isEmpty()) {
+    return;
+  }
+
+  $body = $node->get('body')->first();
+  $variables['#cache']['tags'][] = 'config:filter.format.' . $body->format;
+  $dom = \Drupal\Component\Utility\Html::load((string) $body->processed);
+  $root = $dom->getElementsByTagName('body')->item(0);
+
+  $intro = '';
+  $sections = [];
+  foreach (iterator_to_array($root->childNodes) as $child) {
+    if ($child instanceof \DOMElement && $child->tagName === 'h2') {
+      $title = '';
+      foreach ($child->childNodes as $inline) {
+        $title .= $dom->saveHTML($inline);
+      }
+      $sections[] = ['title' => $title, 'label' => trim($child->textContent), 'text' => ''];
+    }
+    elseif ($sections) {
+      $sections[array_key_last($sections)]['text'] .= $dom->saveHTML($child);
+    }
+    else {
+      $intro .= $dom->saveHTML($child);
+    }
+  }
+  if (!$sections) {
+    return;
+  }
+
+  // Layout variant per page, following the client references: icon rows
+  // for the Impressum, plain rows for the Widerrufsbelehrung, numbered
+  // headings for the rest — unless the headings already carry their own
+  // numbering (e.g. "§ 1 Geltungsbereich" on the AGB).
+  $alias = \Drupal::service('path_alias.manager')->getAliasByPath('/node/' . $node->id());
+  $variant = match ($alias) {
+    '/impressum' => 'icons',
+    '/widerrufsbelehrung' => 'plain',
+    default => 'numbered',
+  };
+  if ($variant === 'numbered') {
+    foreach ($sections as $section) {
+      if (preg_match('/^(§|\d)/u', $section['label'])) {
+        $variant = 'plain';
+        break;
+      }
+    }
+  }
+
+  foreach ($sections as &$section) {
+    $section['icon'] = $variant === 'icons' ? _suchauftrag_theme_legal_section_icon($section['label']) : NULL;
+    $section['title'] = \Drupal\Core\Render\Markup::create($section['title']);
+    $section['text'] = \Drupal\Core\Render\Markup::create(trim($section['text']));
+  }
+  unset($section);
+
+  $variables['variant'] = $variant;
+  $variables['intro'] = trim($intro) !== '' ? \Drupal\Core\Render\Markup::create(trim($intro)) : NULL;
+  $variables['sections'] = $sections;
+}
+
+/**
+ * Picks the Impressum row icon (see node--page.html.twig) from a heading.
+ */
+function _suchauftrag_theme_legal_section_icon(string $heading): string {
+  $heading = mb_strtolower($heading);
+  $map = [
+    'kontakt' => 'mail',
+    'anbieter' => 'user',
+    'betreiber' => 'user',
+    'person' => 'document',
+    'verantwort' => 'document',
+    'register' => 'building',
+    'steuer' => 'percent',
+    'haftung' => 'shield',
+  ];
+  foreach ($map as $keyword => $icon) {
+    if (str_contains($heading, $keyword)) {
+      return $icon;
+    }
+  }
+  return 'document';
 }
 
 function suchauftrag_theme_preprocess_node__search_request(array &$variables) {

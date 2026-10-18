@@ -1,0 +1,15 @@
+{#
+/**
+ * @file
+ * Contact form submit button with envelope icon.
+ *
+ * Available variables:
+ * - attributes: type="submit", name, value, id and classes from core's
+ *   button pre-render.
+ * - label: the button label.
+ */
+#}
+<button{{ attributes }}>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 7l7.5 5.5L19.5 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <span>{{ label }}</span>
+</button>

@@ -1209,10 +1209,15 @@
   /* ==========================================================
      FOOTER
      ========================================================== */
+  /* Light ground derived from --hero-bg, deepening slightly toward the
+     bottom so the footer reads as its own band against --bg. A thin
+     primary-tinted rule separates it from the content above. Body text
+     uses #475467 (not --muted) to stay ≥4.5:1 across the gradient. */
   .footer{
-    background:linear-gradient(160deg, #0F172A 0%, #0B1224 100%);
+    background:linear-gradient(180deg, var(--hero-bg) 0%, #E9ECFF 100%);
+    border-top:1px solid rgba(86,100,255,.16);
     padding-top:56px;
-    color:#CBD5E1;
+    color:#475467;
   }
   .footer__grid{
     display:grid;
@@ -1224,17 +1229,15 @@
     display:flex;
     align-items:center;
     gap:10px;
-    color:#fff;
+    color:var(--text);
     font-weight:700;
     font-size:18px;
     margin-bottom:14px;
   }
-  /* The logo's dark lettering needs a light ground on the dark footer. */
+  /* The PNG has a transparent background, so it sits directly on the
+     light footer — no white plate needed. */
   .footer__logo:has(.footer__logo-img){
     display:inline-flex;
-    padding:8px 14px;
-    background:#fff;
-    border-radius:12px;
   }
   .footer__logo-img{
     display:block;
@@ -1244,11 +1247,11 @@
   .footer__desc{
     font-size:13.5px;
     line-height:1.7;
-    color:#94A3B8;
+    color:#475467;
     max-width:280px;
   }
   .footer__heading{
-    color:#fff;
+    color:var(--text);
     font-size:14.5px;
     margin-bottom:16px;
   }
@@ -1257,16 +1260,16 @@
   .footer__links a,
   .footer__contact a{
     font-size:13.5px;
-    color:#94A3B8;
+    color:#475467;
     transition:color var(--ease);
   }
   .footer__links a:hover,
-  .footer__contact a:hover{ color:#fff; }
+  .footer__contact a:hover{ color:var(--primary-dark); }
   .footer__contact li{
     display:flex;
     align-items:center;
     gap:8px;
-    color:#94A3B8;
+    color:#475467;
   }
   .footer__social{
     display:flex;
@@ -1276,24 +1279,27 @@
   .footer__social-link{
     width:36px; height:36px;
     border-radius:50%;
-    background:rgba(255,255,255,.06);
+    background:var(--surface);
+    border:1px solid var(--border);
     display:flex;
     align-items:center;
     justify-content:center;
-    color:#CBD5E1;
-    transition:background var(--ease), color var(--ease), transform var(--ease);
+    color:#475467;
+    transition:background var(--ease), color var(--ease), border-color var(--ease), transform var(--ease);
   }
   .footer__social-link:hover{
-    background:var(--primary);
+    background:var(--gradient);
+    border-color:transparent;
     color:#fff;
     transform:translateY(-2px);
   }
+  .footer__social-link:focus-visible{ border-radius:50%; }
   .footer__bottom{
-    border-top:1px solid rgba(255,255,255,.08);
+    border-top:1px solid rgba(86,100,255,.12);
     padding:20px 0;
     text-align:center;
   }
-  .footer__bottom p{ font-size:13px; color:#64748B; margin:0; }
+  .footer__bottom p{ font-size:13px; color:#475467; margin:0; }
 
 
   /* ==========================================================

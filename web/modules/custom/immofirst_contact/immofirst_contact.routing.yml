@@ -1,0 +1,19 @@
+immofirst_contact.form:
+  path: '/kontakt'
+  defaults:
+    _form: '\Drupal\immofirst_contact\Form\ContactForm'
+    _title: 'Kontakt'
+  requirements:
+    _access: 'TRUE'
+
+# Only reachable once per successful submission (session flag set by
+# ContactForm::submitForm()); otherwise redirects back to /kontakt.
+immofirst_contact.thank_you:
+  path: '/kontakt/danke'
+  defaults:
+    _controller: '\Drupal\immofirst_contact\Controller\ContactThankYouController::build'
+    _title: 'Vielen Dank für Ihre Nachricht!'
+  requirements:
+    _access: 'TRUE'
+  options:
+    no_cache: TRUE

@@ -1,0 +1,10 @@
+contact:
+  css:
+    theme:
+      css/contact.css: {}
+  js:
+    js/contact.js: {}
+  dependencies:
+    - suchauftrag_theme/global
+    - core/drupal
+    - core/once

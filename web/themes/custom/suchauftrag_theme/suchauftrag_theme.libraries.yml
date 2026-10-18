@@ -88,3 +88,14 @@ offer-webform:
   dependencies:
     - suchauftrag_theme/search-request-detail
     - core/drupal
+
+# NEW library — used only by templates/node/node--page.html.twig via
+# {{ attach_library('suchauftrag_theme/basic-page') }}. Content card and
+# body typography for Basic pages (Impressum, Datenschutz, AGB, ...).
+# Kept separate from "global" so no other page's CSS payload changes.
+basic-page:
+  css:
+    theme:
+      css/basic-page.css: {}
+  dependencies:
+    - suchauftrag_theme/global

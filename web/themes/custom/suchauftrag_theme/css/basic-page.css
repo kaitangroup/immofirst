@@ -1,0 +1,145 @@
+/**
+ * basic-page.css — Basic page (node type "page") layout: title + intro
+ * on the page background, sections as divided rows in a white card.
+ * Loaded only via templates/node/node--page.html.twig. Variants (set in
+ * suchauftrag_theme_preprocess_node__page()):
+ *   --numbered  "1." counters before each section heading
+ *   --icons     blue round icon beside each section (Impressum)
+ *   --plain     no prefix (Widerrufsbelehrung, headings with "§ 1")
+ */
+
+.basic-page{
+  max-width:880px;
+  margin:0 auto;
+}
+
+/* ---------- Title + intro ---------- */
+.basic-page__header{
+  margin-bottom:32px;
+}
+.basic-page__title{
+  font-size:44px;
+  line-height:1.15;
+  letter-spacing:-.01em;
+  overflow-wrap:break-word;
+}
+.basic-page__intro{
+  max-width:680px;
+  margin-top:16px;
+  font-size:18px;
+  line-height:1.6;
+  color:var(--muted);
+}
+.basic-page__intro p + p{ margin-top:12px; }
+.basic-page__intro strong{ color:var(--text); }
+
+/* ---------- Card ---------- */
+.basic-page__card{
+  padding:8px 40px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-md);
+}
+
+/* ---------- Section rows ---------- */
+.basic-page--numbered .basic-page__card{ counter-reset:legal-section; }
+
+.basic-page__section{
+  display:flex;
+  align-items:flex-start;
+  gap:24px;
+  padding:28px 0;
+}
+.basic-page__section + .basic-page__section{
+  border-top:1px solid var(--border);
+}
+.basic-page__section-main{
+  flex:1 1 auto;
+  min-width:0;
+}
+.basic-page__section-title{
+  font-size:20px;
+  font-weight:600;
+  line-height:1.35;
+}
+.basic-page__section-text{
+  margin-top:8px;
+}
+
+/* Numbered: "1." hangs left of the heading, body text aligns with the
+   heading text, as in the client reference. */
+.basic-page--numbered .basic-page__section{ counter-increment:legal-section; }
+.basic-page--numbered .basic-page__section-main{ padding-left:32px; }
+.basic-page--numbered .basic-page__section-title::before{
+  content:counter(legal-section) ".";
+  display:inline-block;
+  width:32px;
+  margin-left:-32px;
+}
+
+/* Icons: blue round badge with a white line icon. */
+.basic-page__icon{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:52px;
+  height:52px;
+  border-radius:50%;
+  background:var(--primary);
+  color:#fff;
+}
+.basic-page--icons .basic-page__section-main{ padding-top:12px; }
+
+/* ---------- Body typography ----------
+   style.css resets margins and list bullets globally, so restore
+   readable spacing for editor-entered HTML here. */
+.basic-page__section-text,
+.basic-page__body{
+  font-size:16px;
+  line-height:1.7;
+  color:var(--muted);
+}
+.basic-page__card p,
+.basic-page__card ul,
+.basic-page__card ol{
+  margin:0 0 12px;
+}
+.basic-page__card ul{ list-style:disc; padding-left:24px; }
+.basic-page__card ol{ list-style:decimal; padding-left:24px; }
+.basic-page__card li + li{ margin-top:4px; }
+.basic-page__card h3{
+  font-size:17px;
+  margin:20px 0 8px;
+}
+.basic-page__card a{
+  color:var(--primary);
+  text-decoration:underline;
+}
+.basic-page__card strong{ color:var(--text); }
+.basic-page__section-text > :last-child,
+.basic-page__body .field__item > :last-child{
+  margin-bottom:0;
+}
+.basic-page__body{ padding:28px 0; }
+.basic-page__body h2{
+  font-size:20px;
+  margin:28px 0 8px;
+}
+
+/* ---------- Tablet / mobile ---------- */
+@media (max-width: 768px){
+  .basic-page__header{ margin-bottom:24px; }
+  .basic-page__title{ font-size:32px; }
+  .basic-page__intro{ font-size:16px; margin-top:12px; }
+  .basic-page__card{ padding:4px 20px; }
+  .basic-page__section{ gap:16px; padding:22px 0; }
+  .basic-page__section-title{ font-size:18px; }
+  .basic-page__section-text{ font-size:15px; }
+  .basic-page--numbered .basic-page__section-main{ padding-left:26px; }
+  .basic-page--numbered .basic-page__section-title::before{ width:26px; margin-left:-26px; }
+  .basic-page__icon{ width:44px; height:44px; }
+  .basic-page__icon svg{ width:20px; height:20px; }
+  .basic-page--icons .basic-page__section-main{ padding-top:9px; }
+}

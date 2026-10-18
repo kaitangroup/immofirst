@@ -4,6 +4,7 @@ status: true
 dependencies:
   config:
     - node.type.faq
+    - node.type.page
     - node.type.search_request
     - taxonomy.vocabulary.faq_category
   module:
@@ -26,10 +27,13 @@ permissions:
   - 'administer immobiliengesuch expiration settings'
   - 'administer node published status'
   - 'create faq content'
+  - 'create page content'
   - 'create terms in faq_category'
   - 'delete any faq content'
+  - 'delete any page content'
   - 'delete any search_request content'
   - 'edit any faq content'
+  - 'edit any page content'
   - 'edit any search_request content'
   - 'edit terms in faq_category'
   - 'manage provider offers'

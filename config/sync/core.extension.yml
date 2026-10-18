@@ -37,6 +37,7 @@ module:
   imce: 0
   immo_faq: 0
   immofirst_api: 0
+  immofirst_contact: 0
   immofirst_geosearch: 0
   immofirst_offers: 0
   immofirst_search_request: 0

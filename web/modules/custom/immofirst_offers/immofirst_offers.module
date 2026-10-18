@@ -24,6 +24,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\immofirst_offers\NotificationMailer;
+use Drupal\immofirst_offers\OfferUploadGuard;
 use Drupal\immofirst_offers\OfferWorkflow;
 use Drupal\node\NodeInterface;
 use Drupal\user\UserInterface;
@@ -67,6 +68,19 @@ function immofirst_offers_webform_submission_access(WebformSubmissionInterface $
     return AccessResult::allowedIfHasPermission($account, 'manage provider offers');
   }
   return AccessResult::neutral();
+}
+
+/**
+ * Implements hook_webform_submission_form_alter().
+ *
+ * Server-side pre-check of the offer upload ("dateien") with German
+ * messages, content check and upload flood limit — see OfferUploadGuard.
+ */
+function immofirst_offers_webform_submission_form_alter(array &$form, FormStateInterface $form_state, string $form_id): void {
+  $submission = $form_state->getFormObject()->getEntity();
+  if ($submission instanceof WebformSubmissionInterface && OfferWorkflow::isOffer($submission) && isset($form['elements']['dateien'])) {
+    OfferUploadGuard::protect($form['elements']['dateien']);
+  }
 }
 
 /**

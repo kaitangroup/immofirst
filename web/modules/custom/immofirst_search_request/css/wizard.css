@@ -1092,6 +1092,15 @@ textarea.form-textarea:focus{
   outline-offset:2px;
 }
 .wizard-success__copy-btn.is-copied{ background:var(--if-success); color:#fff; }
+/* Action buttons: stacked and centred at every width, with a gap so the
+   two buttons never touch (they previously wrapped inline with none on
+   desktop). Same values as the mobile rule in the max-width:767px block. */
+.wizard-success__actions{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+}
 
 /* ===== Step 4: privacy note below "Suchauftrag anlegen" ===== */
 .wizard__privacy-note{
