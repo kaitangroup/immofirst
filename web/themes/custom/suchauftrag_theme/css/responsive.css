@@ -272,19 +272,19 @@
     --space-content-to-footer:40px;
   }
 
-  /* Top padding 36px → 60px: just enough room for the (smaller)
-     decoration band above the heading — see the ≤1024px block. */
-  .hero{ padding:60px 0 24px; }
+  .hero{ padding:36px 0 24px; }
   .hero__title{ font-size:26px; }
   .hero__subtitle{ font-size:15px; }
   .hero__card{ display:none; }
-  /* Phone-sized version of the ≤1024px top-band decoration: fits the
-     60px top padding, slightly lighter so it stays secondary. */
-  .hero__bg{ top:-54px; width:112px; height:48px; opacity:.85; }
-  .hero__path{ top:4px; left:8px; width:86px; height:44px; }
-  .hero__pin--1 svg{ width:22px; height:22px; }
-  .hero__pin--2{ top:30px; }
-  .hero__pin--2 svg{ width:16px; height:16px; }
+  /* Phone-sized version of the ≤1024px top-band decoration, fitted into
+     the hero's original 36px top padding (client: headline stays where
+     it was, no extra space above it) — smaller and lighter, so it reads
+     as a background accent at the right edge. */
+  .hero__bg{ top:-33px; width:84px; height:30px; opacity:.7; }
+  .hero__path{ top:5px; left:6px; width:62px; height:24px; }
+  .hero__pin--1 svg{ width:16px; height:16px; }
+  .hero__pin--2{ top:18px; }
+  .hero__pin--2 svg{ width:12px; height:12px; }
   .feature-icons{ display:none; }
 
   .label-mobile, .btn-text-mobile { display: inline; }
@@ -372,10 +372,24 @@
      its own full-width row below it. display:contents lets the button
      leave .search-requests__sort and wrap within .search-requests__head;
      the sort .select stays a normal box, so its dropdown is unaffected. */
-  .search-requests__head{ flex-wrap:wrap; row-gap:14px; }
+  /* Client feedback (Oct 2026): the sort icon belongs on the SAME row
+     as the "… gefunden" count, at its right — the full-width title used
+     to push it onto a row of its own. A two-column grid instead of the
+     wrapping flex row: title spans both columns, then count | sort,
+     then the saved-filter button across both. The count may wrap
+     (minmax(0,1fr)) rather than push the 40px icon off-screen. */
+  .search-requests__head{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) auto;
+    column-gap:12px;
+    row-gap:14px;
+  }
+  .search-requests__intro{ display:contents; }
+  .search-requests__title{ grid-column:1 / -1; }
+  .search-requests__count{ justify-self:start; margin-top:0; }
   .search-requests__sort{ display:contents; }
   .saved-filter-btn{
-    flex:1 0 100%;
+    grid-column:1 / -1;
     justify-content:center;
   }
 

@@ -91,13 +91,13 @@ function suchauftrag_theme_preprocess_page__front(array &$variables) {
     [
       'icon' => 'target',
       'title' => 'Aktuelle Gesuche',
-      'text' => 'Finden Sie passende Gesuche und senden Sie unverbindlich Angebote.',
+      'text' => 'Finden Sie passende Gesuche für Ihre Immobilienangebote.',
       'color' => 'indigo',
     ],
     [
       'icon' => 'lock',
       'title' => 'Kostenlos & unverbindlich',
-      'text' => 'Angebote einstellen ist für Sie kostenlos.',
+      'text' => 'Finden Sie passende Gesuche und senden Sie unverbindlich Angebote',
       'color' => 'purple',
     ],
     [

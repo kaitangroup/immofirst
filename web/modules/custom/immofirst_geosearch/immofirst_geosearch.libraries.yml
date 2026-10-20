@@ -1,0 +1,14 @@
+# "Ort oder PLZ" autocomplete for the homepage search (search-form.html.twig)
+# and the search-request wizard (immofirst_geosearch.module). Builds on core's
+# autocomplete; see js/location-autocomplete.js.
+location-autocomplete:
+  js:
+    js/location-autocomplete.js: {}
+  css:
+    component:
+      css/location-autocomplete.css: {}
+  dependencies:
+    - core/drupal
+    - core/jquery
+    - core/once
+    - core/drupal.autocomplete

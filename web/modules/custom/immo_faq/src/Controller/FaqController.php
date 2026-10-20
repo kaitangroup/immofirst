@@ -62,7 +62,10 @@ class FaqController extends ControllerBase {
       $term_name = $term->getName();
       $term_desc = '';
       if ($term->hasField('description') && !$term->get('description')->isEmpty()) {
-        $term_desc = $term->get('description')->value;
+        // Filtered through the term's own text format (CKEditor stores
+        // HTML), like the answers below; ->value would print the tags
+        // literally once Twig escapes it.
+        $term_desc = $term->get('description')->processed;
       }
 
       $icon_type = $icon_map[$term_name] ?? 'question';

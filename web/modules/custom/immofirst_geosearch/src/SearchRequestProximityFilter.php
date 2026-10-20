@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\immofirst_geosearch;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
 use Drupal\geofield\Plugin\views\filter\GeofieldProximityFilter;
 use Drupal\views\Plugin\ViewsHandlerManager;
 use Drupal\views\ViewExecutable;
@@ -23,9 +24,15 @@ use Drupal\views\ViewExecutable;
  *   stored coordinates) is added, and the plain text match on
  *   field_location is dropped, since "within 25 km of 80331" must not also
  *   require the text "80331".
- * - "ort" doesn't geocode (unknown place, provider down, no token): the
- *   existing text match stays in place, unchanged, and the failure is
- *   logged by LocationGeocoder.
+ * - "ort" is verified first (GermanLocationLookup::verify()): only a
+ *   German postcode/place label as offered by the autocomplete is used as
+ *   the search centre.
+ * - "ort" is not a valid location (typed without picking a suggestion,
+ *   unknown or fabricated): no results, and the empty text explains that a
+ *   suggestion must be selected (FLAG_INVALID, see the .module file).
+ * - Provider unavailable: the existing text match stays in place, without a
+ *   radius, with a visible notice (FLAG_UNAVAILABLE) — never silently.
+ *   Not cached, so the radius search resumes once the provider is back.
  */
 final class SearchRequestProximityFilter {
 
@@ -41,8 +48,17 @@ final class SearchRequestProximityFilter {
 
   private const PROXIMITY_FILTER_ID = 'field_location_coordinates_proximity';
 
+  /**
+   * $view->element key holding FLAG_INVALID / FLAG_UNAVAILABLE.
+   */
+  public const STATE_KEY = '#immofirst_geosearch_location';
+  public const FLAG_INVALID = 'invalid';
+  public const FLAG_UNAVAILABLE = 'unavailable';
+
   public function __construct(
     private readonly LocationGeocoder $locationGeocoder,
+    private readonly GermanLocationLookup $lookup,
+    private readonly KillSwitch $pageCacheKillSwitch,
     private readonly ConfigFactoryInterface $configFactory,
     private readonly ViewsHandlerManager $filterManager,
   ) {}
@@ -58,8 +74,24 @@ final class SearchRequestProximityFilter {
       return;
     }
 
-    $center = $this->locationGeocoder->resolveSearchCenter($location);
+    $check = $this->lookup->verify($location);
+    if ($check['status'] === GermanLocationLookup::STATUS_UNAVAILABLE) {
+      $view->element[self::STATE_KEY] = self::FLAG_UNAVAILABLE;
+      $view->element['#cache']['max-age'] = 0;
+      $this->pageCacheKillSwitch->trigger();
+      return;
+    }
+    if ($check['status'] !== GermanLocationLookup::STATUS_VALID) {
+      $view->element[self::STATE_KEY] = self::FLAG_INVALID;
+      return;
+    }
+    // Same text the provider verified: resolves (cached) to the very same
+    // first result, i.e. the selected place.
+    $center = $this->locationGeocoder->resolveSearchCenter($check['label']);
     if ($center === NULL) {
+      $view->element[self::STATE_KEY] = self::FLAG_UNAVAILABLE;
+      $view->element['#cache']['max-age'] = 0;
+      $this->pageCacheKillSwitch->trigger();
       return;
     }
 

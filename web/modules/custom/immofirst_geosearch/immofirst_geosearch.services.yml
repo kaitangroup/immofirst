@@ -15,6 +15,8 @@ services:
     class: Drupal\immofirst_geosearch\SearchRequestProximityFilter
     arguments:
       - '@immofirst_geosearch.location_geocoder'
+      - '@immofirst_geosearch.location_lookup'
+      - '@page_cache_kill_switch'
       - '@config.factory'
       - '@plugin.manager.views.filter'
 
@@ -29,3 +31,20 @@ services:
   logger.channel.immofirst_geosearch:
     parent: logger.channel_base
     arguments: ['immofirst_geosearch']
+
+  immofirst_geosearch.location_lookup:
+    class: Drupal\immofirst_geosearch\GermanLocationLookup
+    arguments:
+      - '@immofirst_geosearch.location_geocoder'
+      - '@logger.channel.immofirst_geosearch'
+  Drupal\immofirst_geosearch\GermanLocationLookup: '@immofirst_geosearch.location_lookup'
+
+  # HTTP client for Geocoder (injected into geocoder.http_adapter by
+  # ImmofirstGeosearchServiceProvider): a slow Mapbox response must not hold
+  # the autocomplete / form submit for core's default 30 s. Only geocoding
+  # uses it; Drupal's global http_client is unchanged.
+  immofirst_geosearch.geocoder_http_client:
+    class: GuzzleHttp\Client
+    factory: ['@http_client_factory', 'fromOptions']
+    arguments:
+      - { timeout: 5, connect_timeout: 3 }

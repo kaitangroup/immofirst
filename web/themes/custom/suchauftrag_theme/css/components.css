@@ -319,14 +319,17 @@
      fixed pixels, so this holds up as the container's actual width
      changes — left is what keeps this clear of both the text and the
      card, not top, so it isn't thrown off by how tall either renders. */
-  .hero__path{ position:absolute; top:24%; left:50%; opacity:.7; }
+  /* Client feedback (Oct 2026): nudged further right (and slightly
+     lighter) so the graphic sits in the background gap before the
+     card, clearly away from the heading. */
+  .hero__path{ position:absolute; top:24%; left:54%; opacity:.6; }
   .hero__pin{
     position:absolute;
     display:flex;
     color:var(--primary);
   }
-  .hero__pin--1{ top:6%; left:58%; }
-  .hero__pin--2{ top:60%; left:52%; opacity:.55; }
+  .hero__pin--1{ top:6%; left:62%; opacity:.85; }
+  .hero__pin--2{ top:60%; left:56%; opacity:.5; }
   
   .hero__inner{
     position:relative;
@@ -1244,6 +1247,10 @@
   .footer__logo:has(.footer__logo-img){
     display:inline-flex;
   }
+  /* Same fix as .header__logo: no translucent tap square on mobile;
+     keyboard focus keeps the global outline, with rounded corners. */
+  .footer__logo{ -webkit-tap-highlight-color:transparent; }
+  .footer__logo:focus-visible{ border-radius:8px; }
   .footer__logo-img{
     display:block;
     height:48px;

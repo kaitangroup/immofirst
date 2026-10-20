@@ -1,0 +1,9 @@
+# "Ort oder PLZ" suggestions (homepage search + search-request wizard);
+# see LocationSuggestController. Public, like the forms using it.
+immofirst_geosearch.location_suggest:
+  path: '/standort/vorschlaege'
+  defaults:
+    _controller: '\Drupal\immofirst_geosearch\Controller\LocationSuggestController::suggest'
+  methods: [GET]
+  requirements:
+    _access: 'TRUE'

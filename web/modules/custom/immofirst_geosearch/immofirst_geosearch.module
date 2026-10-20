@@ -7,6 +7,10 @@
 
 declare(strict_types=1);
 
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\immofirst_geosearch\GermanLocationLookup;
+use Drupal\immofirst_geosearch\SearchRequestProximityFilter;
+use Drupal\views\Plugin\views\query\Sql;
 use Drupal\views\ViewExecutable;
 
 /**
@@ -17,4 +21,85 @@ use Drupal\views\ViewExecutable;
  */
 function immofirst_geosearch_views_pre_build(ViewExecutable $view): void {
   \Drupal::service('immofirst_geosearch.proximity_filter')->apply($view);
+}
+
+/**
+ * Implements hook_views_query_alter().
+ *
+ * An "ort" that isn't a verified German location matches nothing.
+ */
+function immofirst_geosearch_views_query_alter(ViewExecutable $view, $query): void {
+  if (($view->element[SearchRequestProximityFilter::STATE_KEY] ?? NULL) === SearchRequestProximityFilter::FLAG_INVALID && $query instanceof Sql) {
+    $query->addWhereExpression(0, '1 = 0');
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for views_view.
+ *
+ * German notices for a rejected "ort" (instead of the generic empty text)
+ * and for an unavailable location service.
+ */
+function immofirst_geosearch_preprocess_views_view(array &$variables): void {
+  $state = $variables['view']->element[SearchRequestProximityFilter::STATE_KEY] ?? NULL;
+  if ($state === SearchRequestProximityFilter::FLAG_INVALID) {
+    $variables['empty'] = [
+      '#markup' => t('Der eingegebene Ort wurde nicht gefunden. Bitte wählen Sie einen Ort oder eine Postleitzahl in Deutschland aus der Vorschlagsliste aus.'),
+    ];
+  }
+  elseif ($state === SearchRequestProximityFilter::FLAG_UNAVAILABLE) {
+    $notice = [
+      '#type' => 'html_tag',
+      '#tag' => 'p',
+      '#value' => t('Die Umkreissuche ist vorübergehend nicht verfügbar. Es werden Gesuche angezeigt, deren Ort zu Ihrer Eingabe passt.'),
+      '#attributes' => ['class' => ['location-lookup-notice'], 'role' => 'status'],
+    ];
+    $variables['header'] = ['location_notice' => $notice] + (array) ($variables['header'] ?? []);
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for immofirst_search_request_wizard.
+ *
+ * Step 1 "Ort oder PLZ": provider-backed suggestions and server-side
+ * verification. Done here, not in the wizard, because this module already
+ * depends on immofirst_search_request (not the other way round).
+ */
+function immofirst_geosearch_form_immofirst_search_request_wizard_alter(array &$form, FormStateInterface $form_state): void {
+  if (!isset($form['step_content']['location_section']['fields']['location'])) {
+    return;
+  }
+  $element = &$form['step_content']['location_section']['fields']['location'];
+  $element['#autocomplete_route_name'] = 'immofirst_geosearch.location_suggest';
+  $element['#attributes']['data-location-autocomplete'] = '';
+  $element['#attached']['library'][] = 'immofirst_geosearch/location-autocomplete';
+  $form['#validate'][] = 'immofirst_geosearch_wizard_validate_location';
+}
+
+/**
+ * Form #validate: the wizard location must be a verified German location.
+ */
+function immofirst_geosearch_wizard_validate_location(array &$form, FormStateInterface $form_state): void {
+  if (($form_state->getTriggeringElement()['#name'] ?? '') !== 'wizard_next') {
+    return;
+  }
+  $parents = ['step_content', 'location_section', 'fields', 'location'];
+  $value = trim((string) $form_state->getValue($parents, ''));
+  $error_name = implode('][', $parents);
+  // Empty is reported by the field's own #required_error.
+  if ($value === '' || $form_state->getError($form['step_content']['location_section']['fields']['location'])) {
+    return;
+  }
+
+  $check = \Drupal::service('immofirst_geosearch.location_lookup')->verify($value);
+  if ($check['status'] === GermanLocationLookup::STATUS_VALID) {
+    // Store the provider's canonical spelling.
+    $form_state->setValue($parents, $check['label']);
+  }
+  elseif ($check['status'] === GermanLocationLookup::STATUS_UNAVAILABLE) {
+    $form_state->setErrorByName($error_name, t('Der Ort kann gerade nicht überprüft werden. Bitte versuchen Sie es in einigen Minuten erneut.'));
+  }
+  else {
+    $form_state->setErrorByName($error_name, t('Bitte wählen Sie einen Ort oder eine Postleitzahl in Deutschland aus der Vorschlagsliste aus.'));
+  }
 }

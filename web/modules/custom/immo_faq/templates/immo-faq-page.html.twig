@@ -75,7 +75,8 @@
             <div class="immo-faq-card__titles">
               <h2 class="immo-faq-card__title">{{ category.title }}</h2>
               {% if category.description %}
-                <p class="immo-faq-card__desc">{{ category.description }}</p>
+                {# Filtered HTML (may contain its own <p>), so a <div>. #}
+                <div class="immo-faq-card__desc">{{ category.description }}</div>
               {% endif %}
             </div>
           </div>
@@ -95,7 +96,8 @@
                 </button>
                 <div id="{{ item.id }}" class="immo-faq-answer" hidden>
                   <div class="immo-faq-answer__inner">
-                    {{ item.answer|raw }}
+                    {# Already filtered by the body's text format. #}
+                    {{ item.answer }}
                   </div>
                 </div>
               </div>

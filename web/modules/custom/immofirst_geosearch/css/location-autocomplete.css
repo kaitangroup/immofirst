@@ -1,0 +1,58 @@
+/**
+ * "Ort oder PLZ" suggestion list + status line, in the theme's tokens
+ * (falls back to the same values when a page lacks them).
+ */
+ul.ui-autocomplete.location-autocomplete__menu.ui-widget-content{
+  z-index:1000;
+  max-height:320px;
+  overflow-y:auto;
+  margin:4px 0 0;
+  padding:6px;
+  list-style:none;
+  background:var(--surface, #fff);
+  border:1px solid var(--border, #E8ECF6);
+  border-radius:var(--radius-md, 12px);
+  box-shadow:var(--shadow-md, 0 8px 24px rgba(17,24,39,.08));
+  font-family:inherit;
+}
+.location-autocomplete__menu .ui-menu-item{ margin:0; padding:0; list-style:none; }
+.location-autocomplete__menu .ui-menu-item-wrapper{
+  display:block;
+  padding:10px 12px;
+  border:0;
+  border-radius:var(--radius-sm, 8px);
+  font-size:14px;
+  line-height:1.4;
+  color:var(--text, #111827);
+  cursor:pointer;
+}
+.location-autocomplete__menu .ui-menu-item-wrapper.ui-state-active{
+  margin:0;
+  border:0;
+  background:var(--hero-bg, #F4F6FF);
+  color:var(--primary, #5664FF);
+}
+
+.location-autocomplete__hint{
+  margin-top:6px;
+  font-size:13px;
+  line-height:1.4;
+  color:var(--muted, #667085);
+}
+.location-autocomplete__hint--error{ color:#D92D20; }
+input.location-autocomplete--invalid{ border-color:#D92D20; }
+
+.location-lookup-notice{
+  margin:0 0 16px;
+  padding:10px 14px;
+  border-radius:var(--radius-sm, 8px);
+  background:#FFF7E6;
+  color:#8A5300;
+  font-size:14px;
+}
+
+/* The homepage field has its own pin icon at the right edge, where core's
+   autocomplete throbber would sit on top of it. */
+.input-icon input[data-location-autocomplete].form-autocomplete{
+  background-image:none;
+}

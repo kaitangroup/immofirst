@@ -89,7 +89,10 @@
     <div class="search-card__field">
       <label class="search-card__label" for="city-input">Ort oder PLZ</label>
       <div class="input-icon">
-        <input type="text" id="city-input" name="ort" class="input" placeholder="z. B. München oder 80331" value="{{ ort }}">
+        {# German postcode/place suggestions + server-side check:
+           immofirst_geosearch (location-autocomplete library). #}
+        {{ attach_library('immofirst_geosearch/location-autocomplete') }}
+        <input type="text" id="city-input" name="ort" class="input form-autocomplete" placeholder="z. B. München oder 80331" value="{{ ort }}" autocomplete="off" data-location-autocomplete data-autocomplete-path="{{ path('immofirst_geosearch.location_suggest') }}">
         <svg class="input-icon__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 21.5s7.2-6.7 7.2-12A7.2 7.2 0 104.8 9.5c0 5.3 7.2 12 7.2 12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
           <circle cx="12" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>

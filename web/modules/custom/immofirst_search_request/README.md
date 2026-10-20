@@ -75,9 +75,9 @@ allowed-value on `field_property_icon`.
 
 ## Known follow-ups (flagged, not silently skipped)
 
-- **Standort autocomplete** uses a small static list of ~50 major
-  German cities (`LocationAutocompleteController`), not a geocoding
-  service — sufficient for real autocomplete behavior without adding
-  an external dependency the spec didn't request.
+- **Standort autocomplete** is replaced by `immofirst_geosearch` (form
+  alter): German postcodes/places from the Mapbox provider, verified on
+  the server. The static ~50-city `LocationAutocompleteController` is only
+  a fallback for when that module is disabled.
 - **Character counter / number input JS** are the only client-side
   enhancements; no validation logic is duplicated in JS per spec.
